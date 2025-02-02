@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="OllamaClient.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:OllamaClient"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="OllamaClient">
+
+    <SplitView x:Name="TopLevelSplitView"
+               DisplayMode="CompactOverlay"
+               CompactPaneLength="60"
+               OpenPaneLength="300"
+               MinWidth="300">
+        <SplitView.Pane>
+            <Grid x:Name="SidebarGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="200"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="50" />
+                    </Grid.ColumnDefinitions>
+                    <AppBarButton x:Name="ToggleSidebarButton"
+                        Grid.Column="0"
+                                  Margin="5,0,5,0"
+                        Height="50"
+                        Width="50"
+                        HorizontalContentAlignment="Left"
+                        Icon="GlobalNavigationButton"
+                        Click="ToggleSidebarButton_Click"/>
+                    <AppBarButton
+                        Height="50"
+                        Width="50"
+                        Grid.Column="1"
+                        HorizontalContentAlignment="Right"
+                        Icon="Setting"
+                        Click="ToggleSidebarButton_Click"/>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <AppBarButton Icon="Add" Margin="5,0,5,0" Height="50" Width="50"  />
+                    <ListBox x:Name="ConversationsListBox" Grid.Row="1" Background="Transparent">
+
+                    </ListBox>
+                </Grid>
+                <StackPanel x:Name="ControlsStackPanel" Grid.Row="2" Margin="15">
+                    <ComboBox x:Name="ModelSelectorComboBox" HorizontalAlignment="Stretch" Width="100" Height="40"/>
+                </StackPanel>
+            </Grid>
+        </SplitView.Pane>
+        <SplitView.Content>
+            <Frame x:Name="ContentFrame" Grid.Row="0" IsNavigationStackEnabled="False" />
+        </SplitView.Content>
+    </SplitView>
+</Window>

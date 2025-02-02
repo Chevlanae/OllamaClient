@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "OllamaClient (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "OllamaClient (Unpackaged)": {
+      "commandName": "Project"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Profile 1": {
+      "commandName": "Executable"
+    }
+  }
+}
