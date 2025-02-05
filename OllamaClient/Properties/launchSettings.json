@@ -1,7 +1,8 @@
 {
   "profiles": {
     "OllamaClient (Package)": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "nativeDebugging": false
     },
     "OllamaClient (Unpackaged)": {
       "commandName": "Project"
@@ -9,9 +10,6 @@
     "WSL": {
       "commandName": "WSL2",
       "distributionName": ""
-    },
-    "Profile 1": {
-      "commandName": "Executable"
     }
   }
 }

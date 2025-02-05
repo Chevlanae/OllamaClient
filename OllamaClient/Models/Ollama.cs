@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace OllamaClient
 {
@@ -22,8 +24,14 @@ namespace OllamaClient
 
         public struct Message
         {
-            string role { get; set; }
-            string content { get; set; }
+            public string? role { get; set; }
+            public string? content { get; set; }
+
+            public Message(Role role, string content)
+            {
+                this.role = Enum.GetName(role);
+                this.content = content;
+            }
 
             public Message(Stream data, JsonSerializerOptions options)
             {
@@ -33,19 +41,19 @@ namespace OllamaClient
 
         public struct ModelParameters
         {
-            int? mirostat { get; set; }
-            float? mirostat_eta { get; set; }
-            float? mirostat_tau { get; set; }
-            int? num_ctx { get; set; }
-            int? repeat_last_n { get; set; }
-            float? repeat_penalty { get; set; }
-            float? temperature { get; set; }
-            int? seed { get; set; }
-            string? stop { get; set; }
-            int? num_predict { get; set; }
-            int? top_k { get; set; }
-            float? top_p { get; set; }
-            float? min_p { get; set; }
+            public int? mirostat { get; set; }
+            public float? mirostat_eta { get; set; }
+            public float? mirostat_tau { get; set; }
+            public int? num_ctx { get; set; }
+            public int? repeat_last_n { get; set; }
+            public float? repeat_penalty { get; set; }
+            public float? temperature { get; set; }
+            public int? seed { get; set; }
+            public string? stop { get; set; }
+            public int? num_predict { get; set; }
+            public int? top_k { get; set; }
+            public float? top_p { get; set; }
+            public float? min_p { get; set; }
 
             public ModelParameters(Stream data, JsonSerializerOptions options)
             {
@@ -55,12 +63,12 @@ namespace OllamaClient
 
         public struct ChatRequest
         {
-            string model { get; set; }
-            Message[] messages { get; set; }
-            string? role { get; set; }
-            bool? streaam { get; set; }
-            ModelParameters? model_parameters { get; set; }
-            string? keep_alive { get; set; }
+            public string model { get; set; }
+            public Message[] messages { get; set; }
+            public string? role { get; set; }
+            public bool? stream { get; set; }
+            public ModelParameters? model_parameters { get; set; }
+            public string? keep_alive { get; set; }
 
             public ChatRequest(object data)
             {
@@ -70,17 +78,17 @@ namespace OllamaClient
 
         public struct ChatResponse
         {
-            string? model { get; set; }
-            string? created_at { get; set; }
-            Message? message { get; set; }
-            bool? done { get; set; }
-            string? done_reason { get; set; }
-            long? total_duration { get; set; }
-            long? load_duration { get; set; }
-            int? prompt_eval_count { get; set; }
-            long? prompt_eval_duration { get; set; }
-            int? eval_count { get; set; }
-            long? eval_duration { get; set; }
+            public string? model { get; set; }
+            public string? created_at { get; set; }
+            public Message? message { get; set; }
+            public bool? done { get; set; }
+            public string? done_reason { get; set; }
+            public long? total_duration { get; set; }
+            public long? load_duration { get; set; }
+            public int? prompt_eval_count { get; set; }
+            public long? prompt_eval_duration { get; set; }
+            public int? eval_count { get; set; }
+            public long? eval_duration { get; set; }
 
             public ChatResponse(Stream data, JsonSerializerOptions options)
             {
@@ -90,12 +98,12 @@ namespace OllamaClient
 
         public struct CompletionRequest
         {
-            string model { get; set; }
-            string prompt { get; set; }
-            bool? stream { get; set; }
-            string? system { get; set; }
-            string? template { get; set; }
-            ModelParameters? options { get; set; }
+            public string model { get; set; }
+            public string prompt { get; set; }
+            public bool? stream { get; set; }
+            public string? system { get; set; }
+            public string? template { get; set; }
+            public ModelParameters? options { get; set; }
 
             public CompletionRequest(object data)
             {
@@ -105,17 +113,17 @@ namespace OllamaClient
 
         public struct CompletionResponse
         {
-            string? model { get; set; }
-            string? created_at { get; set; }
-            bool? done { get; set; }
-            long? total_duration { get; set; }
-            long? load_duration { get; set; }
-            int? prompt_eval_count { get; set; }
-            long? prompt_eval_duration { get; set; }
-            int? eval_count { get; set; }
-            long? eval_duration { get; set; }
-            int[]? context { get; set; }
-            string? response { get; set; }
+            public string? model { get; set; }
+            public string? created_at { get; set; }
+            public bool? done { get; set; }
+            public long? total_duration { get; set; }
+            public long? load_duration { get; set; }
+            public int? prompt_eval_count { get; set; }
+            public long? prompt_eval_duration { get; set; }
+            public int? eval_count { get; set; }
+            public long? eval_duration { get; set; }
+            public int[]? context { get; set; }
+            public string? response { get; set; }
 
 
             public CompletionResponse(Stream data, JsonSerializerOptions options)
@@ -126,17 +134,17 @@ namespace OllamaClient
 
         public struct CreateModelRequest
         {
-            string model { get; set; }
-            string? from { get; set; }
-            Dictionary<string, string>? files { get; set; }
-            Dictionary<string, string>? adapters { get; set; }
-            object? template { get; set; }
-            string[]? license { get; set; }
-            string? system { get; set; }
-            ModelParameters? parameters { get; set; }
-            Message[]? messages { get; set; }
-            bool? stream { get; set; }
-            string? quantize { get; set; }
+            public string model { get; set; }
+            public string? from { get; set; }
+            public Dictionary<string, string>? files { get; set; }
+            public Dictionary<string, string>? adapters { get; set; }
+            public object? template { get; set; }
+            public string[]? license { get; set; }
+            public string? system { get; set; }
+            public ModelParameters? parameters { get; set; }
+            public Message[]? messages { get; set; }
+            public bool? stream { get; set; }
+            public string? quantize { get; set; }
 
             public CreateModelRequest(Stream data, JsonSerializerOptions options)
             {
@@ -144,7 +152,7 @@ namespace OllamaClient
             }
         }
 
-        internal class Endpoints
+        public class Endpoints
         {
             public string BaseUrl { get; set; }
             public string GenerateCompletion { get; set; }
@@ -178,7 +186,7 @@ namespace OllamaClient
             }
         }
 
-        internal class Connection
+        public class Connection
         {
             public string SocketAddress { get; set; }
 
@@ -196,48 +204,44 @@ namespace OllamaClient
                 _HttpClient.Timeout = Timeout;
             }
 
-            public async Task Chat(ChatRequest request, Action<ChatResponse> callback)
+            public async Task<DelimitedJsonStream<ChatResponse>?> ChatStream(ChatRequest request)
             {
-                HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Chat)
+                using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Chat)
                 {
                     Content = JsonContent.Create(request)
                 };
-                await GetJsonStream(req, callback);
+                return await GetJsonStream<ChatResponse>(req);
             }
 
-            public async Task GenerateCompletion(CompletionRequest request, Action<CompletionResponse> callback)
+            public async Task<DelimitedJsonStream<CompletionResponse>?> GenerateCompletionStream(CompletionRequest request)
             {
-                HttpRequestMessage req = new(HttpMethod.Post, Endpoints.GenerateCompletion)
+                using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.GenerateCompletion)
                 {
                     Content = JsonContent.Create(request)
                 };
-                await GetJsonStream(req, callback);
+
+                return await GetJsonStream<CompletionResponse>(req);
             }
 
-            private async Task GetJsonStream<T>(HttpRequestMessage request, Action<T> callback)
+            private async Task<DelimitedJsonStream<T>?> GetJsonStream<T>(HttpRequestMessage request)
             {
                 try
                 {
                     HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-                    using DelimitedJsonStream<T> stream = new(await httpResp.Content.ReadAsStreamAsync(), '\n');
-                    stream.ObjectReceived += (sender, obj) =>
-                    {
-                        callback(obj);
-                    };
-                    await stream.Read();
+                    return new(await httpResp.Content.ReadAsStreamAsync(), '\n');
                 }
                 catch (HttpRequestException e)
                 {
                     Debug.Write(e);
                 }
+
+                return null;
             }
         }
 
-        public class DelimitedJsonStream<T> : IDisposable
+        public partial class DelimitedJsonStream<T> : IDisposable
         {
-            public event EventHandler<T>? ObjectReceived;
-
             public Stream BaseStream { get; set; }
             public char Delimiter { get; set; }
             public List<T> Objects { get; set; }
@@ -250,7 +254,7 @@ namespace OllamaClient
             {
                 BaseStream = sourceStream;
                 Delimiter = delimiter;
-                Objects = new();
+                Objects = [];
                 _Reader = new(BaseStream);
                 _PartialObject = "";
             }
@@ -259,31 +263,26 @@ namespace OllamaClient
             {
                 BaseStream.Dispose();
                 _Reader.Dispose();
+                GC.SuppressFinalize(this);
             }
 
-            protected void OnObjectReceived(T obj)
-            {
-                ObjectReceived?.Invoke(this, obj);
-            }
-
-            public async Task Read()
+            public async Task Read(CancellationToken cancellationToken, IProgress<T> progress)
             {
                 char[] buffer = new char[256];
                 while (!_Reader.EndOfStream)
                 {
 
-                    await _Reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                    await _Reader.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                     foreach (char c in buffer)
                     {
-                        if (c == Delimiter && _PartialObject[-1] == '}')
+                        if (c == Delimiter && _PartialObject.LastOrDefault() == '}')
                         {
-                            _PartialObject = Regex.Replace(_PartialObject, "^.*{", "{");
+                            _PartialObject = Regex.Replace(_PartialObject, "(^.*?{){1}", "{");
                             try
                             {
                                 if (JsonSerializer.Deserialize<T>(_PartialObject) is T obj)
                                 {
-                                    Objects.Add(obj);
-                                    OnObjectReceived(obj);
+                                    progress.Report(obj);
                                 }
                             }
                             catch (JsonException)

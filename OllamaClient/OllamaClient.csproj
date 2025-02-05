@@ -13,7 +13,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="ChatPage.xaml" />
+    <None Remove="NewFolder\ChatSessionPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Themes\Generic.xaml" />
@@ -46,7 +46,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="ChatPage.xaml">
+    <Page Update="NewFolder\ChatSessionPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <None Update="Themes\Generic.xaml">
