@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Models;
+using OllamaClient.ViewModels;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -18,63 +18,67 @@ namespace OllamaClient
     /// </summary>
     public partial class ChatSessionPage : Page
     {
-
-        private ChatSession Session { get; set; }
+        private Conversation? Session { get; set; }
+        private bool IsScrolling 
+        {
+            get
+            {
+                return ChatItemsView.ScrollView.State != ScrollingInteractionState.Idle;
+            }
+        }
 
         public ChatSessionPage()
         {
-            Session = new(new("127.0.0.1:4443", new(1, 0, 0)));
-            Session.ContentRecieved += Session_ContentRecieved;
-
             InitializeComponent();
-
 
             ChatItemsView.ItemsSource = Session;
         }
 
-        private void Session_ContentRecieved(object? sender, EventArgs e)
+        private void ScrollView_ScrollCompleted(ScrollView sender, ScrollingScrollCompletedEventArgs args)
         {
-            // Scroll to the last item
-            ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
+            throw new NotImplementedException();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if(e.Parameter is string model)
+            if (e.Parameter is Conversation conversation)
             {
-                Session.SelectedModel = model;
+                Session = conversation;
+                ChatItemsView.ItemsSource = Session;
             }
             base.OnNavigatedTo(e);
         }
 
-        private void SendChatButton_Click(object sender, RoutedEventArgs e)
+        private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
+            if(Session != null)
+            {
+                ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
 
-            ChatInputTextBox.IsEnabled = false;
-            SendChatButton.IsEnabled = false;
+                ChatInputTextBox.IsEnabled = false;
+                SendChatButton.IsEnabled = false;
 
-            string text = ChatInputTextBox.Text;
+                string text = ChatInputTextBox.Text;
 
+                DispatcherQueue.TryEnqueue(async () => { await Session.NewUserMessage(text); });
 
-            DispatcherQueue.TryEnqueue(async () => { await Session.NewUserMessage(text); });
-
-
-            ChatInputTextBox.Text = "";
-
-            ChatInputTextBox.IsEnabled = true;
-            SendChatButton.IsEnabled = true;
-        }
-
-        private void NewConversationButton_Click(object sender, RoutedEventArgs e)
-        {
-            Session.Cancel();
-            Session.Clear();
+                ChatInputTextBox.Text = "";
+                ChatInputTextBox.IsEnabled = true;
+                SendChatButton.IsEnabled = true;
+            }
         }
 
         private void CancelChatButton_Click(object sender, RoutedEventArgs e)
         {
-            Session.Cancel();
+            if(Session != null) Session.Cancel();
+        }
+
+        private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if(!IsScrolling)
+            {
+                ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
+            }
         }
     }
 }

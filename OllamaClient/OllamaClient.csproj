@@ -13,9 +13,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="NewFolder\ChatSessionPage.xaml" />
-  </ItemGroup>
-  <ItemGroup>
     <Page Remove="Themes\Generic.xaml" />
   </ItemGroup>
 

@@ -152,6 +152,31 @@ namespace OllamaClient
             }
         }
 
+        public struct ModelDetails
+        {
+            public string? parent_model { get; set; }
+            public string? format { get; set; }
+            public string? family { get; set; }
+            public string[]? families { get; set; }
+            public string? parameter_size { get; set; }
+            public string? quantization_level { get; set; }
+        }
+
+        public struct ModelInfo
+        {
+            public string? name { get; set; }
+            public string? model { get; set; }
+            public string? modified_at { get; set; }
+            public long? size { get; set; }
+            public string? digest { get; set; }
+            public ModelDetails? details { get; set; }
+        }
+
+        public struct ListModelsResponse
+        {
+            public ModelInfo[]? models { get; set; }
+        }
+
         public class Endpoints
         {
             public string BaseUrl { get; set; }
@@ -192,16 +217,14 @@ namespace OllamaClient
 
             public Endpoints Endpoints { get; set; }
 
-            public TimeSpan Timeout => _HttpClient.Timeout;
+            private HttpClient HttpClient { get; set; }
 
-            private HttpClient _HttpClient { get; set; }
-
-            public Connection(string socketAddress, TimeSpan timeout)
+            public Connection(string socketAddress)
             {
                 SocketAddress = socketAddress;
                 Endpoints = new Endpoints(SocketAddress);
-                _HttpClient = new HttpClient();
-                _HttpClient.Timeout = Timeout;
+                HttpClient = new HttpClient();
+                HttpClient.Timeout = Timeout.InfiniteTimeSpan;
             }
 
             public async Task<DelimitedJsonStream<ChatResponse>?> ChatStream(ChatRequest request)
@@ -223,17 +246,27 @@ namespace OllamaClient
                 return await GetJsonStream<CompletionResponse>(req);
             }
 
+            public async Task<ListModelsResponse?> ListModels()
+            {
+                using HttpRequestMessage req = new(HttpMethod.Get, Endpoints.List);
+
+                using HttpResponseMessage resp = await HttpClient.SendAsync(req);
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    return JsonSerializer.Deserialize<ListModelsResponse>(await resp.Content.ReadAsStringAsync());
+                }
+
+                return null;
+            }
+
             private async Task<DelimitedJsonStream<T>?> GetJsonStream<T>(HttpRequestMessage request)
             {
-                try
-                {
-                    HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                HttpResponseMessage httpResp = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-                    return new(await httpResp.Content.ReadAsStreamAsync(), '\n');
-                }
-                catch (HttpRequestException e)
+                if (httpResp.IsSuccessStatusCode)
                 {
-                    Debug.Write(e);
+                    return new(await httpResp.Content.ReadAsStreamAsync(), '\n');
                 }
 
                 return null;
@@ -244,59 +277,63 @@ namespace OllamaClient
         {
             public Stream BaseStream { get; set; }
             public char Delimiter { get; set; }
-            public List<T> Objects { get; set; }
-            private StreamReader _Reader { get; set; }
-            private string _PartialObject { get; set; }
+            private StreamReader Reader { get; set; }
+            private string PartialObject { get; set; }
 
-            public bool EndOfStream => _Reader.EndOfStream;
+            public bool EndOfStream => Reader.EndOfStream;
 
             public DelimitedJsonStream(Stream sourceStream, char delimiter)
             {
                 BaseStream = sourceStream;
                 Delimiter = delimiter;
-                Objects = [];
-                _Reader = new(BaseStream);
-                _PartialObject = "";
+                Reader = new(BaseStream);
+                PartialObject = "";
             }
 
             public void Dispose()
             {
                 BaseStream.Dispose();
-                _Reader.Dispose();
+                Reader.Dispose();
                 GC.SuppressFinalize(this);
             }
 
-            public async Task Read(CancellationToken cancellationToken, IProgress<T> progress)
+            public async Task Read(CancellationToken cancellationToken, IProgress<T> progress, int bufferSize = 32)
             {
-                char[] buffer = new char[256];
-                while (!_Reader.EndOfStream)
+                //buffer
+                char[] buffer = new char[bufferSize];
+                while (!Reader.EndOfStream)
                 {
-
-                    await _Reader.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                    //read BaseStream
+                    await Reader.ReadAsync(buffer, cancellationToken);
                     foreach (char c in buffer)
                     {
-                        if (c == Delimiter && _PartialObject.LastOrDefault() == '}')
+                        //check for delimiter, else append char to PartialObject
+                        if (c == Delimiter)
                         {
-                            _PartialObject = Regex.Replace(_PartialObject, "(^.*?{){1}", "{");
                             try
                             {
-                                if (JsonSerializer.Deserialize<T>(_PartialObject) is T obj)
+                                //Cleanup any leading characters preceding the opening bracket
+                                PartialObject = Regex.Replace(PartialObject, "(^.*?{){1}", "{");
+
+                                //Serialize PartialObject and pass serialized object to given IProgess parameter
+                                if (JsonSerializer.Deserialize<T>(PartialObject) is T obj)
                                 {
                                     progress.Report(obj);
                                 }
                             }
+                            //skip object if deserialize operation fails
                             catch (JsonException)
                             {
                                 continue;
                             }
                             finally
                             {
-                                _PartialObject = "";
+                                PartialObject = "";
                             }
                         }
                         else
                         {
-                            _PartialObject += c;
+                            PartialObject += c;
                         }
                     }
                 }
