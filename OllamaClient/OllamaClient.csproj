@@ -13,6 +13,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Pages\ConversationsSidebarPage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
     <Page Remove="Themes\Generic.xaml" />
   </ItemGroup>
 
@@ -44,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="NewFolder\ChatSessionPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Pages\ConversationsSidebarPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <None Update="Themes\Generic.xaml">

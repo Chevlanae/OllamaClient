@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -10,6 +11,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using OllamaClient.Api;
+using OllamaClient.Pages;
 using OllamaClient.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -24,134 +26,32 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
-        private ObservableCollection<string> AvailableModels { get; set; }
-        private Connection? OllamaConnection { get; set; }
-        private ObservableCollection<Conversation> Conversations { get; set; }
-        private ObservableCollection<string> SocketAddresses { get; set; }
-
         public MainWindow()
         {
-            AvailableModels = [];
-            Conversations = [];
-            SocketAddresses = [];
-
             InitializeComponent();
-
-            ModelsComboBox.ItemsSource = AvailableModels;
-            ConversationsListBox.ItemsSource = Conversations;
-
-            Conversations.CollectionChanged += Conversations_CollectionChanged;
         }
 
-        private async void Conversations_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            await Config.SaveAppState(new(SocketAddresses.ToArray(), Conversations.ToArray()));
-        }
-
-        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
+        private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)
         {
             TopLevelSplitView.IsPaneOpen = !TopLevelSplitView.IsPaneOpen;
-            ConversationsListBox.Visibility = Visibility.Visible;
-            ModelsComboBox.Visibility = Visibility.Visible;
-            SocketAddressInputTextBox.Visibility = Visibility.Visible;
         }
 
-        private void TopLevelSplitView_PaneClosing(SplitView sender, SplitViewPaneClosingEventArgs args)
+        private void ConversationsButton_Click(object sender, RoutedEventArgs e)
         {
-            ConversationsListBox.Visibility = Visibility.Collapsed;
-            ModelsComboBox.Visibility = Visibility.Collapsed;
-            SocketAddressInputTextBox.Visibility = Visibility.Collapsed;
-        }
-
-        private void NewConversationButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (ModelsComboBox.SelectedItem is string model && OllamaConnection != null)
+            if(SidebarFrame.CurrentSourcePageType != typeof(ConversationsSidebarPage))
             {
-                Conversation newConversation = new (OllamaConnection, model);
-
-                Conversations.Add(newConversation);
-
-                ConversationsListBox.SelectedIndex = Conversations.Count - 1;
+                SidebarFrame.Navigate(typeof(ConversationsSidebarPage), ContentFrame);
             }
+            ToggleSidbarButton_Click(sender, e);
         }
 
-        private void SocketAddressInputTextBox_LostFocus(object sender, RoutedEventArgs e)
+        private void ModelsButton_Click(object sender, RoutedEventArgs e)
         {
-            SocketAddressInputTextBox.Text = OllamaConnection?.SocketAddress;
-        }
-
-        private async void SocketAddressInputTextBox_KeyUp(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
-        {
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                SocketProgressRing.IsActive = true;
-
-                OllamaConnection = new(SocketAddressInputTextBox.Text);
-
-                foreach (Conversation conversation in Conversations)
-                {
-                    conversation.OllamaConnection = OllamaConnection;
-                }
-
-                AvailableModels.Clear();
-
-                try
-                {
-                    if (await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
-                    {
-                        foreach (ModelInfo model in models)
-                        {
-                            if (model.model is not null)
-                            {
-                                AvailableModels.Add(model.model);
-                            }
-                        }
-
-                        if(!SocketAddresses.Contains(SocketAddressInputTextBox.Text)) SocketAddresses.Add(SocketAddressInputTextBox.Text);
-                        SocketAddressInputTextBox.BorderBrush = new SolidColorBrush(Colors.Transparent);
-                        ModelsComboBox.SelectedIndex = 0;
-                    }
-                }
-                catch(HttpRequestException ex)
-                {
-                    SocketAddressInputTextBox.BorderBrush = new SolidColorBrush(Colors.Red);
-                    Debug.Write(ex);
-                }
-
-                SocketProgressRing.IsActive = false;
-            }
-        }
-
-        private void ConversationsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if(sender is ListBox listBox && listBox.SelectedItem is Conversation conversation)
-            {
-                ContentFrame.Navigate(typeof(ChatSessionPage), conversation);
-            }
-        }
-
-        private void SocketAddressInputTextBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-        {
-            // Since selecting an item will also change the text,
-            // only listen to changes caused by user entering text.
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-            {
-                var suitableItems = new List<string>();
-                foreach (string address in SocketAddresses)
-                {
-                    if (address.Contains(SocketAddressInputTextBox.Text))
-                    {
-                        suitableItems.Add(address);
-                    }
-                }
-                sender.ItemsSource = suitableItems;
-            }
 
         }
 
-        private void SocketAddressInputTextBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            SocketAddressInputTextBox.Text = args.SelectedItem.ToString();
 
         }
     }

@@ -16,13 +16,10 @@ namespace OllamaClient
     public class AppState
     {
         [DataMember]
-        public string[] SocketHistory { get; set; }
-        [DataMember]
         public ConversationSerializable[] Conversations { get; set; }
 
-        public AppState(string[] sockets, Conversation[] conversations)
+        public AppState(Conversations conversations)
         {
-            SocketHistory = sockets;
             Conversations = conversations.Select(c => new ConversationSerializable(c)).ToArray();
         }
     }
@@ -31,8 +28,10 @@ namespace OllamaClient
     {
         private static readonly ApplicationData AppData = ApplicationData.GetDefault();
 
-        public static async Task SaveAppState(AppState state)
+        public static async Task SaveConversations(Conversations c)
         {
+            AppState state = new(c);
+
             Windows.Storage.StorageFile appstateFile = await AppData.LocalFolder.CreateFileAsync("appstate.xml", Windows.Storage.CreationCollisionOption.ReplaceExisting);
             DataContractSerializer serializer = new(typeof(AppState));
             using Stream stream = await appstateFile.OpenStreamForWriteAsync();

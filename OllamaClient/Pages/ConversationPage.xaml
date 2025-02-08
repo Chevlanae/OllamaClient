@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="OllamaClient.ChatSessionPage"
+    x:Class="OllamaClient.ConversationPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:OllamaClient.ViewModels"
@@ -12,7 +12,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="20" MaxWidth="1000">
-            <ItemsView x:Name="ChatItemsView" SelectionMode="None" TabFocusNavigation="Local">
+            <ItemsView x:Name="ChatItemsView" SelectionMode="None" TabFocusNavigation="Local" Loaded="ChatItemsView_Loaded">
                 <ItemsView.Resources>
                     <local:ChatItemHorizontalAlignmentConverter x:Key="ChatItemHorizontalAlignmentConverter"/>
                     <local:ChatItemTextBoxBackgroundConverter x:Key="ChatItemTextBoxBackgroundConverter" />
@@ -45,7 +45,7 @@
                                         TextAlignment="Left" 
                                         BorderThickness="0" 
                                         FontSize="12"
-                                         TextChanged="ChatBubbleTextBox_TextChanged"
+                                        TextChanged="ChatBubbleTextBox_TextChanged"
                                         Template="{StaticResource ChatTextBoxControlTemplate}" />
                             </Grid>
                         </ItemContainer>

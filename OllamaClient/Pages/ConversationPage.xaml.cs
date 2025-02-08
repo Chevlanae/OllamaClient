@@ -16,7 +16,7 @@ namespace OllamaClient
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public partial class ChatSessionPage : Page
+    public partial class ConversationPage : Page
     {
         private Conversation? Session { get; set; }
         private bool IsScrolling 
@@ -27,16 +27,9 @@ namespace OllamaClient
             }
         }
 
-        public ChatSessionPage()
+        public ConversationPage()
         {
             InitializeComponent();
-
-            ChatItemsView.ItemsSource = Session;
-        }
-
-        private void ScrollView_ScrollCompleted(ScrollView sender, ScrollingScrollCompletedEventArgs args)
-        {
-            throw new NotImplementedException();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -79,6 +72,11 @@ namespace OllamaClient
             {
                 ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
             }
+        }
+
+        private void ChatItemsView_Loaded(object sender, RoutedEventArgs e)
+        {
+            ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
         }
     }
 }

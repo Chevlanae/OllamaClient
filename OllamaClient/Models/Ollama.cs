@@ -32,14 +32,9 @@ namespace OllamaClient
                 this.role = Enum.GetName(role);
                 this.content = content;
             }
-
-            public Message(Stream data, JsonSerializerOptions options)
-            {
-                this = JsonSerializer.Deserialize<Message>(data, options);
-            }
         }
 
-        public struct ModelParameters
+        public record struct ModelParameters
         {
             public int? mirostat { get; set; }
             public float? mirostat_eta { get; set; }
@@ -54,14 +49,9 @@ namespace OllamaClient
             public int? top_k { get; set; }
             public float? top_p { get; set; }
             public float? min_p { get; set; }
-
-            public ModelParameters(Stream data, JsonSerializerOptions options)
-            {
-                this = JsonSerializer.Deserialize<ModelParameters>(data, options);
-            }
         }
 
-        public struct ChatRequest
+        public record struct ChatRequest
         {
             public string model { get; set; }
             public Message[] messages { get; set; }
@@ -69,11 +59,6 @@ namespace OllamaClient
             public bool? stream { get; set; }
             public ModelParameters? model_parameters { get; set; }
             public string? keep_alive { get; set; }
-
-            public ChatRequest(object data)
-            {
-                this = (ChatRequest)data;
-            }
         }
 
         public struct ChatResponse
@@ -89,14 +74,9 @@ namespace OllamaClient
             public long? prompt_eval_duration { get; set; }
             public int? eval_count { get; set; }
             public long? eval_duration { get; set; }
-
-            public ChatResponse(Stream data, JsonSerializerOptions options)
-            {
-                this = JsonSerializer.Deserialize<ChatResponse>(data, options);
-            }
         }
 
-        public struct CompletionRequest
+        public record struct CompletionRequest
         {
             public string model { get; set; }
             public string prompt { get; set; }
@@ -104,14 +84,9 @@ namespace OllamaClient
             public string? system { get; set; }
             public string? template { get; set; }
             public ModelParameters? options { get; set; }
-
-            public CompletionRequest(object data)
-            {
-                this = (CompletionRequest)data;
-            }
         }
 
-        public struct CompletionResponse
+        public record struct CompletionResponse
         {
             public string? model { get; set; }
             public string? created_at { get; set; }
@@ -124,15 +99,9 @@ namespace OllamaClient
             public long? eval_duration { get; set; }
             public int[]? context { get; set; }
             public string? response { get; set; }
-
-
-            public CompletionResponse(Stream data, JsonSerializerOptions options)
-            {
-                this = JsonSerializer.Deserialize<CompletionResponse>(data, options);
-            }
         }
 
-        public struct CreateModelRequest
+        public record struct CreateModelRequest
         {
             public string model { get; set; }
             public string? from { get; set; }
@@ -145,14 +114,9 @@ namespace OllamaClient
             public Message[]? messages { get; set; }
             public bool? stream { get; set; }
             public string? quantize { get; set; }
-
-            public CreateModelRequest(Stream data, JsonSerializerOptions options)
-            {
-                this = JsonSerializer.Deserialize<CreateModelRequest>(data, options);
-            }
         }
 
-        public struct ModelDetails
+        public record struct ModelDetails
         {
             public string? parent_model { get; set; }
             public string? format { get; set; }
@@ -162,7 +126,7 @@ namespace OllamaClient
             public string? quantization_level { get; set; }
         }
 
-        public struct ModelInfo
+        public record struct ModelInfo
         {
             public string? name { get; set; }
             public string? model { get; set; }
@@ -172,7 +136,7 @@ namespace OllamaClient
             public ModelDetails? details { get; set; }
         }
 
-        public struct ListModelsResponse
+        public record struct ListModelsResponse
         {
             public ModelInfo[]? models { get; set; }
         }
@@ -193,9 +157,9 @@ namespace OllamaClient
             public string Ps { get; set; }
             public string Version { get; set; }
 
-            public Endpoints(string socketAddress)
+            public Endpoints()
             {
-                BaseUrl = "http://" + socketAddress + "/api/";
+                BaseUrl = "http://" + (Environment.GetEnvironmentVariable("OLLAMA_HOST") ?? "localhost:11434") + "/api/";
                 GenerateCompletion = BaseUrl + "generate";
                 Chat = BaseUrl + "chat";
                 Create = BaseUrl + "create";
@@ -213,16 +177,13 @@ namespace OllamaClient
 
         public class Connection
         {
-            public string SocketAddress { get; set; }
-
             public Endpoints Endpoints { get; set; }
 
             private HttpClient HttpClient { get; set; }
 
-            public Connection(string socketAddress)
+            public Connection()
             {
-                SocketAddress = socketAddress;
-                Endpoints = new Endpoints(SocketAddress);
+                Endpoints = new Endpoints();
                 HttpClient = new HttpClient();
                 HttpClient.Timeout = Timeout.InfiniteTimeSpan;
             }
@@ -297,7 +258,7 @@ namespace OllamaClient
                 GC.SuppressFinalize(this);
             }
 
-            public async Task Read(CancellationToken cancellationToken, IProgress<T> progress, int bufferSize = 32)
+            public async Task Read(IProgress<T> progress, CancellationToken cancellationToken, int bufferSize = 32)
             {
                 //buffer
                 char[] buffer = new char[bufferSize];

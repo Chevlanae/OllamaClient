@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,10 +77,10 @@ namespace OllamaClient.ViewModels
     {
         private CancellationTokenSource CancellationTokenSource { get; set; }
         private string SubjectString { get; set; }
+        private Connection OllamaConnection { get; set; }
 
         public string SelectedModel { get; set; }
-        public Connection OllamaConnection { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateTime Timestamp { get; set; }
 
         public string Subject
         {
@@ -93,23 +94,23 @@ namespace OllamaClient.ViewModels
 
         public event PropertyChangedEventHandler? ContentChanged;
 
-        public Conversation(Connection connection, string model)
+        public Conversation(Connection conn, string model)
         {
             CancellationTokenSource = new();
             SubjectString = "New conversation";
-            OllamaConnection = connection;
+            OllamaConnection = conn;
             SelectedModel = model;
             Timestamp = DateTime.Now;
             CollectionChanged += OnCollectionChanged;
         }
 
-        public Conversation(ConversationSerializable serializable)
+        public Conversation(Connection conn, ConversationSerializable serializable)
         {
             CancellationTokenSource = new();
             SelectedModel = serializable.SelectedModel;
             Timestamp = serializable.Timestamp;
             SubjectString = serializable.Subject;
-            OllamaConnection = new(serializable.SocketAddress);
+            OllamaConnection = conn;
             CollectionChanged += OnCollectionChanged;
             foreach (ChatItemSerializable item in serializable.Messages)
             {
@@ -189,7 +190,7 @@ namespace OllamaClient.ViewModels
                     {
                         using (stream)
                         {
-                            await stream.Read(CancellationTokenSource.Token, responseChatItem.Progress).ConfigureAwait(false);
+                            await stream.Read(responseChatItem.Progress, CancellationTokenSource.Token).ConfigureAwait(false);
                         }
                     }
 
@@ -204,6 +205,84 @@ namespace OllamaClient.ViewModels
                 }
 
             }, CancellationTokenSource.Token);
+        }
+    }
+
+    public class Conversations : ObservableCollection<Conversation>
+    {
+        public event EventHandler? Loaded;
+
+        public ObservableCollection<string> AvailableModels { get; set; }
+
+        private Connection OllamaConnection { get; set; }
+
+        public Conversations()
+        {
+            AvailableModels = [];
+            OllamaConnection = new();
+        }
+
+        public void OnLoaded()
+        {
+            Loaded?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void New(string model)
+        {
+            Conversation newConv = new(OllamaConnection, model);
+
+            newConv.ContentChanged += Conversation_ContentChanged;
+
+            Add(newConv);
+        }
+
+        public async Task LoadAvailableModels()
+        {
+            if(await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+            {
+                List<string> result = [];
+
+                foreach(ModelInfo model in models)
+                {
+                    if (model.model != null) AvailableModels.Add(model.model);
+                }
+            }
+        }
+
+        public async Task LoadSavedConversations()
+        {
+            try
+            {
+                AppState state = await Config.GetSavedAppState();
+
+                foreach (ConversationSerializable c in state.Conversations)
+                {
+                    Conversation newConv = new Conversation(OllamaConnection, c);
+
+                    newConv.ContentChanged += Conversation_ContentChanged;
+
+                    Add(newConv);
+                }
+
+                OnLoaded();
+            }
+            catch (Exception e)
+            {
+                Debug.Write(e);
+            }
+
+        }
+
+        private async void Conversation_ContentChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            try
+            {
+                await Config.SaveConversations(this);
+            }
+            catch(COMException ex)
+            {
+                Debug.Write(ex);
+            }
         }
     }
 
@@ -229,8 +308,6 @@ namespace OllamaClient.ViewModels
         public string Subject { get; set; } = input.Subject;
         [DataMember]
         public ChatItemSerializable[] Messages { get; set; } = input.Select(m => new ChatItemSerializable(m)).ToArray();
-        [DataMember]
-        public string SocketAddress { get; set; } = input.OllamaConnection.SocketAddress;
     }
 
     public partial class ChatItemTimestampConverter : IValueConverter

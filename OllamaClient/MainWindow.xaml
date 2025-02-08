@@ -10,66 +10,26 @@
                DisplayMode="CompactOverlay"
                CompactPaneLength="50"
                OpenPaneLength="300"
-               MinWidth="300"
-               PaneClosing="TopLevelSplitView_PaneClosing">
+               MinWidth="300">
         <SplitView.Pane>
-            <Grid x:Name="SidebarGrid" TabFocusNavigation="Local">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50" />
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="50" />
-                    </Grid.ColumnDefinitions>
-                    <AppBarButton x:Name="ToggleSidebarButton"
-                        Grid.Column="0"
-                        Height="50"
-                        Width="50"
-                        HorizontalContentAlignment="Left"
-                        Icon="GlobalNavigationButton"
-                        Click="ToggleSidebarButton_Click"/>
-                    <StackPanel Orientation="Horizontal" Margin="10,0,10,0" Grid.Column="1"  >
-                        <AutoSuggestBox 
-                            x:Name="SocketAddressInputTextBox" 
-                            LostFocus="SocketAddressInputTextBox_LostFocus" 
-                            KeyUp="SocketAddressInputTextBox_KeyUp"
-                            TextChanged="SocketAddressInputTextBox_TextChanged"
-                            SuggestionChosen="SocketAddressInputTextBox_SuggestionChosen"
-                            Height="40" 
-                            Width="150"
-                            PlaceholderText="Enter Ollama IP:Port"/>
-                        <ProgressRing x:Name="SocketProgressRing" IsActive="False" Margin="10,0,0,0" Height="20" Width="20" />
-                    </StackPanel>
-                    <AppBarButton
-                        Height="50"
-                        Width="50"
-                        Grid.Column="2"
-                        HorizontalContentAlignment="Right"
-                        Icon="Setting"
-                        Click="ToggleSidebarButton_Click"/>
-                </Grid>
-                <Grid Grid.Row="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" Grid.Row="0">
-                        <AppBarButton Icon="Add" Click="NewConversationButton_Click" Height="50" Width="50" />
-                        <ComboBox x:Name="ModelsComboBox" Margin="10,0,10,0" MaxWidth="200" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <ListBox x:Name="ConversationsListBox" Grid.Row="1" SelectionMode="Single"  Background="Transparent" SelectionChanged="ConversationsListBox_SelectionChanged">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Subject, Mode=TwoWay}" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.Resources>
+                    <Style x:Key="NavBarButtonStyle" TargetType="AppBarButton">
+                        <Setter Property="Height" Value="50" />
+                        <Setter Property="Width" Value="50" />
+                    </Style>
+                </Grid.Resources>
+                <StackPanel Grid.Column="0">
+                    <AppBarButton x:Name="ToggleSidbarButton" Icon="GlobalNavigationButton" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidbarButton_Click" />
+                    <AppBarButton x:Name="ConversationsButton" Icon="Message" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click" />
+                    <AppBarButton x:Name="ModelsButton" Icon="Library" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click" />
+                    <AppBarButton x:Name="SettingsButton" Icon="Setting" Style="{StaticResource NavBarButtonStyle}" Click="SettingsButton_Click" />
+                </StackPanel>
+                <Frame Grid.Column="1" x:Name="SidebarFrame" />
             </Grid>
         </SplitView.Pane>
         <SplitView.Content>
