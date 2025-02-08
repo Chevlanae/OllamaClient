@@ -277,7 +277,10 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Config.SaveConversations(this);
+                if (!Config.IsSavingData)
+                {
+                    await Config.SaveConversations(this);
+                }
             }
             catch(COMException ex)
             {

@@ -28,23 +28,33 @@ namespace OllamaClient
     {
         private static readonly ApplicationData AppData = ApplicationData.GetDefault();
 
+        public static bool IsSavingData = false;
+
         public static async Task SaveConversations(Conversations c)
         {
             AppState state = new(c);
 
+            IsSavingData = true;
+
             Windows.Storage.StorageFile appstateFile = await AppData.LocalFolder.CreateFileAsync("appstate.xml", Windows.Storage.CreationCollisionOption.ReplaceExisting);
             DataContractSerializer serializer = new(typeof(AppState));
-            using Stream stream = await appstateFile.OpenStreamForWriteAsync();
-            serializer.WriteObject(stream, state);
+            using (Stream stream = await appstateFile.OpenStreamForWriteAsync())
+            {
+                serializer.WriteObject(stream, state);
+            }
+
+            IsSavingData = false;
         }
 
         public static async Task<AppState> GetSavedAppState()
         {
             Windows.Storage.StorageFile appstateFile = await AppData.LocalFolder.GetFileAsync("appstate.xml");
             DataContractSerializer serializer = new(typeof(AppState));
-            using Stream stream = await appstateFile.OpenStreamForReadAsync();
-            if (serializer.ReadObject(stream) is AppState state) return state;
-            else throw new ApplicationException("Could not read AppState file at " + appstateFile.Path);
+            using (Stream stream = await appstateFile.OpenStreamForReadAsync())
+            {
+                if (serializer.ReadObject(stream) is AppState state) return state;
+                else throw new ApplicationException("Could not read AppState file at " + appstateFile.Path);
+            }
         }
     }
 }
