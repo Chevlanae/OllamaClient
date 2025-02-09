@@ -26,8 +26,6 @@ namespace OllamaClient.Pages
             Conversations.Loaded += Conversations_Loaded;
 
             InitializeComponent();
-
-            ConversationsListView.ItemsSource = Conversations;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -37,6 +35,8 @@ namespace OllamaClient.Pages
                 ContentFrame = contentFrame;
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+
+                ConversationsListView.ItemsSource = Conversations;
                 ModelsComboBox.ItemsSource = Conversations.AvailableModels;
             }
             base.OnNavigatedTo(e);

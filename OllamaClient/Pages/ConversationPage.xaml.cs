@@ -42,7 +42,7 @@ namespace OllamaClient
             base.OnNavigatedTo(e);
         }
 
-        private void SendChatButton_Click(object? sender, RoutedEventArgs e)
+        private async void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
             if(Session != null)
             {
@@ -53,7 +53,7 @@ namespace OllamaClient
 
                 string text = ChatInputTextBox.Text;
 
-                DispatcherQueue.TryEnqueue(async () => { await Session.NewUserMessage(text); });
+                await Session.NewUserMessage(text);
 
                 ChatInputTextBox.Text = "";
                 ChatInputTextBox.IsEnabled = true;
