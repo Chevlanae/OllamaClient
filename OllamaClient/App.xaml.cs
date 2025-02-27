@@ -35,7 +35,7 @@ namespace OllamaClient
         /// </summary>
         public App()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
         /// <summary>

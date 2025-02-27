@@ -1,18 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection;
-using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using OllamaClient.Api;
-using OllamaClient.Pages;
-using OllamaClient.ViewModels;
+using OllamaClient.Views.Pages;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,6 +14,8 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
+        private new DispatcherQueue DispatcherQueue { get; } = DispatcherQueue.GetForCurrentThread();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,9 +28,11 @@ namespace OllamaClient
 
         private void ConversationsButton_Click(object sender, RoutedEventArgs e)
         {
-            if(SidebarFrame.CurrentSourcePageType != typeof(ConversationsSidebarPage))
+            if (SidebarFrame.CurrentSourcePageType != typeof(ConversationsSidebarPage))
             {
-                SidebarFrame.Navigate(typeof(ConversationsSidebarPage), ContentFrame);
+                ConversationsSideBarPageNavigationArgs args = new(ContentFrame, DispatcherQueue);
+
+                SidebarFrame.Navigate(typeof(ConversationsSidebarPage), args);
             }
             ToggleSidbarButton_Click(sender, e);
         }

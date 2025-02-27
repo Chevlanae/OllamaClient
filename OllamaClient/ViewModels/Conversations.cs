@@ -1,6 +1,5 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Data;
-using OllamaClient.Api;
+﻿using Microsoft.UI.Xaml.Data;
+using OllamaClient.Models.Ollama;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,7 +7,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -17,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    
+
     public partial class ChatItem : INotifyPropertyChanged
     {
         private string ContentString { get; set; }
@@ -77,7 +75,7 @@ namespace OllamaClient.ViewModels
     {
         private CancellationTokenSource CancellationTokenSource { get; set; }
         private string SubjectString { get; set; }
-        private Connection OllamaConnection { get; set; }
+        private Client OllamaConnection { get; set; }
 
         public string SelectedModel { get; set; }
         public DateTime Timestamp { get; set; }
@@ -93,8 +91,10 @@ namespace OllamaClient.ViewModels
         }
 
         public event PropertyChangedEventHandler? ContentChanged;
+        public event EventHandler? EndOfResponse;
+        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        public Conversation(Connection conn, string model)
+        public Conversation(Client conn, string model)
         {
             CancellationTokenSource = new();
             SubjectString = "New conversation";
@@ -104,7 +104,7 @@ namespace OllamaClient.ViewModels
             CollectionChanged += OnCollectionChanged;
         }
 
-        public Conversation(Connection conn, ConversationSerializable serializable)
+        public Conversation(Client conn, ConversationSerializable serializable)
         {
             CancellationTokenSource = new();
             SelectedModel = serializable.SelectedModel;
@@ -123,6 +123,16 @@ namespace OllamaClient.ViewModels
         protected void OnContentChanged(object? sender, PropertyChangedEventArgs e)
         {
             ContentChanged?.Invoke(sender, e);
+        }
+
+        protected void OnEndOfResponse(object? sender, EventArgs e)
+        {
+            EndOfResponse?.Invoke(sender, e);
+        }
+
+        protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        {
+            UnhandledException?.Invoke(sender, e);
         }
 
         protected void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -152,14 +162,14 @@ namespace OllamaClient.ViewModels
             CancellationTokenSource = new();
         }
 
-        public async Task NewUserMessage(string content)
+        public async Task SendUserMessage(string content)
         {
             //return early if no model selected
-            if(SelectedModel == null) return;
+            if (SelectedModel == null) return;
             //set subject if new conversation
-            if(Subject == "New conversation")
+            if (Subject == "New conversation")
             {
-                if(content.Length > 30) Subject = content.Substring(0, 30);
+                if (content.Length > 30) Subject = content.Substring(0, 30);
                 else Subject = content;
             }
 
@@ -181,9 +191,9 @@ namespace OllamaClient.ViewModels
             };
 
             //Make HTTP POST request to ollama with built request, cancel if necessary
-            await Task.Run(async () =>
+            try
             {
-                try
+                await Task.Run(async () =>
                 {
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
                     if (await OllamaConnection.ChatStream(request) is DelimitedJsonStream<ChatResponse> stream)
@@ -193,59 +203,85 @@ namespace OllamaClient.ViewModels
                             await stream.Read(responseChatItem.Progress, CancellationTokenSource.Token).ConfigureAwait(false);
                         }
                     }
+                });
 
-                }
-                catch (OperationCanceledException e)
-                {
-                    Debug.Write(e);
-                }
-                catch(HttpRequestException e)
-                {
-                    Debug.Write(e);
-                }
-
-            }, CancellationTokenSource.Token);
+                OnEndOfResponse(this, EventArgs.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Write(e);
+                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+            }
         }
     }
 
     public class Conversations : ObservableCollection<Conversation>
     {
         public event EventHandler? Loaded;
+        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
         public ObservableCollection<string> AvailableModels { get; set; }
 
-        private Connection OllamaConnection { get; set; }
+        private Client OllamaConnection { get; set; }
 
-        public Conversations()
+        public Conversations(TimeSpan? HttpRequestTimeout = null)
         {
             AvailableModels = [];
-            OllamaConnection = new();
+            
+            if(HttpRequestTimeout != null)
+            {
+                OllamaConnection = new Client(HttpRequestTimeout);
+            }
+            else
+            {
+                OllamaConnection = new Client(Timeout.InfiniteTimeSpan);
+            }
         }
 
-        public void OnLoaded()
+        protected void OnLoaded(object? sender, EventArgs e)
         {
-            Loaded?.Invoke(this, EventArgs.Empty);
+            Loaded?.Invoke(sender, e);
         }
+
+        protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        {
+            UnhandledException?.Invoke(sender, e);
+        }   
 
         public void New(string model)
         {
             Conversation newConv = new(OllamaConnection, model);
 
-            newConv.ContentChanged += Conversation_ContentChanged;
+            newConv.EndOfResponse += Conversation_EndOfResponse;
 
             Add(newConv);
         }
 
         public async Task LoadAvailableModels()
         {
-            if(await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+            try
             {
-                List<string> result = [];
+                List<string> results = [];
 
-                foreach(ModelInfo model in models)
+                await Task.Run(async () =>
                 {
-                    if (model.model != null) AvailableModels.Add(model.model);
-                }
+                    if (await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+                    {
+                        foreach (ModelInfo model in models)
+                        {
+                            if (model.model != null) results.Add(model.model);
+                        }
+                    }
+                });
+
+                AvailableModels = new(results);
+
+                OnLoaded(this, EventArgs.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Write(e);
+                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
             }
         }
 
@@ -253,38 +289,50 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                AppState state = await Config.GetSavedAppState();
+                List<Conversation> results = [];
 
-                foreach (ConversationSerializable c in state.Conversations)
+                await Task.Run(async () =>
                 {
-                    Conversation newConv = new Conversation(OllamaConnection, c);
+                    AppState state = await LocalStorage.GetSavedAppState();
 
-                    newConv.ContentChanged += Conversation_ContentChanged;
+                    foreach (ConversationSerializable c in state.Conversations)
+                    {
+                        Conversation newConv = new Conversation(OllamaConnection, c);
 
-                    Add(newConv);
+                        newConv.EndOfResponse += Conversation_EndOfResponse;
+
+                        results.Add(newConv);
+                    }
+                });
+
+                foreach(Conversation c in results)
+                {
+                    Add(c);
                 }
-
-                OnLoaded();
             }
             catch (Exception e)
             {
                 Debug.Write(e);
+                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));  
             }
-
         }
 
-        private async void Conversation_ContentChanged(object? sender, PropertyChangedEventArgs e)
+        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
         {
             try
             {
-                if (!Config.IsSavingData)
+                await Task.Run(async () =>
                 {
-                    await Config.SaveConversations(this);
-                }
+                    if (!LocalStorage.IsSavingData)
+                    {
+                        await LocalStorage.SaveConversations(this);
+                    }
+                });
             }
-            catch(COMException ex)
+            catch (COMException ex)
             {
                 Debug.Write(ex);
+                OnUnhandledException(this, new UnhandledExceptionEventArgs(ex, false));
             }
         }
     }
