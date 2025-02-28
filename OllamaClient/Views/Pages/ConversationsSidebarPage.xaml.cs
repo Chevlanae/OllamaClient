@@ -49,7 +49,7 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(OllamaClient); });
 
-                ConversationsListView.ItemsSource = Conversations;
+                ConversationsListView.ItemsSource = Conversations.Items;
                 ModelsComboBox.ItemsSource = Conversations.AvailableModels;
             }
             base.OnNavigatedTo(e);
@@ -68,7 +68,7 @@ namespace OllamaClient.Views.Pages
 
         private void Conversations_Loaded(object? sender, EventArgs e)
         {
-            if (Conversations.Count > 0)
+            if (Conversations.Items.Count > 0)
             {
                 ConversationsListView.SelectedIndex = 0;
             }
@@ -88,7 +88,8 @@ namespace OllamaClient.Views.Pages
         {
             if (sender is AppBarButton button && button.DataContext is Conversation c)
             {
-                Conversations.Remove(c);
+                Conversations.Items.Remove(c);
+                DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
             }
         }
 

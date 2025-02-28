@@ -72,10 +72,10 @@ namespace OllamaClient.ViewModels
     }
 
     [KnownType(typeof(ChatItem))]
-    [CollectionDataContract]
-    public partial class Conversation : ObservableCollection<ChatItem>
+    [DataContract]
+    public partial class Conversation : INotifyPropertyChanged
     {
-        private CancellationTokenSource CancellationTokenSource { get; set; } = new();
+        private CancellationTokenSource? CancellationTokenSource { get; set; }
 
         [DataMember]
         private string SubjectString { get; set; } = "";
@@ -83,6 +83,8 @@ namespace OllamaClient.ViewModels
         public string SelectedModel { get; set; } = "";
         [DataMember]
         public DateTime Timestamp { get; set; } = DateTime.Now;
+        [DataMember]
+        public ObservableCollection<ChatItem> Items { get; set; } = [];
 
         public string Subject
         {
@@ -90,25 +92,30 @@ namespace OllamaClient.ViewModels
             set
             {
                 SubjectString = value;
-                OnPropertyChanged(new("Subject"));
+                OnPropertyChanged(this, new("Subject"));
             }
         }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
         public event PropertyChangedEventHandler? ContentChanged;
         public event EventHandler? EndOfResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
         public Conversation()
         {
-            CollectionChanged += OnCollectionChanged;
+            Items.CollectionChanged += OnItemsCollectionChanged;
         }
 
         public Conversation(string model)
         {
-            CancellationTokenSource = new();
             SubjectString = "New conversation";
             SelectedModel = model;
-            CollectionChanged += OnCollectionChanged;
+            Items.CollectionChanged += OnItemsCollectionChanged;
+        }
+
+        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            PropertyChanged?.Invoke(sender, e);
         }
 
         protected void OnContentChanged(object? sender, PropertyChangedEventArgs e)
@@ -126,7 +133,7 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(sender, e);
         }
 
-        protected void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        protected void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.NewItems != null)
             {
@@ -149,7 +156,10 @@ namespace OllamaClient.ViewModels
 
         public void Cancel()
         {
-            CancellationTokenSource.Cancel();
+            if(CancellationTokenSource != null)
+            {
+                CancellationTokenSource.Cancel();
+            }
             CancellationTokenSource = new();
         }
 
@@ -164,20 +174,22 @@ namespace OllamaClient.ViewModels
                 else Subject = content;
             }
 
+            if(CancellationTokenSource == null) CancellationTokenSource = new();
+
             //add user message
-            Add(new(Role.user, content));
+            Items.Add(new(Role.user, content));
 
             //initialize assistant response with empty content
             ChatItem responseChatItem = new(Role.assistant, "");
 
             //add assistant message
-            Add(responseChatItem);
+            Items.Add(responseChatItem);
 
             //build HTTP request data
             ChatRequest request = new()
             {
                 model = SelectedModel,
-                messages = this.Select(m => m.ToMessage()).ToArray(),
+                messages = Items.Select(m => m.ToMessage()).ToArray(),
                 stream = true
             };
 
@@ -208,14 +220,16 @@ namespace OllamaClient.ViewModels
 
     [KnownType(typeof(ChatItem))]
     [KnownType(typeof(Conversation))]
-    [CollectionDataContract]
-    public class Conversations : ObservableCollection<Conversation>
+    [DataContract]
+    public class Conversations : INotifyPropertyChanged
     {
         public event EventHandler? Loaded;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        [DataMember]
         public ObservableCollection<string> AvailableModels { get; set; } = [];
+        [DataMember]
+        public ObservableCollection<Conversation> Items { get; set; } = [];
 
         protected void OnLoaded(object? sender, EventArgs e)
         {
@@ -227,13 +241,18 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(sender, e);
         }
 
+        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            PropertyChanged?.Invoke(sender, e);
+        }
+
         public void New(string model)
         {
             Conversation newConv = new(model);
 
             newConv.EndOfResponse += Conversation_EndOfResponse;
 
-            Add(newConv);
+            Items.Add(newConv);
         }
 
         public async Task LoadAvailableModels(Client conn)
@@ -275,9 +294,9 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    if (await LocalStorage.Get(typeof(Conversations)) is Conversations savedConvos)
+                    if (await LocalStorage.Get(typeof(Conversations)) is Conversations savedConvos && savedConvos.Items != null)
                     {
-                        foreach (Conversation c in savedConvos)
+                        foreach (Conversation c in savedConvos.Items)
                         {
                             results.Add(c);
                         }
@@ -286,7 +305,7 @@ namespace OllamaClient.ViewModels
 
                 foreach (Conversation c in results)
                 {
-                    Add(c);
+                    Items.Add(c);
                 }
             }
             catch (FileNotFoundException)
@@ -304,7 +323,7 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
+        public async Task Save()
         {
             try
             {
@@ -318,6 +337,11 @@ namespace OllamaClient.ViewModels
                 Debug.Write(ex);
                 OnUnhandledException(this, new UnhandledExceptionEventArgs(ex, false));
             }
+        }
+
+        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
+        {
+            await Save();
         }
     }
 

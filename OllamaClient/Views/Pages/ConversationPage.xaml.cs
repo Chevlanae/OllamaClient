@@ -49,7 +49,7 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue = args.DispatcherQueue;
                 OllamaClient = args.OllamaClient;
                 Conversation.UnhandledException += Conversation_UnhandledException;
-                ChatItemsControl.ItemsSource = Conversation;
+                ChatItemsControl.ItemsSource = Conversation.Items;
             }
             base.OnNavigatedTo(e);
         }
@@ -93,12 +93,11 @@ namespace OllamaClient.Views.Pages
             ChatItemsControl_ScrollToBottom(sender, e);
         }
 
-        private void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
+        private async void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
         {
-            if (!IsScrolling)
-            {
-                ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
-            }
+            while (IsScrolling) await Task.Delay(100);
+
+            ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
         }
 
         private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
