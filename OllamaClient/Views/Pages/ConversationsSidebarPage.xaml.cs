@@ -2,9 +2,11 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -26,12 +28,14 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Conversations Conversations { get; set; }
+        private Client OllamaClient { get; set; }
 
         public ConversationsSidebarPage()
         {
             Conversations = new();
             Conversations.Loaded += Conversations_Loaded;
             Conversations.UnhandledException += Conversations_UnhandledException;
+            OllamaClient = new(Timeout.InfiniteTimeSpan);
 
             InitializeComponent();
         }
@@ -43,7 +47,7 @@ namespace OllamaClient.Views.Pages
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(OllamaClient); });
 
                 ConversationsListView.ItemsSource = Conversations;
                 ModelsComboBox.ItemsSource = Conversations.AvailableModels;
@@ -74,7 +78,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue != null)
             {
-                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue);
+                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, OllamaClient);
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }

@@ -12,15 +12,15 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="20" MaxWidth="1000">
-            <ItemsView x:Name="ChatItemsView" SelectionMode="None" TabFocusNavigation="Local" Loaded="ChatItemsView_Loaded">
-                <ItemsView.Resources>
-                    <local:ChatItemHorizontalAlignmentConverter x:Key="ChatItemHorizontalAlignmentConverter"/>
-                    <local:ChatItemTextBoxBackgroundConverter x:Key="ChatItemTextBoxBackgroundConverter" />
-                    <local:ChatItemTimestampConverter x:Key="ChatItemTimestampConverter" />
-                </ItemsView.Resources>
-                <ItemsView.ItemTemplate>
-                    <DataTemplate>
-                        <ItemContainer>
+            <ScrollView x:Name="ChatItemsScrollView">
+                <ItemsControl x:Name="ChatItemsControl" TabFocusNavigation="Local" Loaded="ChatItemsControl_Loaded">
+                    <ItemsControl.Resources>
+                        <local:ChatItemHorizontalAlignmentConverter x:Key="ChatItemHorizontalAlignmentConverter"/>
+                        <local:ChatItemTextBoxBackgroundConverter x:Key="ChatItemTextBoxBackgroundConverter" />
+                        <local:ChatItemTimestampConverter x:Key="ChatItemTimestampConverter" />
+                    </ItemsControl.Resources>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
                             <Grid Margin="10,5,10,5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
@@ -31,25 +31,26 @@
                                     <TextBlock Text="{Binding Converter={StaticResource ChatItemTimestampConverter}}" />
                                 </StackPanel>
                                 <TextBox Grid.Row="1"
-                                        Margin="10" 
-                                        Background="{Binding Converter={StaticResource ChatItemTextBoxBackgroundConverter}}" 
-                                        CornerRadius="10" 
-                                        Padding="15" 
-                                        HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}"
-                                        x:Name="ChatBubbleTextBox"
-                                        Text="{Binding Content, Mode=TwoWay}" 
-                                        MaxWidth="600"
-                                        IsReadOnly="True" 
-                                        TextWrapping="Wrap" 
-                                        TextAlignment="Left" 
-                                        BorderThickness="0" 
-                                        FontSize="12"
-                                        Template="{StaticResource ChatTextBoxControlTemplate}" />
+                                    Margin="10" 
+                                    Background="{Binding Converter={StaticResource ChatItemTextBoxBackgroundConverter}}" 
+                                    CornerRadius="10" 
+                                    Padding="15" 
+                                    HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}"
+                                    x:Name="ChatBubbleTextBox"
+                                    Text="{Binding Content, Mode=TwoWay}" 
+                                    MaxWidth="600"
+                                    IsReadOnly="True" 
+                                    TextWrapping="Wrap" 
+                                    TextAlignment="Left" 
+                                    TextChanged="ChatBubbleTextBox_TextChanged"
+                                    BorderThickness="0" 
+                                    FontSize="12"
+                                    Template="{StaticResource ChatTextBoxControlTemplate}" />
                             </Grid>
-                        </ItemContainer>
-                    </DataTemplate>
-                </ItemsView.ItemTemplate>
-            </ItemsView>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollView>
         </Grid>
         <Grid Height="200" Grid.Row="1" >
             <Grid Margin="20,20,20,20" Background="DimGray" MaxWidth="500" MinWidth="100" CornerRadius="20">

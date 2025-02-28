@@ -1,5 +1,6 @@
 ﻿using OllamaClient.ViewModels;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -8,70 +9,80 @@ using Windows.Storage;
 
 namespace OllamaClient
 {
-
-    /// <summary>
-    /// Serializable class for saving and loading the AppState object
-    /// </summary>
-    [DataContract]
-    [KnownType(typeof(ChatItemSerializable))]
-    [KnownType(typeof(ConversationSerializable))]
-    public class AppState
-    {
-        [DataMember]
-        public ConversationSerializable[] Conversations { get; set; }
-
-        public AppState(Conversations conversations)
-        {
-            Conversations = conversations.Select(c => new ConversationSerializable(c)).ToArray();
-        }
-    }
-
-    /// <summary>
-    /// Local storage class for saving and loading app related data
-    /// </summary>
-
     internal static class LocalStorage
     {
         private static readonly Microsoft.Windows.Storage.ApplicationData AppData = Microsoft.Windows.Storage.ApplicationData.GetDefault();
 
-        public static bool IsSavingData = false;
-
+        public static bool IsSaving = false;
 
         /// <summary>
-        /// Save the current state of the Conversations object to the app's local storage
+        /// Assert that a given type is not primitive, and has the DataContract attribute
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        public static async Task SaveConversations(Conversations c)
+        /// <param name="T"></param>
+        /// <exception cref="ArgumentException"></exception>
+        private static void AssertType(Type T)
         {
-            AppState state = new(c);
-
-            IsSavingData = true;
-
-            StorageFile appstateFile = await AppData.LocalFolder.CreateFileAsync("appstate.xml", CreationCollisionOption.ReplaceExisting);
-            DataContractSerializer serializer = new(typeof(AppState));
-            using (Stream stream = await appstateFile.OpenStreamForWriteAsync())
+            if (T.IsPrimitive)
             {
-                serializer.WriteObject(stream, state);
+                throw new ArgumentException("Given argument was an invalid type. This function does not accept primitive types.", "T");
             }
-
-            IsSavingData = false;
+            else if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
+            {
+                if (!Attribute.IsDefined(T, typeof(CollectionDataContractAttribute)))
+                {
+                    throw new ArgumentException("Given argument was an invalid type. This function only accepts objects with a DataContract attribute", "T");
+                }
+            }
         }
 
         /// <summary>
-        /// Load the saved AppState object from the app's local storage
+        /// Get a saved object with a given type
         /// </summary>
+        /// <param name="T"></param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="FileNotFoundException"</exception>
         /// <returns></returns>
-        /// <exception cref="ApplicationException"></exception>
-        public static async Task<AppState> GetSavedAppState()
+        public static async Task<object?> Get(Type T)
         {
-            StorageFile appstateFile = await AppData.LocalFolder.GetFileAsync("appstate.xml");
-            DataContractSerializer serializer = new(typeof(AppState));
-            using (Stream stream = await appstateFile.OpenStreamForReadAsync())
+            AssertType(T);
+
+            string filename = T.Name + ".xml";
+
+            StorageFile classFile = await AppData.LocalFolder.GetFileAsync(filename);
+            DataContractSerializer serializer = new(T);
+
+            using (Stream stream = await classFile.OpenStreamForReadAsync())
             {
-                if (serializer.ReadObject(stream) is AppState state) return state;
-                else throw new ApplicationException("Could not read AppState file at " + appstateFile.Path);
+                return serializer.ReadObject(stream);
             }
+        }
+
+        /// <summary>
+        /// Save a given object to the appdata\local store
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <returns></returns>
+        public static async Task Save(object obj)
+        {
+            Type objType = obj.GetType();
+
+            AssertType(objType);
+
+            while (IsSaving) await Task.Delay(100);
+
+            IsSaving = true;
+            string filename = objType.Name + ".xml";
+
+            StorageFile classFile = await AppData.LocalFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
+            DataContractSerializer serializer = new(objType);
+
+            using (Stream stream = await classFile.OpenStreamForWriteAsync())
+            {
+                serializer.WriteObject(stream, obj);
+            }
+
+            IsSaving = false;
         }
     }
 }

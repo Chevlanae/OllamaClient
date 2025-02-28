@@ -6,22 +6,28 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace OllamaClient.ViewModels
 {
-
+    [DataContract]
     public partial class ChatItem : INotifyPropertyChanged
     {
-        private string ContentString { get; set; }
-
-        public string Role { get; set; }
+        [DataMember]
+        private string ContentString { get; set; } = "";
+        [DataMember]
+        public string Role { get; set; } = "user";
+        [DataMember]
         public DateTime Timestamp { get; set; } = DateTime.Now;
+
+        public IProgress<ChatResponse> Progress;
 
         public string Content
         {
@@ -33,9 +39,12 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public IProgress<ChatResponse> Progress { get; set; }
-
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public ChatItem()
+        {
+            Progress = new Progress<ChatResponse>(s => Content = Content + s.message?.content ?? "");
+        }
 
         public ChatItem(Role role, string content) : this(new Message(role, content)) { }
 
@@ -46,15 +55,6 @@ namespace OllamaClient.ViewModels
             Timestamp = DateTime.Now;
             Progress = new Progress<ChatResponse>(s => Content = Content + s.message?.content ?? "");
         }
-
-        public ChatItem(ChatItemSerializable serializable)
-        {
-            ContentString = serializable.Content;
-            Role = serializable.Role;
-            Timestamp = serializable.Timestamp;
-            Progress = new Progress<ChatResponse>(s => Content = Content + s.message?.content ?? "");
-        }
-
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
@@ -71,14 +71,18 @@ namespace OllamaClient.ViewModels
         }
     }
 
+    [KnownType(typeof(ChatItem))]
+    [CollectionDataContract]
     public partial class Conversation : ObservableCollection<ChatItem>
     {
-        private CancellationTokenSource CancellationTokenSource { get; set; }
-        private string SubjectString { get; set; }
-        private Client OllamaConnection { get; set; }
+        private CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-        public string SelectedModel { get; set; }
-        public DateTime Timestamp { get; set; }
+        [DataMember]
+        private string SubjectString { get; set; } = "";
+        [DataMember]
+        public string SelectedModel { get; set; } = "";
+        [DataMember]
+        public DateTime Timestamp { get; set; } = DateTime.Now;
 
         public string Subject
         {
@@ -94,30 +98,17 @@ namespace OllamaClient.ViewModels
         public event EventHandler? EndOfResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        public Conversation(Client conn, string model)
+        public Conversation()
         {
-            CancellationTokenSource = new();
-            SubjectString = "New conversation";
-            OllamaConnection = conn;
-            SelectedModel = model;
-            Timestamp = DateTime.Now;
             CollectionChanged += OnCollectionChanged;
         }
 
-        public Conversation(Client conn, ConversationSerializable serializable)
+        public Conversation(string model)
         {
             CancellationTokenSource = new();
-            SelectedModel = serializable.SelectedModel;
-            Timestamp = serializable.Timestamp;
-            SubjectString = serializable.Subject;
-            OllamaConnection = conn;
+            SubjectString = "New conversation";
+            SelectedModel = model;
             CollectionChanged += OnCollectionChanged;
-            foreach (ChatItemSerializable item in serializable.Messages)
-            {
-                ChatItem chatItem = new(item);
-                chatItem.PropertyChanged += OnContentChanged;
-                Add(chatItem);
-            }
         }
 
         protected void OnContentChanged(object? sender, PropertyChangedEventArgs e)
@@ -162,7 +153,7 @@ namespace OllamaClient.ViewModels
             CancellationTokenSource = new();
         }
 
-        public async Task SendUserMessage(string content)
+        public async Task SendUserMessage(Client conn, string content)
         {
             //return early if no model selected
             if (SelectedModel == null) return;
@@ -196,7 +187,7 @@ namespace OllamaClient.ViewModels
                 await Task.Run(async () =>
                 {
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
-                    if (await OllamaConnection.ChatStream(request) is DelimitedJsonStream<ChatResponse> stream)
+                    if (await conn.ChatStream(request) is DelimitedJsonStream<ChatResponse> stream)
                     {
                         using (stream)
                         {
@@ -215,28 +206,16 @@ namespace OllamaClient.ViewModels
         }
     }
 
+    [KnownType(typeof(ChatItem))]
+    [KnownType(typeof(Conversation))]
+    [CollectionDataContract]
     public class Conversations : ObservableCollection<Conversation>
     {
         public event EventHandler? Loaded;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        public ObservableCollection<string> AvailableModels { get; set; }
-
-        private Client OllamaConnection { get; set; }
-
-        public Conversations(TimeSpan? HttpRequestTimeout = null)
-        {
-            AvailableModels = [];
-            
-            if(HttpRequestTimeout != null)
-            {
-                OllamaConnection = new Client(HttpRequestTimeout);
-            }
-            else
-            {
-                OllamaConnection = new Client(Timeout.InfiniteTimeSpan);
-            }
-        }
+        [DataMember]
+        public ObservableCollection<string> AvailableModels { get; set; } = [];
 
         protected void OnLoaded(object? sender, EventArgs e)
         {
@@ -246,18 +225,18 @@ namespace OllamaClient.ViewModels
         protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
         {
             UnhandledException?.Invoke(sender, e);
-        }   
+        }
 
         public void New(string model)
         {
-            Conversation newConv = new(OllamaConnection, model);
+            Conversation newConv = new(model);
 
             newConv.EndOfResponse += Conversation_EndOfResponse;
 
             Add(newConv);
         }
 
-        public async Task LoadAvailableModels()
+        public async Task LoadAvailableModels(Client conn)
         {
             try
             {
@@ -265,7 +244,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    if (await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+                    if (await conn.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
                     {
                         foreach (ModelInfo model in models)
                         {
@@ -274,7 +253,10 @@ namespace OllamaClient.ViewModels
                     }
                 });
 
-                AvailableModels = new(results);
+                foreach(string s in results)
+                {
+                    AvailableModels.Add(s);
+                }
 
                 OnLoaded(this, EventArgs.Empty);
             }
@@ -293,27 +275,32 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    AppState state = await LocalStorage.GetSavedAppState();
-
-                    foreach (ConversationSerializable c in state.Conversations)
+                    if (await LocalStorage.Get(typeof(Conversations)) is Conversations savedConvos)
                     {
-                        Conversation newConv = new Conversation(OllamaConnection, c);
-
-                        newConv.EndOfResponse += Conversation_EndOfResponse;
-
-                        results.Add(newConv);
+                        foreach (Conversation c in savedConvos)
+                        {
+                            results.Add(c);
+                        }
                     }
                 });
 
-                foreach(Conversation c in results)
+                foreach (Conversation c in results)
                 {
                     Add(c);
                 }
             }
+            catch (FileNotFoundException)
+            {
+                return;
+            }
+            catch (XmlException)
+            {
+                return;
+            }
             catch (Exception e)
             {
                 Debug.Write(e);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));  
+                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
             }
         }
 
@@ -323,10 +310,7 @@ namespace OllamaClient.ViewModels
             {
                 await Task.Run(async () =>
                 {
-                    if (!LocalStorage.IsSavingData)
-                    {
-                        await LocalStorage.SaveConversations(this);
-                    }
+                    await LocalStorage.Save(this);
                 });
             }
             catch (COMException ex)
@@ -335,30 +319,6 @@ namespace OllamaClient.ViewModels
                 OnUnhandledException(this, new UnhandledExceptionEventArgs(ex, false));
             }
         }
-    }
-
-    [DataContract]
-    public class ChatItemSerializable(ChatItem input)
-    {
-        [DataMember]
-        public string Role { get; set; } = input.Role;
-        [DataMember]
-        public DateTime Timestamp { get; set; } = input.Timestamp;
-        [DataMember]
-        public string Content { get; set; } = input.Content;
-    }
-
-    [DataContract]
-    public class ConversationSerializable(Conversation input)
-    {
-        [DataMember]
-        public string SelectedModel { get; set; } = input.SelectedModel;
-        [DataMember]
-        public DateTime Timestamp { get; set; } = input.Timestamp;
-        [DataMember]
-        public string Subject { get; set; } = input.Subject;
-        [DataMember]
-        public ChatItemSerializable[] Messages { get; set; } = input.Select(m => new ChatItemSerializable(m)).ToArray();
     }
 
     public partial class ChatItemTimestampConverter : IValueConverter

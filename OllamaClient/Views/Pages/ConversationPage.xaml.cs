@@ -2,6 +2,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System.Threading.Tasks;
@@ -11,10 +12,11 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue)
+    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, Client ollamaClient)
     {
         public Conversation Conversation { get; set; } = conversation;
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+        public Client OllamaClient { get; set; } = ollamaClient;
     }
 
     /// <summary>
@@ -24,12 +26,13 @@ namespace OllamaClient.Views.Pages
     {
         private Conversation? Conversation { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
+        private Client? OllamaClient { get; set; }
 
         private bool IsScrolling
         {
             get
             {
-                return ChatItemsView.ScrollView.State != ScrollingInteractionState.Idle;
+                return ChatItemsScrollView.State != ScrollingInteractionState.Idle;
             }
         }
 
@@ -44,8 +47,9 @@ namespace OllamaClient.Views.Pages
             {
                 Conversation = args.Conversation;
                 DispatcherQueue = args.DispatcherQueue;
+                OllamaClient = args.OllamaClient;
                 Conversation.UnhandledException += Conversation_UnhandledException;
-                ChatItemsView.ItemsSource = Conversation;
+                ChatItemsControl.ItemsSource = Conversation;
             }
             base.OnNavigatedTo(e);
         }
@@ -60,22 +64,22 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (Conversation != null && DispatcherQueue != null)
+            if (Conversation != null && DispatcherQueue != null && OllamaClient != null)
             {
-                ChatItemsView.ScrollView.ScrollTo(0, ChatItemsView.ScrollView.ScrollableHeight);
+                ChatItemsControl_ScrollToBottom(sender, e);
 
                 ChatInputTextBox.IsEnabled = false;
                 SendChatButton.IsEnabled = false;
 
                 string text = ChatInputTextBox.Text;
 
-                DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(text); });
+                DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(OllamaClient, text); });
 
                 ChatInputTextBox.Text = "";
                 ChatInputTextBox.IsEnabled = true;
                 SendChatButton.IsEnabled = true;
 
-                ChatItemsView_ScrollToBottom(sender, e);
+                ChatItemsControl_ScrollToBottom(sender, e);
             }
         }
 
@@ -84,17 +88,22 @@ namespace OllamaClient.Views.Pages
             if (Conversation != null) Conversation.Cancel();
         }
 
-        private void ChatItemsView_Loaded(object sender, RoutedEventArgs e)
+        private void ChatItemsControl_Loaded(object sender, RoutedEventArgs e)
         {
-            ChatItemsView_ScrollToBottom(sender, e);
+            ChatItemsControl_ScrollToBottom(sender, e);
         }
 
-        private void ChatItemsView_ScrollToBottom(object? sender, RoutedEventArgs e)
+        private void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
         {
             if (!IsScrolling)
             {
-                ChatItemsView.ScrollView.ScrollTo(ChatItemsView.ScrollView.HorizontalOffset, ChatItemsView.ScrollView.ScrollableHeight);
+                ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
             }
+        }
+
+        private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ChatItemsControl_ScrollToBottom(sender, e);
         }
     }
 }

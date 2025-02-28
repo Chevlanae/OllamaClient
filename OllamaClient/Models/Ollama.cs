@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Diagnostics;
 
 namespace OllamaClient.Models.Ollama
 {
@@ -20,7 +19,7 @@ namespace OllamaClient.Models.Ollama
         tool
     }
 
-    public struct Message
+    public record struct Message
     {
         public string? role { get; set; }
         public string? content { get; set; }
@@ -302,7 +301,7 @@ namespace OllamaClient.Models.Ollama
                         }
                         finally
                         {
-                            PartialObject = new();
+                            PartialObject.Clear();
                         }
                     }
                     else
