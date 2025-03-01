@@ -12,12 +12,18 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="20" MaxWidth="1000">
-            <ScrollView x:Name="ChatItemsScrollView">
-                <ItemsControl x:Name="ChatItemsControl" TabFocusNavigation="Local" Loaded="ChatItemsControl_Loaded">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ComboBox x:Name="ModelsComboBox"/>
+            <ScrollView Grid.Row="1" x:Name="ChatItemsScrollView" >
+                <ItemsControl x:Name="ChatItemsControl" TabFocusNavigation="Local">
                     <ItemsControl.Resources>
                         <local:ChatItemHorizontalAlignmentConverter x:Key="ChatItemHorizontalAlignmentConverter"/>
                         <local:ChatItemTextBoxBackgroundConverter x:Key="ChatItemTextBoxBackgroundConverter" />
                         <local:ChatItemTimestampConverter x:Key="ChatItemTimestampConverter" />
+                        <local:ChatItemProgressRingVisibilityConverter x:Key="ChatItemProgressRingVisibilityConverter" />
                     </ItemsControl.Resources>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -28,7 +34,12 @@
                                 </Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}">
                                     <TextBlock Grid.Row="0" Text="{Binding Role}" Margin="10,0,10,0"  />
-                                    <TextBlock Text="{Binding Converter={StaticResource ChatItemTimestampConverter}}" />
+                                    <TextBlock Text="{Binding Timestamp, Converter={StaticResource ChatItemTimestampConverter}, Mode=TwoWay}" />
+                                    <ProgressRing 
+                                        Height="10" 
+                                        Width="10" 
+                                        Margin="10,0,10,0" 
+                                        Visibility="{Binding ProgressRingEnabled, Converter={StaticResource ChatItemProgressRingVisibilityConverter}, Mode=TwoWay}"/>
                                 </StackPanel>
                                 <TextBox Grid.Row="1"
                                     Margin="10" 
@@ -41,11 +52,11 @@
                                     MaxWidth="600"
                                     IsReadOnly="True" 
                                     TextWrapping="Wrap" 
-                                    TextAlignment="Left" 
-                                    TextChanged="ChatBubbleTextBox_TextChanged"
+                                    TextAlignment="Left"
                                     BorderThickness="0" 
                                     FontSize="12"
-                                    Template="{StaticResource ChatTextBoxControlTemplate}" />
+                                    Template="{StaticResource ChatTextBoxControlTemplate}"
+                                    TextChanged="ChatBubbleTextBox_TextChanged"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

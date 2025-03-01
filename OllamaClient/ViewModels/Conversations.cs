@@ -20,14 +20,42 @@ namespace OllamaClient.ViewModels
     [DataContract]
     public partial class ChatItem : INotifyPropertyChanged
     {
+        private bool RingEnabled { get; set; } = false;
+
+        [DataMember]
+        private DateTime? MessageTimestamp { get; set; }
         [DataMember]
         private string ContentString { get; set; } = "";
         [DataMember]
         public string Role { get; set; } = "user";
-        [DataMember]
-        public DateTime Timestamp { get; set; } = DateTime.Now;
 
         public IProgress<ChatResponse> Progress;
+
+        public bool ProgressRingEnabled
+        {
+            get
+            {
+                return RingEnabled;
+            }
+            set
+            {
+                RingEnabled = value;
+                OnPropertyChanged(this, new("ProgressRingEnabled"));
+            }
+        }
+
+        public DateTime? Timestamp
+        {
+            get
+            {
+                return MessageTimestamp;
+            }
+            set
+            {
+                MessageTimestamp = value;
+                OnPropertyChanged(this, new("Timestamp"));
+            }
+        }
 
         public string Content
         {
@@ -35,7 +63,7 @@ namespace OllamaClient.ViewModels
             set
             {
                 ContentString = value;
-                OnPropertyChanged();
+                OnPropertyChanged(this, new("Content"));
             }
         }
 
@@ -52,13 +80,12 @@ namespace OllamaClient.ViewModels
         {
             ContentString = message.content ?? "";
             Role = message.role ?? "user";
-            Timestamp = DateTime.Now;
             Progress = new Progress<ChatResponse>(s => Content = Content + s.message?.content ?? "");
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
+        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            PropertyChanged?.Invoke(sender, e);
         }
 
         public Message ToMessage()
@@ -78,7 +105,7 @@ namespace OllamaClient.ViewModels
         private CancellationTokenSource? CancellationTokenSource { get; set; }
 
         [DataMember]
-        private string SubjectString { get; set; } = "";
+        private string SubjectString { get; set; } = "New conversation";
         [DataMember]
         public string SelectedModel { get; set; } = "";
         [DataMember]
@@ -97,20 +124,15 @@ namespace OllamaClient.ViewModels
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event PropertyChangedEventHandler? ContentChanged;
+        public event EventHandler? StartOfRequest;
         public event EventHandler? EndOfResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        public Conversation()
-        {
-            Items.CollectionChanged += OnItemsCollectionChanged;
-        }
+        public Conversation() { }
 
         public Conversation(string model)
         {
-            SubjectString = "New conversation";
             SelectedModel = model;
-            Items.CollectionChanged += OnItemsCollectionChanged;
         }
 
         protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -118,9 +140,9 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(sender, e);
         }
 
-        protected void OnContentChanged(object? sender, PropertyChangedEventArgs e)
+        protected void OnStartOfRequest(object? sender, EventArgs e)
         {
-            ContentChanged?.Invoke(sender, e);
+            StartOfRequest?.Invoke(sender, e);
         }
 
         protected void OnEndOfResponse(object? sender, EventArgs e)
@@ -131,27 +153,6 @@ namespace OllamaClient.ViewModels
         protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
         {
             UnhandledException?.Invoke(sender, e);
-        }
-
-        protected void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (e.NewItems != null)
-            {
-                foreach (ChatItem newItem in e.NewItems)
-                {
-
-                    //Add listener for each item on PropertyChanged event
-                    newItem.PropertyChanged += OnContentChanged;
-                }
-            }
-
-            if (e.OldItems != null)
-            {
-                foreach (ChatItem oldItem in e.OldItems)
-                {
-                    oldItem.PropertyChanged -= OnContentChanged;
-                }
-            }
         }
 
         public void Cancel()
@@ -176,11 +177,17 @@ namespace OllamaClient.ViewModels
 
             if(CancellationTokenSource == null) CancellationTokenSource = new();
 
+            ChatItem newChatItem = new(Role.user, content);
+
+            newChatItem.Timestamp = DateTime.Now;
+
             //add user message
-            Items.Add(new(Role.user, content));
+            Items.Add(newChatItem);
 
             //initialize assistant response with empty content
             ChatItem responseChatItem = new(Role.assistant, "");
+
+            responseChatItem.ProgressRingEnabled = true;
 
             //add assistant message
             Items.Add(responseChatItem);
@@ -192,6 +199,8 @@ namespace OllamaClient.ViewModels
                 messages = Items.Select(m => m.ToMessage()).ToArray(),
                 stream = true
             };
+
+            OnStartOfRequest(this, EventArgs.Empty);
 
             //Make HTTP POST request to ollama with built request, cancel if necessary
             try
@@ -207,13 +216,21 @@ namespace OllamaClient.ViewModels
                         }
                     }
                 });
-
-                OnEndOfResponse(this, EventArgs.Empty);
+            }
+            catch (TaskCanceledException e)
+            {
+                Debug.Write(e);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+            }
+            finally
+            {
+                responseChatItem.ProgressRingEnabled = false;
+                responseChatItem.Timestamp = DateTime.Now;
+                OnEndOfResponse(this, EventArgs.Empty);
             }
         }
     }
@@ -246,10 +263,24 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(sender, e);
         }
 
-        public void New(string model)
+        private async void Conversation_StartOfRequest(object? sender, EventArgs e)
         {
-            Conversation newConv = new(model);
+            await Save();
+        }
 
+        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
+        {
+            await Save();
+        }
+
+        public void Create(string? model)
+        {
+            Conversation newConv;
+
+            if (model == null) newConv = new();
+            else newConv = new(model);
+
+            newConv.StartOfRequest += Conversation_StartOfRequest;
             newConv.EndOfResponse += Conversation_EndOfResponse;
 
             Items.Add(newConv);
@@ -290,20 +321,17 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                List<Conversation> results = [];
+                Conversation[] result = [];
 
                 await Task.Run(async () =>
                 {
                     if (await LocalStorage.Get(typeof(Conversations)) is Conversations savedConvos && savedConvos.Items != null)
                     {
-                        foreach (Conversation c in savedConvos.Items)
-                        {
-                            results.Add(c);
-                        }
+                        result = savedConvos.Items.ToArray();
                     }
                 });
 
-                foreach (Conversation c in results)
+                foreach (Conversation c in result)
                 {
                     Items.Add(c);
                 }
@@ -332,16 +360,11 @@ namespace OllamaClient.ViewModels
                     await LocalStorage.Save(this);
                 });
             }
-            catch (COMException ex)
+            catch (Exception ex)
             {
                 Debug.Write(ex);
                 OnUnhandledException(this, new UnhandledExceptionEventArgs(ex, false));
             }
-        }
-
-        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
-        {
-            await Save();
         }
     }
 
@@ -349,11 +372,11 @@ namespace OllamaClient.ViewModels
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value is ChatItem item)
+            if (value is DateTime timestamp)
             {
-                return item.Timestamp.ToLocalTime().ToShortDateString() + " " + item.Timestamp.ToLocalTime().ToShortTimeString();
+                return timestamp.ToLocalTime().ToShortDateString() + " " + timestamp.ToLocalTime().ToShortTimeString();
             }
-            else return DateTime.Now.ToLocalTime().ToShortDateString() + " " + DateTime.Now.ToLocalTime().ToShortTimeString();
+            else return "";
         }
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
@@ -386,6 +409,22 @@ namespace OllamaClient.ViewModels
                 return "Left";
             }
             else return "Right";
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public partial class ChatItemProgressRingVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool v && v)
+            {
+                return "Visible";
+            }
+            else return "Collapsed";
         }
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {

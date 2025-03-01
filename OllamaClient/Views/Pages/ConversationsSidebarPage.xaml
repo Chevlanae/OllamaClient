@@ -25,16 +25,7 @@
                             </Underline>
                         </Bold>
                     </TextBlock>
-                    <AppBarButton Icon="Add" Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50">
-                        <AppBarButton.Flyout>
-                            <Flyout x:Name="NewConversationFlyout">
-                                <StackPanel>
-                                    <TextBlock Text="Select model:" Margin="0,0,0,12" />
-                                    <ComboBox x:Name="ModelsComboBox" AllowFocusOnInteraction="True" DropDownClosed="ModelsComboBox_DropDownClosed" />
-                                </StackPanel>
-                            </Flyout>
-                        </AppBarButton.Flyout>
-                    </AppBarButton>
+                    <AppBarButton Icon="Add" Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Click="AddConversationButton_Click" />
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>

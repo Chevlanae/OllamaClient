@@ -5,18 +5,21 @@ using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Timers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace OllamaClient.Views.Pages
 {
-    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, Client ollamaClient)
+    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, Client ollamaClient, List<string> availableModels)
     {
         public Conversation Conversation { get; set; } = conversation;
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
         public Client OllamaClient { get; set; } = ollamaClient;
+        public List<string> AvailableModels { get; set; } = availableModels;
     }
 
     /// <summary>
@@ -27,18 +30,27 @@ namespace OllamaClient.Views.Pages
         private Conversation? Conversation { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Client? OllamaClient { get; set; }
-
-        private bool IsScrolling
-        {
-            get
-            {
-                return ChatItemsScrollView.State != ScrollingInteractionState.Idle;
-            }
-        }
+        private List<string>? AvailableModels { get; set; }
+        private Timer DisableAutoScrollTimer { get; set; }
+        private bool DisableAutoScroll { get; set; }
 
         public ConversationPage()
         {
             InitializeComponent();
+
+            DisableAutoScrollTimer = new();
+            DisableAutoScrollTimer.Elapsed += (object? sender, ElapsedEventArgs e) =>
+            {
+                DisableAutoScroll = false;
+            };
+            DisableAutoScroll = false;
+        }
+
+        public void DisableAutoScroll5Seconds()
+        {
+            DisableAutoScroll = true;
+            DisableAutoScrollTimer.Interval = 5000;
+            DisableAutoScrollTimer.Start();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -48,10 +60,41 @@ namespace OllamaClient.Views.Pages
                 Conversation = args.Conversation;
                 DispatcherQueue = args.DispatcherQueue;
                 OllamaClient = args.OllamaClient;
+                AvailableModels = args.AvailableModels;
+
+                Conversation.Items.CollectionChanged += Items_CollectionChanged;
+                Conversation.EndOfResponse += Conversation_EndOfResponse;
                 Conversation.UnhandledException += Conversation_UnhandledException;
                 ChatItemsControl.ItemsSource = Conversation.Items;
+                ModelsComboBox.ItemsSource = AvailableModels;
+
+                int index = AvailableModels.IndexOf(Conversation.SelectedModel);
+                if(index == -1)
+                {
+                    ModelsComboBox.SelectedIndex = 0;
+                }
+                else
+                {
+                    ModelsComboBox.SelectedIndex = index;
+                }
             }
             base.OnNavigatedTo(e);
+        }
+
+        private void Items_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ChatItemsControl_ScrollToBottom(sender, new());
+        }
+
+        private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ChatItemsControl_ScrollToBottom(sender, new());
+        }
+
+        private void Conversation_EndOfResponse(object? sender, System.EventArgs e)
+        {
+            ChatInputTextBox.IsEnabled = true;
+            SendChatButton.IsEnabled = true;
         }
 
         private void Conversation_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
@@ -66,8 +109,6 @@ namespace OllamaClient.Views.Pages
         {
             if (Conversation != null && DispatcherQueue != null && OllamaClient != null)
             {
-                ChatItemsControl_ScrollToBottom(sender, e);
-
                 ChatInputTextBox.IsEnabled = false;
                 SendChatButton.IsEnabled = false;
 
@@ -76,10 +117,6 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(OllamaClient, text); });
 
                 ChatInputTextBox.Text = "";
-                ChatInputTextBox.IsEnabled = true;
-                SendChatButton.IsEnabled = true;
-
-                ChatItemsControl_ScrollToBottom(sender, e);
             }
         }
 
@@ -88,21 +125,22 @@ namespace OllamaClient.Views.Pages
             if (Conversation != null) Conversation.Cancel();
         }
 
-        private void ChatItemsControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            ChatItemsControl_ScrollToBottom(sender, e);
-        }
-
         private async void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
         {
-            while (IsScrolling) await Task.Delay(100);
+            if (!DisableAutoScroll)
+            {
+                while (ChatItemsScrollView.State != ScrollingInteractionState.Idle) await Task.Delay(100);
 
-            ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
+                ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
+            }
         }
 
-        private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void ModelsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ChatItemsControl_ScrollToBottom(sender, e);
+            if(ModelsComboBox.SelectedItem is string selectedModel && Conversation != null)
+            {
+                Conversation.SelectedModel = selectedModel;
+            }
         }
     }
 }

@@ -28,10 +28,7 @@ namespace OllamaClient
             }
             else if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
             {
-                if (!Attribute.IsDefined(T, typeof(CollectionDataContractAttribute)))
-                {
-                    throw new ArgumentException("Given argument was an invalid type. This function only accepts objects with a DataContract attribute", "T");
-                }
+                throw new ArgumentException("Given argument was an invalid type. This function only accepts objects with a DataContract attribute", "T");
             }
         }
 

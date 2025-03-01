@@ -19,6 +19,8 @@ namespace OllamaClient
         public MainWindow()
         {
             InitializeComponent();
+
+            ConversationsButton_Click(this, new());
         }
 
         private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)

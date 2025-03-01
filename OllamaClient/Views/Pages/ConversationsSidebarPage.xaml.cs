@@ -6,6 +6,7 @@ using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -50,7 +51,6 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(OllamaClient); });
 
                 ConversationsListView.ItemsSource = Conversations.Items;
-                ModelsComboBox.ItemsSource = Conversations.AvailableModels;
             }
             base.OnNavigatedTo(e);
         }
@@ -78,7 +78,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue != null)
             {
-                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, OllamaClient);
+                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, OllamaClient, Conversations.AvailableModels.ToList());
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }
@@ -93,16 +93,10 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private void ModelsComboBox_DropDownClosed(object sender, object e)
+        private void AddConversationButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ModelsComboBox.SelectedItem is string selectedModel)
-            {
-                NewConversationFlyout.Hide();
-
-                Conversations.New(selectedModel);
-
-                ConversationsListView.SelectedIndex = ConversationsListView.Items.Count - 1;
-            }
+            Conversations.Create(null);
+            ConversationsListView.SelectedIndex = Conversations.Items.Count - 1;
         }
     }
 }
