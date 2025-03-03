@@ -63,12 +63,12 @@ namespace OllamaClient.Views.Pages
                 AvailableModels = args.AvailableModels;
 
                 Conversation.Items.CollectionChanged += Items_CollectionChanged;
-                Conversation.EndOfResponse += Conversation_EndOfResponse;
+                Conversation.EndOfMessasge += Conversation_EndOfResponse;
                 Conversation.UnhandledException += Conversation_UnhandledException;
                 ChatItemsControl.ItemsSource = Conversation.Items;
                 ModelsComboBox.ItemsSource = AvailableModels;
 
-                int index = AvailableModels.IndexOf(Conversation.SelectedModel);
+                int index = AvailableModels.IndexOf(Conversation.SelectedModel ?? "");
                 if(index == -1)
                 {
                     ModelsComboBox.SelectedIndex = 0;
@@ -113,6 +113,11 @@ namespace OllamaClient.Views.Pages
                 SendChatButton.IsEnabled = false;
 
                 string text = ChatInputTextBox.Text;
+
+                if(Conversation.Subject == null)
+                {
+                    DispatcherQueue.TryEnqueue(async () => { await Conversation.GenerateSubject(OllamaClient, text); });
+                }
 
                 DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(OllamaClient, text); });
 

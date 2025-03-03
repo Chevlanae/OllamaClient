@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -16,8 +15,6 @@ namespace OllamaClient.Views.Windows
             InitializeComponent();
             MessageHeaderTextBlock.Text = header;
             MessageBodyTextBlock.Text = body;
-
-            this.SetWindowSize(480, 480);
         }
     }
 }

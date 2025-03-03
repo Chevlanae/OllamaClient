@@ -8,6 +8,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace OllamaClient.Models.Ollama
 {
@@ -138,6 +140,11 @@ namespace OllamaClient.Models.Ollama
         public ModelInfo[]? models { get; set; }
     }
 
+    public record struct StatusResponse
+    {
+        public string status { get; set; }
+    }
+
     public class Endpoints
     {
         public string BaseUrl { get; set; }
@@ -154,9 +161,9 @@ namespace OllamaClient.Models.Ollama
         public string Ps { get; set; }
         public string Version { get; set; }
 
-        public Endpoints()
+        public Endpoints(string socketAddress, bool useHttps = false)
         {
-            BaseUrl = "http://" + (Environment.GetEnvironmentVariable("OLLAMA_HOST") ?? "localhost:11434") + "/api/";
+            BaseUrl = useHttps ? "https" : "http" + "://" + socketAddress + "/api/";
             GenerateCompletion = BaseUrl + "generate";
             Chat = BaseUrl + "chat";
             Create = BaseUrl + "create";
@@ -172,17 +179,34 @@ namespace OllamaClient.Models.Ollama
         }
     }
 
+    public class ClientOptions(string socketAddress, bool useHttps, TimeSpan requestTimeout)
+    {
+        public string SocketAddress { get; set; } = socketAddress;
+        public bool UseHttps { get; set; } = useHttps;
+        public TimeSpan RequestTimeout { get; set; } = requestTimeout;
+    }
+
     public class Client
     {
         public Endpoints Endpoints { get; set; }
 
         private HttpClient HttpClient { get; set; }
 
-        public Client(TimeSpan? timeout)
+        public Client(ClientOptions? options = null)
         {
-            Endpoints = new Endpoints();
+
             HttpClient = new HttpClient();
-            HttpClient.Timeout = timeout ?? Timeout.InfiniteTimeSpan;
+
+            if (options != null)
+            {
+                Endpoints = new Endpoints(options.SocketAddress, options.UseHttps);
+                HttpClient.Timeout = options.RequestTimeout;
+            }
+            else
+            {
+                Endpoints = new Endpoints(Environment.GetEnvironmentVariable("OLLAMA_HOST") ?? "localhost:11434", false);
+                HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+            }
         }
 
         public async Task<DelimitedJsonStream<ChatResponse>?> ChatStream(ChatRequest request)
@@ -191,7 +215,7 @@ namespace OllamaClient.Models.Ollama
             {
                 Content = JsonContent.Create(request)
             };
-            return await GetJsonStream<ChatResponse>(req);
+            return await GetJsonStream<ChatResponse>(req, ResponseJsonContext.Default.ChatResponse);
         }
 
         public async Task<DelimitedJsonStream<CompletionResponse>?> GenerateCompletionStream(CompletionRequest request)
@@ -201,7 +225,7 @@ namespace OllamaClient.Models.Ollama
                 Content = JsonContent.Create(request)
             };
 
-            return await GetJsonStream<CompletionResponse>(req);
+            return await GetJsonStream<CompletionResponse>(req, ResponseJsonContext.Default.CompletionResponse);
         }
 
         public async Task<ListModelsResponse?> ListModels()
@@ -212,21 +236,30 @@ namespace OllamaClient.Models.Ollama
 
             if (resp.IsSuccessStatusCode)
             {
-                return JsonSerializer.Deserialize<ListModelsResponse>(await resp.Content.ReadAsStringAsync());
+                return JsonSerializer.Deserialize<ListModelsResponse>(await resp.Content.ReadAsStringAsync(), ResponseJsonContext.Default.ListModelsResponse);
             }
             return null;
         }
 
-        private async Task<DelimitedJsonStream<T>?> GetJsonStream<T>(HttpRequestMessage request)
+        private async Task<DelimitedJsonStream<T>?> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
         {
             HttpResponseMessage httpResp = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (httpResp.IsSuccessStatusCode)
             {
-                return new(await httpResp.Content.ReadAsStreamAsync(), '\n');
+                return new(await httpResp.Content.ReadAsStreamAsync(), '\n', jsonTypeInfo);
             }
             return null;
         }
+    }
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
+    [JsonSerializable(typeof(ChatResponse))]
+    [JsonSerializable(typeof(CompletionResponse))]
+    [JsonSerializable(typeof(ListModelsResponse))]
+    [JsonSerializable(typeof(StatusResponse))]
+    internal partial class ResponseJsonContext : JsonSerializerContext
+    {
     }
 
     /// <summary>
@@ -239,6 +272,7 @@ namespace OllamaClient.Models.Ollama
         public char Delimiter { get; set; }
         private StreamReader Reader { get; set; }
         private StringBuilder PartialObject { get; set; }
+        private JsonTypeInfo<T> JsonTypeInfo { get; set; }
 
         public bool EndOfStream => Reader.EndOfStream;
 
@@ -247,12 +281,13 @@ namespace OllamaClient.Models.Ollama
         /// </summary>
         /// <param name="sourceStream"></param>
         /// <param name="delimiter"></param>
-        public DelimitedJsonStream(Stream sourceStream, char delimiter)
+        public DelimitedJsonStream(Stream sourceStream, char delimiter, JsonTypeInfo<T> jsonTypeInfo)
         {
             BaseStream = sourceStream;
             Delimiter = delimiter;
             Reader = new(BaseStream);
             PartialObject = new();
+            JsonTypeInfo = jsonTypeInfo;
         }
 
         public void Dispose()
@@ -288,7 +323,7 @@ namespace OllamaClient.Models.Ollama
                             string objString = Regex.Replace(PartialObject.ToString(), "(^.*?{){1}", "{");
 
                             //Serialize PartialObject and pass serialized object to given IProgess parameter
-                            T? obj = JsonSerializer.Deserialize<T>(objString);
+                            T? obj = JsonSerializer.Deserialize<T>(objString, JsonTypeInfo);
                             if (obj != null)
                             {
                                 progress.Report(obj);

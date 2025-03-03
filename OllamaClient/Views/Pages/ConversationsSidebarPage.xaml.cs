@@ -34,9 +34,10 @@ namespace OllamaClient.Views.Pages
         public ConversationsSidebarPage()
         {
             Conversations = new();
-            Conversations.Loaded += Conversations_Loaded;
+            Conversations.Items.CollectionChanged += ConversationItems_CollectionChanged;
+            Conversations.ModelTagsLoaded += Conversations_ModelTagsLoaded;
             Conversations.UnhandledException += Conversations_UnhandledException;
-            OllamaClient = new(Timeout.InfiniteTimeSpan);
+            OllamaClient = new();
 
             InitializeComponent();
         }
@@ -51,8 +52,25 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(OllamaClient); });
 
                 ConversationsListView.ItemsSource = Conversations.Items;
+
+                if(Conversations.Items.Count == 0)
+                {
+                    ContentFrame?.Navigate(typeof(ConversationsBlankPage));
+                }
+                else
+                {
+                    ConversationsListView.SelectedIndex = 0;
+                }
             }
             base.OnNavigatedTo(e);
+        }
+
+        private void ConversationItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (Conversations.Items.Count == 0)
+            {
+                ContentFrame?.Navigate(typeof(ConversationsBlankPage));
+            }
         }
 
         private async void Conversations_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
@@ -66,7 +84,7 @@ namespace OllamaClient.Views.Pages
             });
         }
 
-        private void Conversations_Loaded(object? sender, EventArgs e)
+        private void Conversations_ModelTagsLoaded(object? sender, EventArgs e)
         {
             if (Conversations.Items.Count > 0)
             {
@@ -95,7 +113,7 @@ namespace OllamaClient.Views.Pages
 
         private void AddConversationButton_Click(object sender, RoutedEventArgs e)
         {
-            Conversations.Create(null);
+            Conversations.Create();
             ConversationsListView.SelectedIndex = Conversations.Items.Count - 1;
         }
     }

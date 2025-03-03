@@ -16,7 +16,7 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ComboBox x:Name="ModelsComboBox"/>
+            <ComboBox x:Name="ModelsComboBox" SelectionChanged="ModelsComboBox_SelectionChanged" />
             <ScrollView Grid.Row="1" x:Name="ChatItemsScrollView" >
                 <ItemsControl x:Name="ChatItemsControl" TabFocusNavigation="Local">
                     <ItemsControl.Resources>
