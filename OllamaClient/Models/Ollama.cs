@@ -154,6 +154,13 @@ namespace OllamaClient.Models.Ollama
     {
     }
 
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
+    [JsonSerializable(typeof(ChatRequest))]
+    [JsonSerializable(typeof(CompletionRequest))]
+    internal partial class RequestJsonContext : JsonSerializerContext
+    {
+    }
+
 
     public class Endpoints
     {
@@ -223,19 +230,19 @@ namespace OllamaClient.Models.Ollama
         {
             using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Chat)
             {
-                Content = JsonContent.Create(request)
+                Content = JsonContent.Create(request, RequestJsonContext.Default.ChatRequest)
             };
-            return await GetJsonStream<ChatResponse>(req, ResponseJsonContext.Default.ChatResponse);
+            return await GetJsonStream(req, ResponseJsonContext.Default.ChatResponse);
         }
 
         public async Task<DelimitedJsonStream<CompletionResponse>?> GenerateCompletionStream(CompletionRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.GenerateCompletion)
             {
-                Content = JsonContent.Create(request)
+                Content = JsonContent.Create(request, RequestJsonContext.Default.CompletionRequest)
             };
 
-            return await GetJsonStream<CompletionResponse>(req, ResponseJsonContext.Default.CompletionResponse);
+            return await GetJsonStream(req, ResponseJsonContext.Default.CompletionResponse);
         }
 
         public async Task<ListModelsResponse?> ListModels()
@@ -246,7 +253,7 @@ namespace OllamaClient.Models.Ollama
 
             if (resp.IsSuccessStatusCode)
             {
-                return JsonSerializer.Deserialize<ListModelsResponse>(await resp.Content.ReadAsStringAsync(), ResponseJsonContext.Default.ListModelsResponse);
+                return JsonSerializer.Deserialize(await resp.Content.ReadAsStringAsync(), ResponseJsonContext.Default.ListModelsResponse);
             }
             return null;
         }
@@ -324,7 +331,7 @@ namespace OllamaClient.Models.Ollama
                             string objString = Regex.Replace(PartialObject.ToString(), "(^.*?{){1}", "{");
 
                             //Serialize PartialObject and pass serialized object to given IProgess parameter
-                            T? obj = JsonSerializer.Deserialize<T>(objString, JsonTypeInfo);
+                            T? obj = JsonSerializer.Deserialize(objString, JsonTypeInfo);
                             if (obj != null)
                             {
                                 progress.Report(obj);
