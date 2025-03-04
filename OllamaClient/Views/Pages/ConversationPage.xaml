@@ -27,19 +27,19 @@
                     </ItemsControl.Resources>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="10,5,10,5">
+                            <Grid Margin="10,5,10,5" Loaded="ChatItemGrid_Loaded">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}">
                                     <TextBlock Grid.Row="0" Text="{Binding Role}" Margin="10,0,10,0"  />
-                                    <TextBlock Text="{Binding Timestamp, Converter={StaticResource ChatItemTimestampConverter}, Mode=TwoWay}" />
+                                    <TextBlock Text="{Binding Timestamp, Converter={StaticResource ChatItemTimestampConverter}, Mode=OneWay}" />
                                     <ProgressRing 
                                         Height="10" 
                                         Width="10" 
                                         Margin="10,0,10,0" 
-                                        Visibility="{Binding ProgressRingEnabled, Converter={StaticResource ChatItemProgressRingVisibilityConverter}, Mode=TwoWay}"/>
+                                        Visibility="{Binding ProgressRingEnabled, Converter={StaticResource ChatItemProgressRingVisibilityConverter}, Mode=OneWay}"/>
                                 </StackPanel>
                                 <TextBox Grid.Row="1"
                                     Margin="10" 
@@ -48,7 +48,7 @@
                                     Padding="15" 
                                     HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}"
                                     x:Name="ChatBubbleTextBox"
-                                    Text="{Binding Content, Mode=TwoWay}" 
+                                    Text="{Binding Content, Mode=OneWay}" 
                                     MaxWidth="600"
                                     IsReadOnly="True" 
                                     TextWrapping="Wrap" 

@@ -145,6 +145,16 @@ namespace OllamaClient.Models.Ollama
         public string status { get; set; }
     }
 
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
+    [JsonSerializable(typeof(ChatResponse))]
+    [JsonSerializable(typeof(CompletionResponse))]
+    [JsonSerializable(typeof(ListModelsResponse))]
+    [JsonSerializable(typeof(StatusResponse))]
+    internal partial class ResponseJsonContext : JsonSerializerContext
+    {
+    }
+
+
     public class Endpoints
     {
         public string BaseUrl { get; set; }
@@ -251,15 +261,6 @@ namespace OllamaClient.Models.Ollama
             }
             return null;
         }
-    }
-
-    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
-    [JsonSerializable(typeof(ChatResponse))]
-    [JsonSerializable(typeof(CompletionResponse))]
-    [JsonSerializable(typeof(ListModelsResponse))]
-    [JsonSerializable(typeof(StatusResponse))]
-    internal partial class ResponseJsonContext : JsonSerializerContext
-    {
     }
 
     /// <summary>

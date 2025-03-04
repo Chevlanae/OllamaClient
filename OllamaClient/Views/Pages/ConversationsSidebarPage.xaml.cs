@@ -102,10 +102,11 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private void DeleteConversation_Click(object sender, RoutedEventArgs e)
+        private void DeleteConversationButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is AppBarButton button && button.DataContext is Conversation c)
             {
+                c.Cancel();
                 Conversations.Items.Remove(c);
                 DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
             }

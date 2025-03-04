@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
@@ -62,7 +63,6 @@ namespace OllamaClient.Views.Pages
                 OllamaClient = args.OllamaClient;
                 AvailableModels = args.AvailableModels;
 
-                Conversation.Items.CollectionChanged += Items_CollectionChanged;
                 Conversation.EndOfMessasge += Conversation_EndOfResponse;
                 Conversation.UnhandledException += Conversation_UnhandledException;
                 ChatItemsControl.ItemsSource = Conversation.Items;
@@ -79,11 +79,6 @@ namespace OllamaClient.Views.Pages
                 }
             }
             base.OnNavigatedTo(e);
-        }
-
-        private void Items_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            ChatItemsControl_ScrollToBottom(sender, new());
         }
 
         private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -146,6 +141,11 @@ namespace OllamaClient.Views.Pages
             {
                 Conversation.SelectedModel = selectedModel;
             }
+        }
+
+        private void ChatItemGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            ChatItemsControl_ScrollToBottom(sender, e);
         }
     }
 }

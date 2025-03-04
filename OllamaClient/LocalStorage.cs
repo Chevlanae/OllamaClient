@@ -1,19 +1,51 @@
-﻿using OllamaClient.ViewModels;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using Windows.Storage;
+using System.Xml;
 
-namespace OllamaClient
+namespace OllamaClient.LocalStorage
 {
-    internal static class LocalStorage
+    internal static class Paths
     {
-        private static readonly Microsoft.Windows.Storage.ApplicationData AppData = Microsoft.Windows.Storage.ApplicationData.GetDefault();
+        public static string AppData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Assembly.GetExecutingAssembly().GetName().Name ?? "OllamaClient");
+    }
 
-        public static bool IsSaving = false;
+    internal static class Persistence
+    {
+        /// <summary>
+        /// Key represents a type that currently exists, the value is set to true when the file is being accesssed, and false when it is not.
+        /// </summary>
+        private static Dictionary<Type, bool> Files = new();
+
+        private static string FolderPath = Path.Combine(Paths.AppData, "Persistence");
+
+        static Persistence()
+        {
+            Directory.CreateDirectory(FolderPath);
+
+            LoadFiles();
+        }
+
+        private static void LoadFiles()
+        {
+            //check existing filenames in FolderPath against type names in the currently executing assembly
+            Type[] assemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
+            foreach (string filename in Directory.GetFiles(FolderPath))
+            {
+                string typeName = Path.GetFileNameWithoutExtension(filename);
+
+                Type? match = assemblyTypes.FirstOrDefault((t) => { return t.Name == typeName; });
+
+                if (match != null)
+                {
+                    Files[match] = false;
+                }
+            }
+        }
 
         /// <summary>
         /// Assert that a given type is not primitive, and has the DataContract attribute
@@ -43,15 +75,28 @@ namespace OllamaClient
         {
             AssertType(T);
 
-            string filename = T.Name + ".xml";
-
-            StorageFile classFile = await AppData.LocalFolder.GetFileAsync(filename);
-            DataContractSerializer serializer = new(T);
-
-            using (Stream stream = await classFile.OpenStreamForReadAsync())
+            if (Files.ContainsKey(T))
             {
-                return serializer.ReadObject(stream);
+                while (Files[T]) await Task.Delay(100);
             }
+            else return null;
+
+            string filename = Path.Combine(FolderPath, T.Name + ".xml");
+
+            DataContractSerializer serializer = new(T);
+            object? result;
+
+            Files[T] = true;
+
+            using (FileStream file = File.OpenRead(filename))
+            using (XmlReader reader = XmlReader.Create(file))
+            {
+                result = serializer.ReadObject(reader);
+            }
+
+            Files[T] = false;
+
+            return result;
         }
 
         /// <summary>
@@ -66,20 +111,25 @@ namespace OllamaClient
 
             AssertType(objType);
 
-            while (IsSaving) await Task.Delay(100);
+            if (Files.ContainsKey(objType))
+            {
+                while (Files[objType]) await Task.Delay(100);
+            }
+            else Files[objType] = false;
 
-            IsSaving = true;
-            string filename = objType.Name + ".xml";
+            string filename = Path.Combine(FolderPath, objType.Name + ".xml"); ;
 
-            StorageFile classFile = await AppData.LocalFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
             DataContractSerializer serializer = new(objType);
 
-            using (Stream stream = await classFile.OpenStreamForWriteAsync())
+            Files[objType] = true;
+
+            using (FileStream file = File.Create(filename))
+            using (XmlWriter writer = XmlWriter.Create(file))
             {
-                serializer.WriteObject(stream, obj);
+                serializer.WriteObject(writer, obj);
             }
 
-            IsSaving = false;
+            Files[objType] = false;
         }
     }
 }

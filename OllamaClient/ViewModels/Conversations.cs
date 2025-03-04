@@ -1,5 +1,6 @@
 ﻿using Microsoft.UI.Xaml.Data;
 using OllamaClient.Models.Ollama;
+using OllamaClient.LocalStorage;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,6 +12,7 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Text;
 
 namespace OllamaClient.ViewModels
 {
@@ -85,7 +87,7 @@ namespace OllamaClient.ViewModels
     [DataContract]
     public partial class Conversation : INotifyPropertyChanged
     {
-        private CancellationTokenSource? CancellationTokenSource { get; set; } = new();
+        private CancellationTokenSource? CancellationTokenSource { get; set; }
 
         [DataMember]
         private ObservableCollection<ChatItem> ChatItemCollection { get; set; } = [];
@@ -175,7 +177,9 @@ namespace OllamaClient.ViewModels
 
             try
             {
-                Progress<CompletionResponse> progress = new((response) => { Subject = Subject + response.response; });
+                StringBuilder subject = new();
+
+                Progress<CompletionResponse> progress = new((response) => { Subject = subject.Append(response.response).ToString(); });
 
                 await Task.Run(async () =>
                 {
@@ -313,12 +317,12 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(sender, e);
         }
 
-        private async void Conversation_StartOfRequest(object? sender, EventArgs e)
+        private async void Conversation_StartOfMessage(object? sender, EventArgs e)
         {
             await Save();
         }
 
-        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
+        private async void Conversation_EndOfMessage(object? sender, EventArgs e)
         {
             await Save();
         }
@@ -327,8 +331,8 @@ namespace OllamaClient.ViewModels
         {
             Conversation newConv = new();
 
-            newConv.StartOfMessage += Conversation_StartOfRequest;
-            newConv.EndOfMessasge += Conversation_EndOfResponse;
+            newConv.StartOfMessage += Conversation_StartOfMessage;
+            newConv.EndOfMessasge += Conversation_EndOfMessage;
 
             Items.Add(newConv);
         }
@@ -374,7 +378,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    if (await LocalStorage.Get(typeof(Conversations)) is Conversations savedConvos && savedConvos.Items != null)
+                    if (await Persistence.Get(typeof(Conversations)) is Conversations savedConvos && savedConvos.Items != null)
                     {
                         result = savedConvos.Items;
                     }
@@ -384,6 +388,8 @@ namespace OllamaClient.ViewModels
                 {
                     foreach (Conversation c in result)
                     {
+                        c.StartOfMessage += Conversation_StartOfMessage;
+                        c.EndOfMessasge += Conversation_EndOfMessage;
                         Items.Add(c);
                     }
                 }
@@ -409,7 +415,7 @@ namespace OllamaClient.ViewModels
             {
                 await Task.Run(async () =>
                 {
-                    await LocalStorage.Save(this);
+                    await Persistence.Save(this);
                 });
             }
             catch (Exception ex)
