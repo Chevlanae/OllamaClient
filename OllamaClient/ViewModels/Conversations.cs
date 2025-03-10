@@ -1,6 +1,6 @@
 ﻿using Microsoft.UI.Xaml.Data;
-using OllamaClient.Models.Ollama;
 using OllamaClient.LocalStorage;
+using OllamaClient.Models.Ollama;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,10 +9,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Text;
 
 namespace OllamaClient.ViewModels
 {
@@ -85,9 +85,11 @@ namespace OllamaClient.ViewModels
 
     [KnownType(typeof(ChatItem))]
     [DataContract]
-    public partial class Conversation : INotifyPropertyChanged
+    public partial class Conversation(Client connection) : INotifyPropertyChanged
     {
         private CancellationTokenSource? CancellationTokenSource { get; set; }
+
+        public Client OllamaConnection { get; set; } = connection;
 
         [DataMember]
         private ObservableCollection<ChatItem> ChatItemCollection { get; set; } = [];
@@ -100,10 +102,7 @@ namespace OllamaClient.ViewModels
 
         public ObservableCollection<ChatItem> Items
         {
-            get
-            {
-                return ChatItemCollection;
-            }
+            get => ChatItemCollection;
             set
             {
                 ChatItemCollection = value;
@@ -155,10 +154,10 @@ namespace OllamaClient.ViewModels
             CancellationTokenSource = new();
         }
 
-        public async Task GenerateSubject(Client conn, string prompt)
+        public async Task GenerateSubject(string prompt)
         {
             if (SelectedModel == null) return;
-            if (CancellationTokenSource == null) return;
+            if (CancellationTokenSource == null) CancellationTokenSource = new();
 
             CompletionRequest request = new()
             {
@@ -183,7 +182,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<CompletionResponse>? stream = await conn.GenerateCompletionStream(request);
+                    DelimitedJsonStream<CompletionResponse>? stream = await OllamaConnection.GenerateCompletionStream(request);
 
                     if (stream is not null)
                     {
@@ -192,7 +191,7 @@ namespace OllamaClient.ViewModels
                             await stream.Read(progress, CancellationTokenSource.Token);
                         }
                     }
-                });
+                }, CancellationTokenSource.Token);
             }
             catch (TaskCanceledException e)
             {
@@ -209,24 +208,26 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public async Task SendUserMessage(Client conn, string prompt)
+        public async Task SendUserMessage(string prompt)
         {
             //return early if no model selected
             if (SelectedModel == null) return;
 
             if (CancellationTokenSource == null) CancellationTokenSource = new();
 
-            ChatItem newChatItem = new(Role.user, prompt);
-
-            newChatItem.Timestamp = DateTime.Now;
+            ChatItem newChatItem = new(Role.user, prompt)
+            {
+                Timestamp = DateTime.Now
+            };
 
             //add user message
             Items.Add(newChatItem);
 
             //initialize assistant response with empty content
-            ChatItem responseChatItem = new(Role.assistant, "");
-
-            responseChatItem.ProgressRingEnabled = true;
+            ChatItem responseChatItem = new(Role.assistant, "")
+            {
+                ProgressRingEnabled = true
+            };
 
             //add assistant message
             Items.Add(responseChatItem);
@@ -244,11 +245,11 @@ namespace OllamaClient.ViewModels
             //Make HTTP POST request to ollama with built request, cancel if necessary
             try
             {
-                Progress<ChatResponse> progress = new (s => responseChatItem.Content = responseChatItem.Content + s.message?.content ?? "");
+                Progress<ChatResponse> progress = new(s => responseChatItem.Content = responseChatItem.Content + s.message?.content ?? "");
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<ChatResponse>? stream = await conn.ChatStream(request);
+                    DelimitedJsonStream<ChatResponse>? stream = await OllamaConnection.ChatStream(request);
 
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
                     if (stream is not null)
@@ -281,10 +282,12 @@ namespace OllamaClient.ViewModels
     [KnownType(typeof(ChatItem))]
     [KnownType(typeof(Conversation))]
     [DataContract]
-    public class Conversations : INotifyPropertyChanged
+    public class Conversations(Client? connection = null) : INotifyPropertyChanged
     {
         [DataMember]
         private ObservableCollection<Conversation> ConversationCollection { get; set; } = [];
+
+        private Client OllamaConnection { get; set; } = connection ?? new();
 
         public ObservableCollection<string> AvailableModels { get; set; } = [];
 
@@ -329,7 +332,7 @@ namespace OllamaClient.ViewModels
 
         public void Create()
         {
-            Conversation newConv = new();
+            Conversation newConv = new(OllamaConnection);
 
             newConv.StartOfMessage += Conversation_StartOfMessage;
             newConv.EndOfMessasge += Conversation_EndOfMessage;
@@ -337,7 +340,7 @@ namespace OllamaClient.ViewModels
             Items.Add(newConv);
         }
 
-        public async Task LoadAvailableModels(Client conn)
+        public async Task LoadAvailableModels()
         {
             try
             {
@@ -345,19 +348,16 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    if (await conn.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+                    if (await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
                     {
-                        foreach (ModelInfo model in models)
+                        foreach (ModelInfo info in models)
                         {
-                            if (model.model != null) results.Add(model.model);
+                            if (info.model != null) results.Add(info.model);
                         }
                     }
                 });
 
-                foreach (string s in results)
-                {
-                    AvailableModels.Add(s);
-                }
+                AvailableModels = [.. results];
             }
             catch (Exception e)
             {
@@ -374,22 +374,23 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                ObservableCollection<Conversation>? result = null;
+                Conversations? result = null;
 
                 await Task.Run(async () =>
                 {
-                    if (await Persistence.Get(typeof(Conversations)) is Conversations savedConvos && savedConvos.Items != null)
+                    if (await Persistence.Get(typeof(Conversations)) is Conversations savedConvos)
                     {
-                        result = savedConvos.Items;
+                        result = savedConvos;
                     }
                 });
 
                 if (result != null)
                 {
-                    foreach (Conversation c in result)
+                    foreach (Conversation c in result.Items)
                     {
                         c.StartOfMessage += Conversation_StartOfMessage;
                         c.EndOfMessasge += Conversation_EndOfMessage;
+                        c.OllamaConnection = OllamaConnection;
                         Items.Add(c);
                     }
                 }
@@ -413,10 +414,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(async () =>
-                {
-                    await Persistence.Save(this);
-                });
+                await Task.Run(async () => { await Persistence.Save(this); });
             }
             catch (Exception ex)
             {

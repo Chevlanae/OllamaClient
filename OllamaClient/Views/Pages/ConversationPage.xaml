@@ -18,7 +18,7 @@
             </Grid.RowDefinitions>
             <ComboBox x:Name="ModelsComboBox" SelectionChanged="ModelsComboBox_SelectionChanged" />
             <ScrollView Grid.Row="1" x:Name="ChatItemsScrollView" >
-                <ItemsControl x:Name="ChatItemsControl" TabFocusNavigation="Local">
+                <ItemsControl x:Name="ChatItemsControl">
                     <ItemsControl.Resources>
                         <local:ChatItemHorizontalAlignmentConverter x:Key="ChatItemHorizontalAlignmentConverter"/>
                         <local:ChatItemTextBoxBackgroundConverter x:Key="ChatItemTextBoxBackgroundConverter" />
@@ -91,12 +91,24 @@
                             <KeyboardAccelerator Modifiers="Control" Key="T" />
                         </AppBarButton.KeyboardAccelerators>
                     </AppBarButton>
-                    <AppBarButton x:Name="CancelChatButton" Icon="Cancel" Width="50" Height="50" Click="CancelChatButton_Click" >
+                    <AppBarButton 
+                        x:Name="CancelChatButton" 
+                        Icon="Cancel" 
+                        Width="50" 
+                        Height="50" 
+                        Visibility="Collapsed"
+                        Click="CancelChatButton_Click" >
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Control" Key="C" />
                         </AppBarButton.KeyboardAccelerators>
                     </AppBarButton>
-                    <AppBarButton x:Name="SendChatButton" Icon="Send" Width="50" Height="50" Click="SendChatButton_Click" Foreground="Aqua">
+                    <AppBarButton 
+                        x:Name="SendChatButton" 
+                        Icon="Send" Width="50" 
+                        Height="50" Foreground="Aqua" 
+                        Click="SendChatButton_Click"  
+                        PointerEntered="SendChatButton_PointerEntered"
+                        PointerExited="SendChatButton_PointerExited">
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Key="Enter" />
                         </AppBarButton.KeyboardAccelerators>

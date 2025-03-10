@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="OllamaClient.Views.Pages.ModelItemPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:OllamaClient.Views.Pages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid x:Name="RootGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <TextBlock Text="Name: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Name}" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <TextBlock Text="Model: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Model}" />
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <TextBlock Text="Modified At: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding ModifiedAt}" />
+                </StackPanel>
+                <StackPanel Grid.Row="3" Orientation="Horizontal">
+                    <TextBlock Text="Size: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Size}" />
+                    <TextBlock Text=" bytes" Margin="0,0,10,0" />
+                </StackPanel>
+                <StackPanel Grid.Row="4" Orientation="Horizontal">
+                    <TextBlock Text="Digest: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Digest}" />
+                </StackPanel>
+                <StackPanel Grid.Row="5" Orientation="Horizontal">
+                    <TextBlock Text="Parent Model: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding ParentModel}" />
+                </StackPanel>
+                <StackPanel Grid.Row="6" Orientation="Horizontal">
+                    <TextBlock Text="Format: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Format}" />
+                </StackPanel>
+                <StackPanel Grid.Row="7" Orientation="Horizontal">
+                    <TextBlock Text="Family: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Family}" />
+                </StackPanel>
+                <StackPanel Grid.Row="8" Orientation="Horizontal">
+                    <TextBlock Text="Parameter Size: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding ParameterSize}" />
+                </StackPanel>
+                <StackPanel Grid.Row="9" Orientation="Horizontal">
+                    <TextBlock Text="Quantization Level: " Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding QuantizationLevel}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

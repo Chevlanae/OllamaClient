@@ -17,7 +17,7 @@ namespace OllamaClient.LocalStorage
     internal static class Persistence
     {
         /// <summary>
-        /// Key represents a type that currently exists, the value is set to true when the file is being accesssed, and false when it is not.
+        /// Key represents a type that currently exists, the value is set to true when the file is being accessed, and false when it is not.
         /// </summary>
         private static Dictionary<Type, bool> Files = new();
 
@@ -26,7 +26,6 @@ namespace OllamaClient.LocalStorage
         static Persistence()
         {
             Directory.CreateDirectory(FolderPath);
-
             LoadFiles();
         }
 
@@ -54,11 +53,7 @@ namespace OllamaClient.LocalStorage
         /// <exception cref="ArgumentException"></exception>
         private static void AssertType(Type T)
         {
-            if (T.IsPrimitive)
-            {
-                throw new ArgumentException("Given argument was an invalid type. This function does not accept primitive types.", "T");
-            }
-            else if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
+            if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
             {
                 throw new ArgumentException("Given argument was an invalid type. This function only accepts objects with a DataContract attribute", "T");
             }

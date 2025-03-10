@@ -2,12 +2,9 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
-using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -29,15 +26,12 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Conversations Conversations { get; set; }
-        private Client OllamaClient { get; set; }
 
         public ConversationsSidebarPage()
         {
             Conversations = new();
             Conversations.Items.CollectionChanged += ConversationItems_CollectionChanged;
-            Conversations.ModelTagsLoaded += Conversations_ModelTagsLoaded;
             Conversations.UnhandledException += Conversations_UnhandledException;
-            OllamaClient = new();
 
             InitializeComponent();
         }
@@ -48,20 +42,18 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(OllamaClient); });
+                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
 
-                ConversationsListView.ItemsSource = Conversations.Items;
-
-                if(Conversations.Items.Count == 0)
+                if (Conversations.Items.Count == 0)
                 {
+                    DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
                     ContentFrame?.Navigate(typeof(ConversationsBlankPage));
                 }
-                else
-                {
-                    ConversationsListView.SelectedIndex = 0;
-                }
             }
+
+            ConversationsListView.ItemsSource = Conversations.Items;
+            ConversationsListView.SelectedIndex = -1;
+
             base.OnNavigatedTo(e);
         }
 
@@ -84,19 +76,11 @@ namespace OllamaClient.Views.Pages
             });
         }
 
-        private void Conversations_ModelTagsLoaded(object? sender, EventArgs e)
-        {
-            if (Conversations.Items.Count > 0)
-            {
-                ConversationsListView.SelectedIndex = 0;
-            }
-        }
-
         private void ConversationsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue != null)
             {
-                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, OllamaClient, Conversations.AvailableModels.ToList());
+                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels.ToList());
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }
@@ -116,6 +100,7 @@ namespace OllamaClient.Views.Pages
         {
             Conversations.Create();
             ConversationsListView.SelectedIndex = Conversations.Items.Count - 1;
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
         }
     }
 }

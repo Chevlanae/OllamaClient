@@ -1,18 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OllamaClient.Models.Ollama
 {
+    internal static class ProcessTracker
+    {
+        private static Process[] Detections { get; set; }
+
+        static ProcessTracker()
+        {
+            Detections = [];
+        }
+
+        public static bool Scan()
+        {
+            Detections = Process.GetProcessesByName("ollama");
+
+            return Detections.Length > 0 && Detections.All((p) => { return !p.HasExited; });
+        }
+    }
+
+    public static class Patterns
+    {
+        public static string FROM = "FROM\\s.*";
+        public static string TEMPLATE = "TEMPLATE\\s\"\"\"\"\"\"(.|\\s)*?\"\"\"\"\"\"";
+        public static string PARAMETER = "PARAMETER\\s.*\\s.*";
+        public static string SYSTEM = "SYSTEM\\s\"\"\"\"\"\"(.|\\s)*?\"\"\"\"\"\"";
+        public static string ADAPTER = "ADAPTER\\s.*";
+        public static string MESSAGE = "MESSAGE\\s(user|assistant|system|tool)\\s.*";
+    }
+
+    public static class RegularExpressions
+    {
+        public static Regex FROM = new(Patterns.FROM, RegexOptions.IgnoreCase);
+        public static Regex TEMPLATE = new(Patterns.TEMPLATE, RegexOptions.IgnoreCase);
+        public static Regex PARAMETER = new(Patterns.PARAMETER, RegexOptions.IgnoreCase);
+        public static Regex SYSTEM = new(Patterns.SYSTEM, RegexOptions.IgnoreCase);
+        public static Regex ADAPTER = new(Patterns.ADAPTER, RegexOptions.IgnoreCase);
+        public static Regex MESSAGE = new(Patterns.MESSAGE, RegexOptions.IgnoreCase);
+    }
+
     public enum Role
     {
         user,
@@ -118,26 +157,26 @@ namespace OllamaClient.Models.Ollama
     public record struct ModelDetails
     {
         public string? parent_model { get; set; }
-        public string? format { get; set; }
-        public string? family { get; set; }
+        public string format { get; set; }
+        public string family { get; set; }
         public string[]? families { get; set; }
-        public string? parameter_size { get; set; }
-        public string? quantization_level { get; set; }
+        public string parameter_size { get; set; }
+        public string quantization_level { get; set; }
     }
 
     public record struct ModelInfo
     {
-        public string? name { get; set; }
-        public string? model { get; set; }
-        public string? modified_at { get; set; }
-        public long? size { get; set; }
-        public string? digest { get; set; }
-        public ModelDetails? details { get; set; }
+        public string name { get; set; }
+        public string model { get; set; }
+        public string modified_at { get; set; }
+        public long size { get; set; }
+        public string digest { get; set; }
+        public ModelDetails details { get; set; }
     }
 
     public record struct ListModelsResponse
     {
-        public ModelInfo[]? models { get; set; }
+        public ModelInfo[] models { get; set; }
     }
 
     public record struct StatusResponse
@@ -150,14 +189,9 @@ namespace OllamaClient.Models.Ollama
     [JsonSerializable(typeof(CompletionResponse))]
     [JsonSerializable(typeof(ListModelsResponse))]
     [JsonSerializable(typeof(StatusResponse))]
-    internal partial class ResponseJsonContext : JsonSerializerContext
-    {
-    }
-
-    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
     [JsonSerializable(typeof(ChatRequest))]
     [JsonSerializable(typeof(CompletionRequest))]
-    internal partial class RequestJsonContext : JsonSerializerContext
+    internal partial class SourceGenerationContext : JsonSerializerContext
     {
     }
 
@@ -230,19 +264,19 @@ namespace OllamaClient.Models.Ollama
         {
             using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Chat)
             {
-                Content = JsonContent.Create(request, RequestJsonContext.Default.ChatRequest)
+                Content = JsonContent.Create(request, SourceGenerationContext.Default.ChatRequest)
             };
-            return await GetJsonStream(req, ResponseJsonContext.Default.ChatResponse);
+            return await GetJsonStream(req, SourceGenerationContext.Default.ChatResponse);
         }
 
         public async Task<DelimitedJsonStream<CompletionResponse>?> GenerateCompletionStream(CompletionRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.GenerateCompletion)
             {
-                Content = JsonContent.Create(request, RequestJsonContext.Default.CompletionRequest)
+                Content = JsonContent.Create(request, SourceGenerationContext.Default.CompletionRequest)
             };
 
-            return await GetJsonStream(req, ResponseJsonContext.Default.CompletionResponse);
+            return await GetJsonStream(req, SourceGenerationContext.Default.CompletionResponse);
         }
 
         public async Task<ListModelsResponse?> ListModels()
@@ -253,7 +287,7 @@ namespace OllamaClient.Models.Ollama
 
             if (resp.IsSuccessStatusCode)
             {
-                return JsonSerializer.Deserialize(await resp.Content.ReadAsStringAsync(), ResponseJsonContext.Default.ListModelsResponse);
+                return JsonSerializer.Deserialize(await resp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.ListModelsResponse);
             }
             return null;
         }
@@ -276,12 +310,12 @@ namespace OllamaClient.Models.Ollama
     /// <typeparam name="T"></typeparam>
     public partial class DelimitedJsonStream<T> : IDisposable
     {
-        public Stream BaseStream { get; set; }
-        public char Delimiter { get; set; }
         private StreamReader Reader { get; set; }
         private StringBuilder PartialObject { get; set; }
         private JsonTypeInfo<T> JsonTypeInfo { get; set; }
 
+        public Stream BaseStream { get; set; }
+        public char Delimiter { get; set; }
         public bool EndOfStream => Reader.EndOfStream;
 
         /// <summary>
@@ -291,11 +325,11 @@ namespace OllamaClient.Models.Ollama
         /// <param name="delimiter"></param>
         public DelimitedJsonStream(Stream sourceStream, char delimiter, JsonTypeInfo<T> jsonTypeInfo)
         {
+            PartialObject = new();
+            JsonTypeInfo = jsonTypeInfo;
             BaseStream = sourceStream;
             Delimiter = delimiter;
             Reader = new(BaseStream);
-            PartialObject = new();
-            JsonTypeInfo = jsonTypeInfo;
         }
 
         public void Dispose()

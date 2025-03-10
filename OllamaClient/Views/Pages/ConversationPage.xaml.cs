@@ -15,11 +15,10 @@ using System.Timers;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, Client ollamaClient, List<string> availableModels)
+    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, List<string> availableModels)
     {
         public Conversation Conversation { get; set; } = conversation;
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public Client OllamaClient { get; set; } = ollamaClient;
         public List<string> AvailableModels { get; set; } = availableModels;
     }
 
@@ -28,9 +27,8 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        private Conversation? Conversation { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private Client? OllamaClient { get; set; }
+        private Conversation? Conversation { get; set; }
         private List<string>? AvailableModels { get; set; }
         private Timer DisableAutoScrollTimer { get; set; }
         private bool DisableAutoScroll { get; set; }
@@ -60,10 +58,9 @@ namespace OllamaClient.Views.Pages
             {
                 Conversation = args.Conversation;
                 DispatcherQueue = args.DispatcherQueue;
-                OllamaClient = args.OllamaClient;
                 AvailableModels = args.AvailableModels;
 
-                Conversation.EndOfMessasge += Conversation_EndOfResponse;
+                Conversation.EndOfMessasge += Conversation_EndOfMessage;
                 Conversation.UnhandledException += Conversation_UnhandledException;
                 ChatItemsControl.ItemsSource = Conversation.Items;
                 ModelsComboBox.ItemsSource = AvailableModels;
@@ -86,7 +83,7 @@ namespace OllamaClient.Views.Pages
             ChatItemsControl_ScrollToBottom(sender, new());
         }
 
-        private void Conversation_EndOfResponse(object? sender, System.EventArgs e)
+        private void Conversation_EndOfMessage(object? sender, System.EventArgs e)
         {
             ChatInputTextBox.IsEnabled = true;
             SendChatButton.IsEnabled = true;
@@ -102,7 +99,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (Conversation != null && DispatcherQueue != null && OllamaClient != null)
+            if (Conversation != null && DispatcherQueue != null)
             {
                 ChatInputTextBox.IsEnabled = false;
                 SendChatButton.IsEnabled = false;
@@ -111,10 +108,10 @@ namespace OllamaClient.Views.Pages
 
                 if(Conversation.Subject == null)
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await Conversation.GenerateSubject(OllamaClient, text); });
+                    DispatcherQueue.TryEnqueue(async () => { await Conversation.GenerateSubject(text); });
                 }
 
-                DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(OllamaClient, text); });
+                DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(text); });
 
                 ChatInputTextBox.Text = "";
             }
@@ -146,6 +143,16 @@ namespace OllamaClient.Views.Pages
         private void ChatItemGrid_Loaded(object sender, RoutedEventArgs e)
         {
             ChatItemsControl_ScrollToBottom(sender, e);
+        }
+
+        private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+
+        }
+
+        private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+
         }
     }
 }

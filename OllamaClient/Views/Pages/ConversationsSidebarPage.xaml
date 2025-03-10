@@ -12,7 +12,7 @@
     NavigationCacheMode="Required">
 
     <Grid>
-        <ListView x:Name="ConversationsListView" SelectionChanged="ConversationsListView_SelectionChanged">
+        <ListView x:Name="ConversationsListView" SelectionChanged="ConversationsListView_SelectionChanged" SelectionMode="Single">
             <ListView.Resources>
                 <vm:ChatItemSubjectConverter x:Key="ChatItemSubjectConverter" />
             </ListView.Resources>
