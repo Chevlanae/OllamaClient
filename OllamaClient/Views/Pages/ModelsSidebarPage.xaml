@@ -24,12 +24,88 @@
                             </Underline>
                         </Bold>
                     </TextBlock>
-                    <AppBarButton x:Name="ModelActionsButton" Icon="More" Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Click="ModelActionsButton_Click">
+                    <AppBarButton 
+                        x:Name="CreateModelDialogButton" 
+                        AllowFocusOnInteraction="True"
+                        Icon="Add" 
+                        Grid.Column="1" 
+                        Margin="10,5,0,0" 
+                        Height="50" 
+                        Width="50" 
+                        Click="CreateModelDialogButton_Click"
+                        LostFocus="CreateModelDialogButton_LostFocus">
                         <FlyoutBase.AttachedFlyout>
                             <Flyout>
-                                <StackPanel Orientation="Vertical">
-                                    <Button Content="Create" Click="CreateModelButton_Click" />
-                                </StackPanel>
+                                <ScrollViewer>
+                                    <Grid Width="400" HorizontalAlignment="Left">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <Grid Grid.Row="0" Margin="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Name: " />
+                                            <TextBox x:Name="NewModelNameTextBox" Grid.Column="1" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="new model name"/>
+                                        </Grid>
+                                        <Grid Grid.Row="1" Margin="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="From: " />
+                                            <TextBox x:Name="NewModelFromTextBox" Grid.Column="1" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="(optional) name of source model"/>
+                                        </Grid>
+                                        <Grid Grid.Row="2" Height="200" Margin="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Template: " />
+                                            <TextBox x:Name="NewModelTemplateTextBox" Grid.Column="1" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="(optional) prompt template"/>
+                                        </Grid>
+                                        <Grid Grid.Row="3" Margin="10" MaxWidth="400">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition MinWidth="100" />
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition MinWidth="48" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Parameters: " />
+                                            <ItemsControl x:Name="NewModelParametersItemsControl" Grid.Column="1" Margin="0,8,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                            <ComboBox x:Name="ModelParameterComboBox" MaxWidth="70" SelectionChanged="ModelParameterComboBox_SelectionChanged">
+                                                                <ComboBox.Items>
+                                                                    <ComboBoxItem Content="mirostat" />
+                                                                </ComboBox.Items>
+                                                            </ComboBox>
+                                                            <TextBox x:Name="ModelParameterTextBox" TextChanged="ModelParameterTextBox_TextChanged" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" Margin="10,0,0,0" MaxWidth="130" PlaceholderText="model parameter"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <AppBarButton x:Name="AddModelParameterButton" Icon="Add" Click="AddModelParameterButton_Click" VerticalAlignment="Bottom" HorizontalAlignment="Center" Height="48" Width="48" Grid.Column="2" />
+                                        </Grid>
+                                        <Grid Grid.Row="4" Margin="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="System: " />
+                                            <TextBox Grid.Column="1" x:Name="NewModelSystemTextBox" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="(optional) system message"/>
+                                        </Grid>
+                                        <Grid Grid.Row="5" Margin="10" HorizontalAlignment="Right">
+                                            <Button x:Name="CreateModelSendButton" Content="Create" Click="CreateModelSendButton_Click" />
+                                        </Grid>
+                                    </Grid>
+                                </ScrollViewer>
                             </Flyout>
                         </FlyoutBase.AttachedFlyout>
                     </AppBarButton>
@@ -37,14 +113,7 @@
             </ListView.Header>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="50" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding Name}" Grid.Column="0" VerticalAlignment="Center"/>
-                        <AppBarButton Icon="More" Grid.Column="1" Height="50" Width="50" Click="AppBarButton_Click" />
-                    </Grid>
+                    <TextBlock Text="{Binding Name}" Grid.Column="0" VerticalAlignment="Center"/>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

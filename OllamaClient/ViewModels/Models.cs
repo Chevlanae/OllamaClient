@@ -1,5 +1,6 @@
 ﻿using OllamaClient.Models.Ollama;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -21,11 +22,11 @@ namespace OllamaClient.ViewModels
         public string QuantizationLevel { get; set; } = source.details.quantization_level;
     }
 
-    public class ModelCollection(Client? connection = null)
+    public class ModelCollection
     {
-        private Client OllamaConnection { get; set; } = connection ?? new();
         public ObservableCollection<ModelItem> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
+        public List<string> StatusStrings = [];
 
         public event EventHandler? ModelsLoaded;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
@@ -48,7 +49,7 @@ namespace OllamaClient.ViewModels
 
                 ListModelsResponse? response = null;
 
-                await Task.Run(async () => { response = await OllamaConnection.ListModels(); });
+                await Task.Run(async () => { response = await ApiClient.ListModels(); });
 
                 if (response is not null)
                 {
@@ -68,6 +69,29 @@ namespace OllamaClient.ViewModels
             finally
             {
                 OnModelsLoaded(this, EventArgs.Empty);
+            }
+        }
+
+        public async Task CreateModel(CreateModelRequest request)
+        {
+            try
+            {
+                IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
+
+                await Task.Run(async () =>
+                {
+                    DelimitedJsonStream<StatusResponse>? stream = await ApiClient.CreateModel(request);
+
+                    if(stream is not null)
+                    {
+                        await stream.Read(progress, new System.Threading.CancellationToken());
+                    }
+                });
+            }
+            catch(Exception e)
+            {
+                Debug.Write(e);
+                OnUnhandledException(this, new(e, false));
             }
         }
     }

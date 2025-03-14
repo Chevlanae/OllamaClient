@@ -32,6 +32,7 @@ namespace OllamaClient.Views.Pages
         private List<string>? AvailableModels { get; set; }
         private Timer DisableAutoScrollTimer { get; set; }
         private bool DisableAutoScroll { get; set; }
+        private bool SendingMessage { get; set; }
 
         public ConversationPage()
         {
@@ -43,6 +44,7 @@ namespace OllamaClient.Views.Pages
                 DisableAutoScroll = false;
             };
             DisableAutoScroll = false;
+            SendingMessage = false;
         }
 
         public void DisableAutoScroll5Seconds()
@@ -60,6 +62,7 @@ namespace OllamaClient.Views.Pages
                 DispatcherQueue = args.DispatcherQueue;
                 AvailableModels = args.AvailableModels;
 
+                Conversation.StartOfMessage += Conversation_StartOfMessage;
                 Conversation.EndOfMessasge += Conversation_EndOfMessage;
                 Conversation.UnhandledException += Conversation_UnhandledException;
                 ChatItemsControl.ItemsSource = Conversation.Items;
@@ -83,10 +86,17 @@ namespace OllamaClient.Views.Pages
             ChatItemsControl_ScrollToBottom(sender, new());
         }
 
+        private void Conversation_StartOfMessage(object? sender, EventArgs e)
+        {
+            SendingMessage = true;
+            ChatInputTextBox.IsEnabled = false;
+        }
+
         private void Conversation_EndOfMessage(object? sender, System.EventArgs e)
         {
+            SendingMessage = false;
             ChatInputTextBox.IsEnabled = true;
-            SendChatButton.IsEnabled = true;
+            SendChatButton.Icon = new SymbolIcon(Symbol.Send);
         }
 
         private void Conversation_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
@@ -99,27 +109,26 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (Conversation != null && DispatcherQueue != null)
+            if (SendingMessage)
             {
-                ChatInputTextBox.IsEnabled = false;
-                SendChatButton.IsEnabled = false;
+                Conversation?.Cancel();
 
+                return;
+            }
+
+            if (Conversation != null)
+            {
                 string text = ChatInputTextBox.Text;
 
                 if(Conversation.Subject == null)
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await Conversation.GenerateSubject(text); });
+                    DispatcherQueue?.TryEnqueue(async () => { await Conversation.GenerateSubject(text); });
                 }
 
-                DispatcherQueue.TryEnqueue(async () => { await Conversation.SendUserMessage(text); });
+                DispatcherQueue?.TryEnqueue(async () => { await Conversation.SendUserMessage(text); });
 
                 ChatInputTextBox.Text = "";
             }
-        }
-
-        private void CancelChatButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (Conversation != null) Conversation.Cancel();
         }
 
         private async void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
@@ -147,12 +156,22 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-
+            if (SendingMessage)
+            {
+                SendChatButton.Opacity = 0;
+                SendChatButton.Icon = new SymbolIcon(Symbol.Cancel);
+                SendChatButton.Opacity = 1;
+            }
         }
 
         private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-
+            if(SendingMessage)
+            {
+                SendChatButton.Opacity = 0;
+                SendChatButton.Icon = new SymbolIcon(Symbol.Send);
+                SendChatButton.Opacity = 1;
+            }
         }
     }
 }

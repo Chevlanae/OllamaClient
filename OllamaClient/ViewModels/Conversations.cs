@@ -85,11 +85,9 @@ namespace OllamaClient.ViewModels
 
     [KnownType(typeof(ChatItem))]
     [DataContract]
-    public partial class Conversation(Client connection) : INotifyPropertyChanged
+    public partial class Conversation : INotifyPropertyChanged
     {
         private CancellationTokenSource? CancellationTokenSource { get; set; }
-
-        public Client OllamaConnection { get; set; } = connection;
 
         [DataMember]
         private ObservableCollection<ChatItem> ChatItemCollection { get; set; } = [];
@@ -182,7 +180,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<CompletionResponse>? stream = await OllamaConnection.GenerateCompletionStream(request);
+                    DelimitedJsonStream<CompletionResponse>? stream = await ApiClient.CompletionStream(request);
 
                     if (stream is not null)
                     {
@@ -249,7 +247,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<ChatResponse>? stream = await OllamaConnection.ChatStream(request);
+                    DelimitedJsonStream<ChatResponse>? stream = await ApiClient.ChatStream(request);
 
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
                     if (stream is not null)
@@ -282,12 +280,10 @@ namespace OllamaClient.ViewModels
     [KnownType(typeof(ChatItem))]
     [KnownType(typeof(Conversation))]
     [DataContract]
-    public class Conversations(Client? connection = null) : INotifyPropertyChanged
+    public class Conversations : INotifyPropertyChanged
     {
         [DataMember]
         private ObservableCollection<Conversation> ConversationCollection { get; set; } = [];
-
-        private Client OllamaConnection { get; set; } = connection ?? new();
 
         public ObservableCollection<string> AvailableModels { get; set; } = [];
 
@@ -332,7 +328,7 @@ namespace OllamaClient.ViewModels
 
         public void Create()
         {
-            Conversation newConv = new(OllamaConnection);
+            Conversation newConv = new();
 
             newConv.StartOfMessage += Conversation_StartOfMessage;
             newConv.EndOfMessasge += Conversation_EndOfMessage;
@@ -348,7 +344,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    if (await OllamaConnection.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+                    if (await ApiClient.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
                     {
                         foreach (ModelInfo info in models)
                         {
@@ -376,21 +372,14 @@ namespace OllamaClient.ViewModels
             {
                 Conversations? result = null;
 
-                await Task.Run(async () =>
-                {
-                    if (await Persistence.Get(typeof(Conversations)) is Conversations savedConvos)
-                    {
-                        result = savedConvos;
-                    }
-                });
+                await Task.Run(async () => { result = await Persistence.Files.Get<Conversations>(); });
 
-                if (result != null)
+                if (result is not null)
                 {
                     foreach (Conversation c in result.Items)
                     {
                         c.StartOfMessage += Conversation_StartOfMessage;
                         c.EndOfMessasge += Conversation_EndOfMessage;
-                        c.OllamaConnection = OllamaConnection;
                         Items.Add(c);
                     }
                 }
@@ -414,7 +403,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(async () => { await Persistence.Save(this); });
+                await Task.Run(async () => { await Persistence.Files.Set(this); });
             }
             catch (Exception ex)
             {

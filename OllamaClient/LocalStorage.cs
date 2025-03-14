@@ -9,31 +9,24 @@ using System.Xml;
 
 namespace OllamaClient.LocalStorage
 {
-    internal static class Paths
+    internal class DataFileDictionary
     {
-        public static string AppData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Assembly.GetExecutingAssembly().GetName().Name ?? "OllamaClient");
-    }
+        private Uri DirectoryUri { get; set; }
+        private Dictionary<Type, bool> FileLocks { get; set; }
 
-    internal static class Persistence
-    {
-        /// <summary>
-        /// Key represents a type that currently exists, the value is set to true when the file is being accessed, and false when it is not.
-        /// </summary>
-        private static Dictionary<Type, bool> Files = new();
-
-        private static string FolderPath = Path.Combine(Paths.AppData, "Persistence");
-
-        static Persistence()
+        public DataFileDictionary(Uri dirUri)
         {
-            Directory.CreateDirectory(FolderPath);
-            LoadFiles();
+            DirectoryUri = dirUri;
+            FileLocks = new();
+            LoadLocks();
+            Directory.CreateDirectory(DirectoryUri.LocalPath);
         }
 
-        private static void LoadFiles()
+        private void LoadLocks()
         {
             //check existing filenames in FolderPath against type names in the currently executing assembly
             Type[] assemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
-            foreach (string filename in Directory.GetFiles(FolderPath))
+            foreach (string filename in Directory.GetFiles(DirectoryUri.LocalPath))
             {
                 string typeName = Path.GetFileNameWithoutExtension(filename);
 
@@ -41,7 +34,7 @@ namespace OllamaClient.LocalStorage
 
                 if (match != null)
                 {
-                    Files[match] = false;
+                    FileLocks[match] = false;
                 }
             }
         }
@@ -51,7 +44,7 @@ namespace OllamaClient.LocalStorage
         /// </summary>
         /// <param name="T"></param>
         /// <exception cref="ArgumentException"></exception>
-        private static void AssertType(Type T)
+        private void AssertType(Type T)
         {
             if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
             {
@@ -62,34 +55,36 @@ namespace OllamaClient.LocalStorage
         /// <summary>
         /// Get a saved object with a given type
         /// </summary>
-        /// <param name="T"></param>
+        /// <param name="type"></param>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="FileNotFoundException"</exception>
         /// <returns></returns>
-        public static async Task<object?> Get(Type T)
+        public async Task<T?> Get<T>()
         {
-            AssertType(T);
+            Type type = typeof(T);
 
-            if (Files.ContainsKey(T))
+            AssertType(type);
+
+            if (FileLocks.ContainsKey(type))
             {
-                while (Files[T]) await Task.Delay(100);
+                while (FileLocks[type]) await Task.Delay(100);
             }
-            else return null;
+            else return default;
 
-            string filename = Path.Combine(FolderPath, T.Name + ".xml");
+            string filename = Path.Combine(DirectoryUri.LocalPath, type.Name + ".xml");
 
-            DataContractSerializer serializer = new(T);
-            object? result;
+            DataContractSerializer serializer = new(type);
+            T? result;
 
-            Files[T] = true;
+            FileLocks[type] = true;
 
             using (FileStream file = File.OpenRead(filename))
             using (XmlReader reader = XmlReader.Create(file))
             {
-                result = serializer.ReadObject(reader);
+                result = (T?)serializer.ReadObject(reader);
             }
 
-            Files[T] = false;
+            FileLocks[type] = false;
 
             return result;
         }
@@ -100,23 +95,23 @@ namespace OllamaClient.LocalStorage
         /// <param name="obj"></param>
         /// <exception cref="ArgumentException"></exception>
         /// <returns></returns>
-        public static async Task Save(object obj)
+        public async Task Set(object obj)
         {
-            Type objType = obj.GetType();
+            Type type = obj.GetType();
 
-            AssertType(objType);
+            AssertType(type);
 
-            if (Files.ContainsKey(objType))
+            if (FileLocks.ContainsKey(type))
             {
-                while (Files[objType]) await Task.Delay(100);
+                while (FileLocks[type]) await Task.Delay(100);
             }
-            else Files[objType] = false;
+            else FileLocks[type] = false;
 
-            string filename = Path.Combine(FolderPath, objType.Name + ".xml"); ;
+            string filename = Path.Combine(DirectoryUri.LocalPath, type.Name + ".xml"); ;
 
-            DataContractSerializer serializer = new(objType);
+            DataContractSerializer serializer = new(type);
 
-            Files[objType] = true;
+            FileLocks[type] = true;
 
             using (FileStream file = File.Create(filename))
             using (XmlWriter writer = XmlWriter.Create(file))
@@ -124,7 +119,18 @@ namespace OllamaClient.LocalStorage
                 serializer.WriteObject(writer, obj);
             }
 
-            Files[objType] = false;
+            FileLocks[type] = false;
         }
+    }
+
+    internal static class Paths
+    {
+        public static string AppData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Assembly.GetExecutingAssembly().GetName().Name ?? "OllamaClient");
+    }
+
+    internal static class Persistence
+    {
+        private static Uri DirectoryUri = new(Path.Combine(Paths.AppData, "Persistence"));
+        public static DataFileDictionary Files = new(DirectoryUri);
     }
 }

@@ -92,23 +92,16 @@
                         </AppBarButton.KeyboardAccelerators>
                     </AppBarButton>
                     <AppBarButton 
-                        x:Name="CancelChatButton" 
-                        Icon="Cancel" 
+                        x:Name="SendChatButton"
+                        Icon="Send"
                         Width="50" 
-                        Height="50" 
-                        Visibility="Collapsed"
-                        Click="CancelChatButton_Click" >
-                        <AppBarButton.KeyboardAccelerators>
-                            <KeyboardAccelerator Modifiers="Control" Key="C" />
-                        </AppBarButton.KeyboardAccelerators>
-                    </AppBarButton>
-                    <AppBarButton 
-                        x:Name="SendChatButton" 
-                        Icon="Send" Width="50" 
                         Height="50" Foreground="Aqua" 
                         Click="SendChatButton_Click"  
                         PointerEntered="SendChatButton_PointerEntered"
                         PointerExited="SendChatButton_PointerExited">
+                        <AppBarButton.OpacityTransition>
+                            <ScalarTransition Duration="0:0:2" />
+                        </AppBarButton.OpacityTransition>
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Key="Enter" />
                         </AppBarButton.KeyboardAccelerators>
