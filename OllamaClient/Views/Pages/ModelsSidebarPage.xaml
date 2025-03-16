@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:OllamaClient.Views.Pages"
+    xmlns:vm="using:OllamaClient.ViewModels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -32,8 +33,7 @@
                         Margin="10,5,0,0" 
                         Height="50" 
                         Width="50" 
-                        Click="CreateModelDialogButton_Click"
-                        LostFocus="CreateModelDialogButton_LostFocus">
+                        Click="CreateModelDialogButton_Click">
                         <FlyoutBase.AttachedFlyout>
                             <Flyout>
                                 <ScrollViewer>
@@ -81,12 +81,8 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                            <ComboBox x:Name="ModelParameterComboBox" MaxWidth="70" SelectionChanged="ModelParameterComboBox_SelectionChanged">
-                                                                <ComboBox.Items>
-                                                                    <ComboBoxItem Content="mirostat" />
-                                                                </ComboBox.Items>
-                                                            </ComboBox>
-                                                            <TextBox x:Name="ModelParameterTextBox" TextChanged="ModelParameterTextBox_TextChanged" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" Margin="10,0,0,0" MaxWidth="130" PlaceholderText="model parameter"/>
+                                                            <ComboBox ItemsSource="{Binding KeyOptions}" SelectedItem="{Binding Key, Mode=TwoWay}" MaxWidth="70" />
+                                                            <TextBox Text="{Binding Value, Mode=TwoWay}" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" Margin="10,0,0,0" MaxWidth="130" PlaceholderText="model parameter"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -102,7 +98,13 @@
                                             <TextBox Grid.Column="1" x:Name="NewModelSystemTextBox" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="(optional) system message"/>
                                         </Grid>
                                         <Grid Grid.Row="5" Margin="10" HorizontalAlignment="Right">
-                                            <Button x:Name="CreateModelSendButton" Content="Create" Click="CreateModelSendButton_Click" />
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="10" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="CreateModelClearButton" Grid.Column="0" Content="Clear" Click="CreateModelClearButton_Click" />
+                                            <Button x:Name="CreateModelSendButton" Grid.Column="2" Content="Create" Click="CreateModelSendButton_Click" />
                                         </Grid>
                                     </Grid>
                                 </ScrollViewer>

@@ -60,14 +60,6 @@ namespace OllamaClient.ViewModels
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public ChatItem(Message message)
-        {
-            ContentString = message.content ?? "";
-            Role = message.role ?? "user";
-        }
-
-        public ChatItem(Role role, string content) : this(new Message(role, content)) { }
-
         protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             PropertyChanged?.Invoke(sender, e);
@@ -213,8 +205,9 @@ namespace OllamaClient.ViewModels
 
             if (CancellationTokenSource == null) CancellationTokenSource = new();
 
-            ChatItem newChatItem = new(Role.user, prompt)
+            ChatItem newChatItem = new()
             {
+                Content = prompt,
                 Timestamp = DateTime.Now
             };
 
@@ -222,8 +215,9 @@ namespace OllamaClient.ViewModels
             Items.Add(newChatItem);
 
             //initialize assistant response with empty content
-            ChatItem responseChatItem = new(Role.assistant, "")
+            ChatItem responseChatItem = new()
             {
+                Role = "assistant",
                 ProgressRingEnabled = true
             };
 

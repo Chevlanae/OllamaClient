@@ -2,10 +2,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,12 +22,6 @@ namespace OllamaClient.Views.Pages
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
     }
 
-    public class ModelParameterItem
-    {
-        public string Key { get; set; } = "";
-        public string Value { get; set; } = "";
-    }
-
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -33,15 +30,22 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ModelCollection ModelList { get; set; } = new();
-        private ObservableCollection<ModelParameterItem> CreateModelParameters { get; set; } = [];
+        private ObservableCollection<ModelParameterItem> NewModelParameters { get; set; } = [];
 
         public ModelsSidebarPage()
         {
             InitializeComponent();
-            NewModelParametersItemsControl.ItemsSource = CreateModelParameters;
+            NewModelParametersItemsControl.ItemsSource = NewModelParameters;
             ModelsListView.ItemsSource = ModelList.Items;
 
-            CreateModelParameters.Add(new());
+            ModelList.UnhandledException += ModelList_UnhandledException;
+
+            NewModelParameters.Add(new());
+        }
+
+        private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        {
+            DispatcherQueue?.TryEnqueue(() => { new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate(); });
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -67,40 +71,42 @@ namespace OllamaClient.Views.Pages
             FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
         }
 
-        private void CreateModelDialogButton_LostFocus(object sender, RoutedEventArgs e)
+        private void AddModelParameterButton_Click(object sender, RoutedEventArgs e)
+        {
+            NewModelParameters.Add(new());
+        }
+
+        private void CreateModelClearButton_Click(object sender, RoutedEventArgs e)
         {
             NewModelNameTextBox.Text = "";
             NewModelFromTextBox.Text = "";
-            CreateModelParameters.Clear();
-            CreateModelParameters.Add(new());
+            NewModelParameters.Clear();
+            NewModelParameters.Add(new());
             NewModelSystemTextBox.Text = "";
             NewModelTemplateTextBox.Text = "";
         }
 
         private void CreateModelSendButton_Click(object sender, RoutedEventArgs e)
         {
-            CreateModelDialogButton_LostFocus(sender, e);
-        }
-
-        private void ModelParameterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if(sender is ComboBox comboBox && comboBox.DataContext is ModelParameterItem item)
+            if(NewModelNameTextBox.Text != "")
             {
-                item.Key = comboBox.SelectedItem?.ToString() ?? "";
-            }
-        }
+                string name = NewModelNameTextBox.Text;
+                string? from = null;
+                string? system = null;
+                string? template = null;
 
-        private void ModelParameterTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if(sender is TextBox textBox && textBox.DataContext is ModelParameterItem item)
-            {
-                item.Value = textBox.Text;
-            }
-        }
+                if (NewModelFromTextBox.Text != "") from = NewModelFromTextBox.Text;
+                if (NewModelSystemTextBox.Text != "") system = NewModelSystemTextBox.Text;
+                if (NewModelTemplateTextBox.Text != "") template = NewModelTemplateTextBox.Text;
 
-        private void AddModelParameterButton_Click(object sender, RoutedEventArgs e)
-        {
-            CreateModelParameters.Add(new());
+                DispatcherQueue?.TryEnqueue(async () =>
+                {
+                    await ModelList.CreateModel(name, from, system, template, NewModelParameters);
+                    await ModelList.LoadModels();
+                });
+
+                CreateModelClearButton_Click(sender, e);
+            }
         }
     }
 }

@@ -60,6 +60,23 @@ namespace OllamaClient.Models.Ollama
         tool
     }
 
+    public enum ModelParameter
+    {
+        mirostat,
+        mirostat_eta,
+        mirostat_tau,
+        num_ctx,
+        repeat_last_n,
+        repeat_penalty,
+        temperature,
+        seed,
+        stop,
+        num_predict,
+        top_k,
+        top_p,
+        min_p
+    }
+
     public record struct Message
     {
         public string? role { get; set; }
@@ -145,7 +162,7 @@ namespace OllamaClient.Models.Ollama
         public string? from { get; set; }
         public Dictionary<string, string>? files { get; set; }
         public Dictionary<string, string>? adapters { get; set; }
-        public object? template { get; set; }
+        public string? template { get; set; }
         public string[]? license { get; set; }
         public string? system { get; set; }
         public ModelParameters? parameters { get; set; }
@@ -194,11 +211,12 @@ namespace OllamaClient.Models.Ollama
 
     public record struct ShowModelResponse
     {
+        public string? license { get; set; }
         public string modelfile { get; set; }
-        public string parameters { get; set; }
-        public string template { get; set; }
-        public ModelDetails details { get; set; }
-        public object model_info { get; set; }
+        public string? parameters { get; set; }
+        public string? template { get; set; }
+        public ModelDetails? details { get; set; }
+        public object? model_info { get; set; }
     }
 
     public record struct CopyModelRequest
@@ -436,8 +454,10 @@ namespace OllamaClient.Models.Ollama
             return await GetJsonStream(req, SourceGenerationContext.Default.CompletionResponse);
         }
 
-        public static async Task<DelimitedJsonStream<StatusResponse>?> CreateModel(CreateModelRequest request)
+        public static async Task<DelimitedJsonStream<StatusResponse>?> CreateModelStream(CreateModelRequest request)
         {
+            request.stream = true;
+
             using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Create)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CreateModelRequest)
