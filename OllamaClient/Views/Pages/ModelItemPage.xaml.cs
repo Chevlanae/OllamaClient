@@ -8,10 +8,11 @@ using OllamaClient.ViewModels;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ModelItemPageNavigationArgs(DispatcherQueue dispatcherQueue, ModelItem modelItem)
+    public class ModelItemPageNavigationArgs(DispatcherQueue dispatcherQueue, ModelItem modelItem, ModelCollection collection)
     {
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public ModelItem ModelItem { get; set; } = modelItem;
+        public ModelItem SelectedItem { get; set; } = modelItem;
+        public ModelCollection Collection { get; set; } = collection;
     }
 
     /// <summary>
@@ -21,6 +22,7 @@ namespace OllamaClient.Views.Pages
     {
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ModelItem? Item { get; set; }
+        private ModelCollection? ParentCollection { get; set; }
 
         public ModelItemPage()
         {
@@ -32,10 +34,29 @@ namespace OllamaClient.Views.Pages
             if(e.Parameter is ModelItemPageNavigationArgs args)
             {
                 DispatcherQueue = args.DispatcherQueue;
-                Item = args.ModelItem;
+                Item = args.SelectedItem;
+                ParentCollection = args.Collection;
 
-                RootGrid.DataContext = Item;
+                ItemGrid.DataContext = Item;
+                DetailsTextBox.Text = Item.ToDetailsString();
             }
+        }
+
+        private void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if(ParentCollection is not null && Item is not null)
+            {
+                DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item.Model); });
+            }
+        }
+
+        private void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            
+        }
+
+        private void InfoButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
         }
     }
 }

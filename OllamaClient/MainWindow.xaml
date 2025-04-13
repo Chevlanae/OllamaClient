@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="OllamaClient">
     <SplitView x:Name="TopLevelSplitView"
-               DisplayMode="CompactOverlay"
+               DisplayMode="CompactInline"
                CompactPaneLength="50"
                OpenPaneLength="300"
                MinWidth="300">

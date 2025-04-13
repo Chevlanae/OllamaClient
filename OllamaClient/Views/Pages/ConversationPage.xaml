@@ -34,12 +34,12 @@
                                 </Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}">
                                     <TextBlock Grid.Row="0" Text="{Binding Role}" Margin="10,0,10,0"  />
-                                    <TextBlock Text="{Binding Timestamp, Converter={StaticResource ChatItemTimestampConverter}, Mode=OneWay}" />
+                                    <TextBlock Text="{Binding Timestamp, Converter={StaticResource ChatItemTimestampConverter}}" />
                                     <ProgressRing 
                                         Height="10" 
                                         Width="10" 
                                         Margin="10,0,10,0" 
-                                        Visibility="{Binding ProgressRingEnabled, Converter={StaticResource ChatItemProgressRingVisibilityConverter}, Mode=OneWay}"/>
+                                        Visibility="{Binding ProgressRingEnabled, Converter={StaticResource ChatItemProgressRingVisibilityConverter}}"/>
                                 </StackPanel>
                                 <TextBox Grid.Row="1"
                                     Margin="10" 
@@ -48,7 +48,7 @@
                                     Padding="15" 
                                     HorizontalAlignment="{Binding Converter={StaticResource ChatItemHorizontalAlignmentConverter}}"
                                     x:Name="ChatBubbleTextBox"
-                                    Text="{Binding Content, Mode=OneWay}" 
+                                    Text="{Binding Content}" 
                                     MaxWidth="600"
                                     IsReadOnly="True" 
                                     TextWrapping="Wrap" 
@@ -86,6 +86,15 @@
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
                          ScrollViewer.IsVerticalRailEnabled="True" />
                 <StackPanel Grid.Row="1" Margin="0,0,10,0" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <AppBarToggleButton 
+                        x:Name="ScrollLockButton" 
+                        Width="50" 
+                        Height="50"
+                        Click="ScrollLockButton_Click">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE72E;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
                     <AppBarButton Icon="Attach" Width="50" Height="50">
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Control" Key="T" />
@@ -100,7 +109,7 @@
                         PointerEntered="SendChatButton_PointerEntered"
                         PointerExited="SendChatButton_PointerExited">
                         <AppBarButton.OpacityTransition>
-                            <ScalarTransition Duration="0:0:2" />
+                            <ScalarTransition Duration="0:0:4" />
                         </AppBarButton.OpacityTransition>
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Key="Enter" />

@@ -14,8 +14,10 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Views\Pages\ConversationsBlankPage.xaml" />
+    <None Remove="Views\Pages\CreateModelPage.xaml" />
     <None Remove="Views\Pages\ModelItemPage.xaml" />
   </ItemGroup>
+
   <ItemGroup>
     <Page Remove="Themes\Generic.xaml" />
   </ItemGroup>
@@ -43,15 +45,17 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
+    <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
+    <PackageReference Include="WinUIEdit" Version="0.0.4-prerelease" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="NewFolder\ChatSessionPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Pages\CreateModelPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Pages\ModelItemPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -68,6 +72,19 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup>
+     <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+     <DotNetCliToolReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <SGenTypes>OllamaClient.ViewModels.Conversations</SGenTypes>
+    <SGenProxyTypes>false</SGenProxyTypes>
+    <SGenVerbose>true</SGenVerbose>
+  </PropertyGroup>
+
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution

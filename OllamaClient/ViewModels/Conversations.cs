@@ -2,12 +2,12 @@
 using OllamaClient.LocalStorage;
 using OllamaClient.Models.Ollama;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
@@ -34,7 +34,7 @@ namespace OllamaClient.ViewModels
             set
             {
                 ProgRingEnabled = value;
-                OnPropertyChanged(this, new("ProgressRingEnabled"));
+                OnPropertyChanged();
             }
         }
 
@@ -44,7 +44,7 @@ namespace OllamaClient.ViewModels
             set
             {
                 MessageTimestamp = value;
-                OnPropertyChanged(this, new("Timestamp"));
+                OnPropertyChanged();
             }
         }
 
@@ -54,15 +54,15 @@ namespace OllamaClient.ViewModels
             set
             {
                 ContentString = value;
-                OnPropertyChanged(this, new("Content"));
+                OnPropertyChanged();
             }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
-            PropertyChanged?.Invoke(sender, e);
+            PropertyChanged?.Invoke(this, new(name));
         }
 
         public Message ToMessage()
@@ -96,7 +96,7 @@ namespace OllamaClient.ViewModels
             set
             {
                 ChatItemCollection = value;
-                OnPropertyChanged(this, new("Items"));
+                OnPropertyChanged();
             }
         }
 
@@ -106,33 +106,33 @@ namespace OllamaClient.ViewModels
             set
             {
                 SubjectString = value;
-                OnPropertyChanged(this, new("Subject"));
+                OnPropertyChanged();
             }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event EventHandler? StartOfMessage;
-        public event EventHandler? EndOfMessasge;
+        public event EventHandler? StartOfRequest;
+        public event EventHandler? EndOfResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        protected void OnStartOfRequest(EventArgs e)
         {
-            PropertyChanged?.Invoke(sender, e);
+            StartOfRequest?.Invoke(this, e);
         }
 
-        protected void OnStartOfMessage(object? sender, EventArgs e)
+        protected void OnEndOfResponse(EventArgs e)
         {
-            StartOfMessage?.Invoke(sender, e);
+            EndOfResponse?.Invoke(this, e);
         }
 
-        protected void OnEndOfMessage(object? sender, EventArgs e)
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
         {
-            EndOfMessasge?.Invoke(sender, e);
+            UnhandledException?.Invoke(this, e);
         }
 
-        protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
-            UnhandledException?.Invoke(sender, e);
+            PropertyChanged?.Invoke(this, new(name));
         }
 
         public void Cancel()
@@ -162,17 +162,17 @@ namespace OllamaClient.ViewModels
                 }
             };
 
-            OnStartOfMessage(this, EventArgs.Empty);
+            OnStartOfRequest(EventArgs.Empty);
 
             try
             {
                 StringBuilder subject = new();
 
-                Progress<CompletionResponse> progress = new((response) => { Subject = subject.Append(response.response).ToString(); });
+                Progress<CompletionResponse> progress = new((response) => { subject.Append(response.response); });
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<CompletionResponse>? stream = await ApiClient.CompletionStream(request);
+                    DelimitedJsonStream<CompletionResponse>? stream = await Api.CompletionStream(request);
 
                     if (stream is not null)
                     {
@@ -181,7 +181,9 @@ namespace OllamaClient.ViewModels
                             await stream.Read(progress, CancellationTokenSource.Token);
                         }
                     }
-                }, CancellationTokenSource.Token);
+                });
+
+                Subject = subject.ToString();
             }
             catch (TaskCanceledException e)
             {
@@ -190,11 +192,11 @@ namespace OllamaClient.ViewModels
             catch (Exception e)
             {
                 Debug.Write(e);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+                OnUnhandledException(new (e, false));
             }
             finally
             {
-                OnEndOfMessage(this, EventArgs.Empty);
+                OnEndOfResponse(EventArgs.Empty);
             }
         }
 
@@ -232,16 +234,18 @@ namespace OllamaClient.ViewModels
                 stream = true
             };
 
-            OnStartOfMessage(this, EventArgs.Empty);
+            OnStartOfRequest(EventArgs.Empty);
 
             //Make HTTP POST request to ollama with built request, cancel if necessary
             try
             {
-                Progress<ChatResponse> progress = new(s => responseChatItem.Content = responseChatItem.Content + s.message?.content ?? "");
+                StringBuilder content = new();
+
+                Progress<ChatResponse> progress = new(s => responseChatItem.Content = content.Append(s.message?.content ?? "").ToString());
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<ChatResponse>? stream = await ApiClient.ChatStream(request);
+                    DelimitedJsonStream<ChatResponse>? stream = await Api.ChatStream(request);
 
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
                     if (stream is not null)
@@ -260,13 +264,13 @@ namespace OllamaClient.ViewModels
             catch (Exception e)
             {
                 Debug.Write(e);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+                OnUnhandledException(new (e, false));
             }
             finally
             {
                 responseChatItem.ProgressRingEnabled = false;
                 responseChatItem.Timestamp = DateTime.Now;
-                OnEndOfMessage(this, EventArgs.Empty);
+                OnEndOfResponse(EventArgs.Empty);
             }
         }
     }
@@ -287,63 +291,40 @@ namespace OllamaClient.ViewModels
             set
             {
                 ConversationCollection = value;
-                OnPropertyChanged(this, new("Items"));
+                OnPropertyChanged();
             }
         }
 
-        public event EventHandler? ModelTagsLoaded;
+        public event EventHandler? LoadModelsResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void OnModelTagsLoaded(object? sender, EventArgs e)
+        protected void OnLoadModelsResponse(EventArgs e)
         {
-            ModelTagsLoaded?.Invoke(sender, e);
+            LoadModelsResponse?.Invoke(this, e);
         }
 
-        protected void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
         {
-            UnhandledException?.Invoke(sender, e);
+            UnhandledException?.Invoke(this, e);
         }
 
-        protected void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
-            PropertyChanged?.Invoke(sender, e);
+            PropertyChanged?.Invoke(this, new(name));
         }
 
-        private async void Conversation_StartOfMessage(object? sender, EventArgs e)
-        {
-            await Save();
-        }
-
-        private async void Conversation_EndOfMessage(object? sender, EventArgs e)
-        {
-            await Save();
-        }
-
-        public void Create()
-        {
-            Conversation newConv = new();
-
-            newConv.StartOfMessage += Conversation_StartOfMessage;
-            newConv.EndOfMessasge += Conversation_EndOfMessage;
-
-            Items.Add(newConv);
-        }
-
-        public async Task LoadAvailableModels()
+        public async Task LoadModels()
         {
             try
             {
-                List<string> results = [];
+                string[] results = [];
 
                 await Task.Run(async () =>
                 {
-                    if (await ApiClient.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
+                    if (await Api.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
                     {
-                        foreach (ModelInfo info in models)
-                        {
-                            if (info.model != null) results.Add(info.model);
-                        }
+                        results = models.Select((m) => { return m.model; }).ToArray();
                     }
                 });
 
@@ -352,28 +333,27 @@ namespace OllamaClient.ViewModels
             catch (Exception e)
             {
                 Debug.Write(e);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+                OnUnhandledException(new (e, false));
             }
             finally
             {
-                OnModelTagsLoaded(this, EventArgs.Empty);
+                OnLoadModelsResponse(EventArgs.Empty);
             }
         }
 
-        public async Task LoadSavedConversations()
+        public async Task LoadSaved()
         {
             try
             {
+                Items.Clear();
                 Conversations? result = null;
 
-                await Task.Run(async () => { result = await Persistence.Files.Get<Conversations>(); });
+                await Task.Run(() => { result = Persistence.Files.Get<Conversations>(); });
 
-                if (result is not null)
+                if(result is not null)
                 {
                     foreach (Conversation c in result.Items)
                     {
-                        c.StartOfMessage += Conversation_StartOfMessage;
-                        c.EndOfMessasge += Conversation_EndOfMessage;
                         Items.Add(c);
                     }
                 }
@@ -389,7 +369,7 @@ namespace OllamaClient.ViewModels
             catch (Exception e)
             {
                 Debug.Write(e);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(e, false));
+                OnUnhandledException(new (e, false));
             }
         }
 
@@ -397,12 +377,12 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(async () => { await Persistence.Files.Set(this); });
+                await Task.Run(() => { Persistence.Files.Set(this); });
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Debug.Write(ex);
-                OnUnhandledException(this, new UnhandledExceptionEventArgs(ex, false));
+                Debug.Write(e);
+                OnUnhandledException(new(e, false));
             }
         }
     }

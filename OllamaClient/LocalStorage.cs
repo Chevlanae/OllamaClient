@@ -1,54 +1,55 @@
-﻿using System;
+﻿using OllamaClient.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace OllamaClient.LocalStorage
 {
-    internal class DataFileDictionary
+    /// <summary>
+    /// Generic class for encapsulating a DataContract object to a file. Automatically serializes and deserializes the object to/from XML.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    internal class DataFile<T>
     {
-        private Uri DirectoryUri { get; set; }
-        private Dictionary<Type, bool> FileLocks { get; set; }
-
-        public DataFileDictionary(Uri dirUri)
+        private Uri FileUri { get; set; }
+        private object FileLock = new();
+        private DataContractSerializer Serializer;
+        private Type[] AllowedTypes =
         {
-            DirectoryUri = dirUri;
-            FileLocks = new();
-            LoadLocks();
-            Directory.CreateDirectory(DirectoryUri.LocalPath);
-        }
-
-        private void LoadLocks()
-        {
-            //check existing filenames in FolderPath against type names in the currently executing assembly
-            Type[] assemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
-            foreach (string filename in Directory.GetFiles(DirectoryUri.LocalPath))
-            {
-                string typeName = Path.GetFileNameWithoutExtension(filename);
-
-                Type? match = assemblyTypes.FirstOrDefault((t) => { return t.Name == typeName; });
-
-                if (match != null)
-                {
-                    FileLocks[match] = false;
-                }
-            }
-        }
+            typeof(Conversations),
+            typeof(Conversation),
+            typeof(ChatItem)
+        };
 
         /// <summary>
-        /// Assert that a given type is not primitive, and has the DataContract attribute
+        /// Constructor for DataFile, takes a directory URI as the location for the parent directory, and a type argument for the object to be serialized
         /// </summary>
-        /// <param name="T"></param>
+        /// <param name="dirUri"></param>
+        /// <param name="type"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentException"></exception>
-        private void AssertType(Type T)
+        public DataFile(Uri dirUri)
         {
-            if (!Attribute.IsDefined(T, typeof(DataContractAttribute)))
+            if (typeof(T) == null)
             {
-                throw new ArgumentException("Given argument was an invalid type. This function only accepts objects with a DataContract attribute", "T");
+                throw new ArgumentNullException($"Given type argument '{nameof(T)}' was null", "T");
+            }
+            else if (!Attribute.IsDefined(typeof(T), typeof(DataContractAttribute)))
+            {
+                throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts types with a DataContractAttribute", "T");
+            }
+            else if (!AllowedTypes.Contains(typeof(T)))
+            {
+                throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts types of {String.Join(", ", AllowedTypes.Select(t => t.FullName))}", "T");
+            }
+            else
+            {
+                FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
+                Serializer = new(typeof(T));
             }
         }
 
@@ -59,78 +60,119 @@ namespace OllamaClient.LocalStorage
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="FileNotFoundException"</exception>
         /// <returns></returns>
-        public async Task<T?> Get<T>()
+        public T? Get()
         {
-            Type type = typeof(T);
-
-            AssertType(type);
-
-            if (FileLocks.ContainsKey(type))
+            lock (FileLock)
             {
-                while (FileLocks[type]) await Task.Delay(100);
+                using FileStream file = File.OpenRead(FileUri.LocalPath);
+                using XmlReader reader = XmlReader.Create(file);
+                return (T?)Serializer.ReadObject(reader);
             }
-            else return default;
-
-            string filename = Path.Combine(DirectoryUri.LocalPath, type.Name + ".xml");
-
-            DataContractSerializer serializer = new(type);
-            T? result;
-
-            FileLocks[type] = true;
-
-            using (FileStream file = File.OpenRead(filename))
-            using (XmlReader reader = XmlReader.Create(file))
-            {
-                result = (T?)serializer.ReadObject(reader);
-            }
-
-            FileLocks[type] = false;
-
-            return result;
         }
 
         /// <summary>
-        /// Save a given object to the appdata\local store
+        /// Save a given object
         /// </summary>
         /// <param name="obj"></param>
         /// <exception cref="ArgumentException"></exception>
         /// <returns></returns>
-        public async Task Set(object obj)
+        public void Set(T obj)
         {
-            Type type = obj.GetType();
-
-            AssertType(type);
-
-            if (FileLocks.ContainsKey(type))
+            lock (FileLock)
             {
-                while (FileLocks[type]) await Task.Delay(100);
+                using FileStream file = File.Create(FileUri.LocalPath);
+                using XmlWriter writer = XmlWriter.Create(file);
+                Serializer.WriteObject(writer, obj);
             }
-            else FileLocks[type] = false;
+        }
+    }
 
-            string filename = Path.Combine(DirectoryUri.LocalPath, type.Name + ".xml"); ;
+    /// <summary>
+    /// Class for managing a dictionary of DataFile objects, allowing easy access to serialized data files.
+    /// </summary>
+    internal class DataFileDictionary
+    {
+        private Uri DirectoryUri { get; set; }
+        private Dictionary<Type, object> Files { get; set; }
 
-            DataContractSerializer serializer = new(type);
+        /// <summary>
+        /// Constructor for DataFileDictionary, takes a directory URI as the location for the parent directory
+        /// </summary>
+        /// <param name="dirUri"></param>
+        public DataFileDictionary(Uri dirUri)
+        {
+            DirectoryUri = dirUri;
+            Files = [];
 
-            FileLocks[type] = true;
-
-            using (FileStream file = File.Create(filename))
-            using (XmlWriter writer = XmlWriter.Create(file))
+            if (!Directory.Exists(DirectoryUri.LocalPath))
             {
-                serializer.WriteObject(writer, obj);
+                Directory.CreateDirectory(DirectoryUri.LocalPath);
             }
+            else
+            {
+                Assembly currentAssembly = Assembly.GetExecutingAssembly();
 
-            FileLocks[type] = false;
+                foreach (string file in Directory.GetFiles(DirectoryUri.LocalPath))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(file);
+
+                    if (currentAssembly.GetType(fileName) is Type fileType)
+                    {
+                        Type genericType = typeof(DataFile<>).MakeGenericType(fileType);
+
+                        if (Activator.CreateInstance(genericType, DirectoryUri) is object instance)
+                        {
+                            Files.Add(fileType, instance);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get a saved object with a given type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T? Get<T>()
+        {
+            if (Files.ContainsKey(typeof(T)) &&  Files[typeof(T)] is DataFile<T> dataFile)
+            {
+                return dataFile.Get();
+            }
+            else return default;
+
+        }
+
+        /// <summary>
+        /// Set a saved object with a given type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        public void Set<T>(T obj)
+        {
+            if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
+            {
+                dataFile.Set(obj);
+            }
+            else
+            {
+                DataFile<T> newFile = new(DirectoryUri);
+                newFile.Set(obj);
+                Files.Add(typeof(T), newFile);
+            }
         }
     }
 
     internal static class Paths
     {
-        public static string AppData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Assembly.GetExecutingAssembly().GetName().Name ?? "OllamaClient");
+        public static string AppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        public static string ParentDirectory = Path.Combine(AppData, "OllamaClient");
+        public static string Persistence = Path.Combine(ParentDirectory, "Persistence");
     }
 
     internal static class Persistence
     {
-        private static Uri DirectoryUri = new(Path.Combine(Paths.AppData, "Persistence"));
-        public static DataFileDictionary Files = new(DirectoryUri);
+        public static DataFileDictionary Files = new(new(Paths.Persistence));
     }
 }

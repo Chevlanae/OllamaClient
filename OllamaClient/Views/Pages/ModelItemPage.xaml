@@ -10,65 +10,27 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <Grid x:Name="RootGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid x:Name="ItemGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="60" />
                 <RowDefinition />
             </Grid.RowDefinitions>
-            <Grid Grid.Row="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0" Orientation="Horizontal">
-                    <TextBlock Text="Name: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Name}" />
-                </StackPanel>
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <TextBlock Text="Model: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Model}" />
-                </StackPanel>
-                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                    <TextBlock Text="Modified At: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding ModifiedAt}" />
-                </StackPanel>
-                <StackPanel Grid.Row="3" Orientation="Horizontal">
-                    <TextBlock Text="Size: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Size}" />
-                    <TextBlock Text=" bytes" Margin="0,0,10,0" />
-                </StackPanel>
-                <StackPanel Grid.Row="4" Orientation="Horizontal">
-                    <TextBlock Text="Digest: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Digest}" />
-                </StackPanel>
-                <StackPanel Grid.Row="5" Orientation="Horizontal">
-                    <TextBlock Text="Parent Model: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding ParentModel}" />
-                </StackPanel>
-                <StackPanel Grid.Row="6" Orientation="Horizontal">
-                    <TextBlock Text="Format: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Format}" />
-                </StackPanel>
-                <StackPanel Grid.Row="7" Orientation="Horizontal">
-                    <TextBlock Text="Family: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding Family}" />
-                </StackPanel>
-                <StackPanel Grid.Row="8" Orientation="Horizontal">
-                    <TextBlock Text="Parameter Size: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding ParameterSize}" />
-                </StackPanel>
-                <StackPanel Grid.Row="9" Orientation="Horizontal">
-                    <TextBlock Text="Quantization Level: " Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding QuantizationLevel}" />
-                </StackPanel>
+            <Grid>
+                <TextBlock Text="{Binding Name}" FontSize="24" TextDecorations="Underline" FontWeight="Bold" TextWrapping="Wrap" />
             </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Button x:Name="DeleteButton" Margin="0,0,10,0" Click="DeleteButton_Click">
+                    <FontIcon Glyph="&#xE74D;" />
+                </Button>
+                <Button x:Name="CopyButton" Margin="0,0,10,0" Click="CopyButton_Click">
+                    <FontIcon Glyph="&#xE8C8;" />
+                </Button>
+                <Button x:Name="InfoButton" Margin="0,0,10,0" Click="InfoButton_Click">
+                    <FontIcon Glyph="&#xE946;" />
+                </Button>
+            </StackPanel>
+            <TextBox x:Name="DetailsTextBox" Grid.Row="2" Background="Transparent" BorderThickness="0" IsReadOnly="True" TextWrapping="Wrap" />
         </Grid>
     </Grid>
 </Page>

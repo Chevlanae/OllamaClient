@@ -30,22 +30,14 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ModelCollection ModelList { get; set; } = new();
-        private ObservableCollection<ModelParameterItem> NewModelParameters { get; set; } = [];
 
         public ModelsSidebarPage()
         {
             InitializeComponent();
-            NewModelParametersItemsControl.ItemsSource = NewModelParameters;
             ModelsListView.ItemsSource = ModelList.Items;
 
             ModelList.UnhandledException += ModelList_UnhandledException;
-
-            NewModelParameters.Add(new());
-        }
-
-        private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
-        {
-            DispatcherQueue?.TryEnqueue(() => { new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate(); });
+            ModelList.ModelDeleted += ModelList_ModelDeleted;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -58,54 +50,29 @@ namespace OllamaClient.Views.Pages
             }
         }
 
+        private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        {
+            DispatcherQueue?.TryEnqueue(() => { new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate(); });
+        }
+
+        private void ModelList_ModelDeleted(object? sender, EventArgs e)
+        {
+            ContentFrame?.Navigate(typeof(ConversationsBlankPage));
+        }
+
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(ModelsListView.SelectedItem is ModelItem item && DispatcherQueue != null)
+            if(ModelsListView.SelectedItem is ModelItem item && DispatcherQueue is not null)
             {
-                ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPageNavigationArgs(DispatcherQueue, item));
+                ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPageNavigationArgs(DispatcherQueue, item, ModelList));
             }
         }
 
-        private void CreateModelDialogButton_Click(object sender, RoutedEventArgs e)
+        private void CreateModelButton_Click(object sender, RoutedEventArgs e)
         {
-            FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
-        }
-
-        private void AddModelParameterButton_Click(object sender, RoutedEventArgs e)
-        {
-            NewModelParameters.Add(new());
-        }
-
-        private void CreateModelClearButton_Click(object sender, RoutedEventArgs e)
-        {
-            NewModelNameTextBox.Text = "";
-            NewModelFromTextBox.Text = "";
-            NewModelParameters.Clear();
-            NewModelParameters.Add(new());
-            NewModelSystemTextBox.Text = "";
-            NewModelTemplateTextBox.Text = "";
-        }
-
-        private void CreateModelSendButton_Click(object sender, RoutedEventArgs e)
-        {
-            if(NewModelNameTextBox.Text != "")
+            if(DispatcherQueue is not null)
             {
-                string name = NewModelNameTextBox.Text;
-                string? from = null;
-                string? system = null;
-                string? template = null;
-
-                if (NewModelFromTextBox.Text != "") from = NewModelFromTextBox.Text;
-                if (NewModelSystemTextBox.Text != "") system = NewModelSystemTextBox.Text;
-                if (NewModelTemplateTextBox.Text != "") template = NewModelTemplateTextBox.Text;
-
-                DispatcherQueue?.TryEnqueue(async () =>
-                {
-                    await ModelList.CreateModel(name, from, system, template, NewModelParameters);
-                    await ModelList.LoadModels();
-                });
-
-                CreateModelClearButton_Click(sender, e);
+                ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPageNavigationArgs(DispatcherQueue, ModelList));
             }
         }
     }

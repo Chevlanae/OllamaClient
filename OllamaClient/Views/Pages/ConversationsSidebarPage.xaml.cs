@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System.Linq;
-using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -42,11 +41,21 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadModels(); });
 
                 if (Conversations.Items.Count == 0)
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadSavedConversations(); });
+                    DispatcherQueue.TryEnqueue(async () =>
+                    {
+                        await Conversations.LoadSaved();
+
+                        foreach (Conversation conversation in Conversations.Items)
+                        {
+                            conversation.StartOfRequest += Conversation_StartOfMessage;
+                            conversation.EndOfResponse += Conversation_EndOfMessasge;
+                        }
+                    });
+
                     ContentFrame?.Navigate(typeof(ConversationsBlankPage));
                 }
             }
@@ -57,6 +66,22 @@ namespace OllamaClient.Views.Pages
             base.OnNavigatedTo(e);
         }
 
+        private void Conversation_StartOfMessage(object? sender, System.EventArgs e)
+        {
+            DispatcherQueue?.TryEnqueue(async () =>
+            {
+                await Conversations.Save();
+            });
+        }
+
+        private void Conversation_EndOfMessasge(object? sender, System.EventArgs e)
+        {
+            DispatcherQueue?.TryEnqueue(async () =>
+            {
+                await Conversations.Save();
+            });
+        }
+
         private void ConversationItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             if (Conversations.Items.Count == 0)
@@ -65,14 +90,11 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private async void Conversations_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        private void Conversations_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
-            await Task.Run(() =>
+            DispatcherQueue?.TryEnqueue(() =>
             {
-                DispatcherQueue?.TryEnqueue(() =>
-                {
-                    new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate();
-                });
+                new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate();
             });
         }
 
@@ -91,6 +113,8 @@ namespace OllamaClient.Views.Pages
             if (sender is AppBarButton button && button.DataContext is Conversation c)
             {
                 c.Cancel();
+                c.StartOfRequest -= Conversation_StartOfMessage;
+                c.EndOfResponse -= Conversation_EndOfMessasge;
                 Conversations.Items.Remove(c);
                 DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
             }
@@ -98,8 +122,10 @@ namespace OllamaClient.Views.Pages
 
         private void AddConversationButton_Click(object sender, RoutedEventArgs e)
         {
-            Conversations.Create();
-            ConversationsListView.SelectedIndex = Conversations.Items.Count - 1;
+            Conversation conversation = new();
+            conversation.StartOfRequest += Conversation_StartOfMessage;
+            conversation.EndOfResponse += Conversation_EndOfMessasge;
+            Conversations.Items.Add(conversation);
             DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
         }
     }
