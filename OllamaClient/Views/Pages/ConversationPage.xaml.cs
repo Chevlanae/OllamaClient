@@ -2,12 +2,11 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Services.Dialogs;
 using OllamaClient.ViewModels;
-using OllamaClient.Views.Windows;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Timers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -102,9 +101,12 @@ namespace OllamaClient.Views.Pages
 
         private void Conversation_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
-            DispatcherQueue?.TryEnqueue(() =>
+            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
+
+            DispatcherQueue?.TryEnqueue(async () =>
             {
-                new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate();
+                await DialogService.ShowDialog(dialog);
+
             });
         }
 

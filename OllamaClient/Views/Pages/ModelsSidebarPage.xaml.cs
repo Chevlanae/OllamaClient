@@ -2,8 +2,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Services.Dialogs;
 using OllamaClient.ViewModels;
-using OllamaClient.Views.Windows;
+using OllamaClient.Views.Dialogs;
 using System;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
@@ -46,19 +47,14 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private Paragraph CreatePullDialogParagraph()
-        {
-            Paragraph pullModelParagraph = new();
-            pullModelParagraph.Inlines.Add(new Run() { Text = "Enter the name of the model to pull from " });
-            Hyperlink link = new Hyperlink() { NavigateUri = new("https://ollama.com/library") };
-            link.Inlines.Add(new Run() { Text = "https://ollama.com/library" });
-            pullModelParagraph.Inlines.Add(link);
-            return pullModelParagraph;
-        }
-
         private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
-            DispatcherQueue?.TryEnqueue(() => { new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate(); });
+            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
+
+            DispatcherQueue?.TryEnqueue(async () =>
+            {
+                await DialogService.ShowDialog(dialog);
+            });
         }
 
         private void ModelList_ModelDeleted(object? sender, EventArgs e)
@@ -84,19 +80,11 @@ namespace OllamaClient.Views.Pages
 
         private async void PullModelButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentDialog contentDialog = new ContentDialog()
-            {
-                Title = "Pull Model",
-                DefaultButton = ContentDialogButton.Primary,
-                PrimaryButtonText = "Pull",
-                CloseButtonText = "Cancel",
-                Content = new TextBoxDialog(CreatePullDialogParagraph(), "Model name"),
-                XamlRoot = XamlRoot,
-            };
+            PullModelContentDialog dialog = new(XamlRoot);
 
-            ContentDialogResult result = await contentDialog.ShowAsync();
+            ContentDialogResult result = await dialog.ShowAsync();
 
-            if (result == ContentDialogResult.Primary && (contentDialog.Content as TextBoxDialog)?.InputText is string modelName)
+            if (result == ContentDialogResult.Primary && (dialog.Content as TextBoxDialog)?.InputText is string modelName)
             {
                 DispatcherQueue?.TryEnqueue(async () => { await ModelList.PullModel(modelName); });
             }

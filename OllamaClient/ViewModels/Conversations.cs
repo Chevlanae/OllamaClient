@@ -1,5 +1,5 @@
 ﻿using Microsoft.UI.Xaml.Data;
-using OllamaClient.LocalStorage;
+using OllamaClient.Services.Persistence;
 using OllamaClient.Models;
 using System;
 using System.Collections.ObjectModel;
@@ -349,7 +349,7 @@ namespace OllamaClient.ViewModels
                 Items.Clear();
                 Conversations? result = null;
 
-                await Task.Run(() => { result = Persistence.Files.Get<Conversations>(); });
+                await Task.Run(() => { result = DataFileStorage.Get<Conversations>(); });
 
                 if(result is not null)
                 {
@@ -378,7 +378,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(() => { Persistence.Files.Set(this); });
+                await Task.Run(() => { DataFileStorage.Set(this); });
             }
             catch (Exception e)
             {

@@ -1,11 +1,10 @@
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Text;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.Models;
 using OllamaClient.ViewModels;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -28,14 +27,12 @@ namespace OllamaClient.Views.Pages
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ObservableCollection<ModelParameterItem> NewModelParameters { get; set; } = [];
         private ModelCollection? ModelList { get; set; }
-        private ObservableCollection<string> TemplateSelectorOptions { get; set; } = [];
 
         public CreateModelPage()
         {
             InitializeComponent();
 
             NewModelParametersItemsControl.ItemsSource = NewModelParameters;
-            TemplateSelectorComboBox.ItemsSource = TemplateSelectorOptions;
 
             NewModelParameters.Add(new());
         }
@@ -46,16 +43,7 @@ namespace OllamaClient.Views.Pages
             {
                 ModelList = args.ModelList;
                 DispatcherQueue = args.DispatcherQueue;
-
-                TemplateSelectorOptions.Clear();
-                var existingItems = ModelList.Items.Select(m => m.Model);
-                if (existingItems is not null)
-                {
-                    foreach (string item in existingItems)
-                    {
-                        TemplateSelectorOptions.Add(item);
-                    }
-                }
+                TemplateSelectorComboBox.ItemsSource = ModelList.Items;
             }
         }
 
@@ -105,6 +93,41 @@ namespace OllamaClient.Views.Pages
             {
                 CreateModelFormGrid.Visibility = Visibility.Visible;
                 CreateModelTextEditorGrid.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void TemplateSelectorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TemplateSelectorComboBox.SelectedItem is ModelItem selectedModel && selectedModel.ModelFile is not null)
+            {
+                CreateModelCodeEditorControl.Editor.SetText(selectedModel.ModelFile.ToString());
+
+                if(selectedModel.ParentModel is not null and not "")
+                {
+                    NewModelFromTextBox.Text = selectedModel.ParentModel;
+                }
+                else
+                {
+                    NewModelFromTextBox.Text = selectedModel.Model;
+                }
+
+                NewModelSystemTextBox.Document.SetText(TextSetOptions.None, selectedModel.ModelFile.System);
+                NewModelTemplateTextBox.Document.SetText(TextSetOptions.None, selectedModel.ModelFile.Template);
+
+                if(selectedModel.ModelFile.Parameters is not null)
+                {
+                    NewModelParameters.Clear();
+
+                    foreach (ModelParameter parameter in selectedModel.ModelFile.Parameters)
+                    {
+                        NewModelParameters.Add(new() { Key = parameter.Key, Value = parameter.Value});
+                    }
+                }
+                else
+                {
+                    NewModelParameters.Clear();
+                    NewModelParameters.Add(new());
+                }
             }
         }
     }

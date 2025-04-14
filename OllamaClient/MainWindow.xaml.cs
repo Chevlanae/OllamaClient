@@ -23,7 +23,7 @@ namespace OllamaClient
             ConversationsButton_Click(this, new());
         }
 
-        private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)
+        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
         {
             TopLevelSplitView.IsPaneOpen = !TopLevelSplitView.IsPaneOpen;
         }
@@ -35,11 +35,9 @@ namespace OllamaClient
                 ConversationsSideBarPageNavigationArgs args = new(ContentFrame, DispatcherQueue);
 
                 SidebarFrame.Navigate(typeof(ConversationsSidebarPage), args);
-
-                if (!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
             }
 
-            if (!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
         }
 
         private void ModelsButton_Click(object sender, RoutedEventArgs e)
@@ -51,7 +49,7 @@ namespace OllamaClient
                 SidebarFrame.Navigate(typeof(ModelsSidebarPage), args);
             }
 
-            if (!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)

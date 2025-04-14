@@ -2,8 +2,10 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Services.Dialogs;
 using OllamaClient.ViewModels;
-using OllamaClient.Views.Windows;
+using OllamaClient.Views.Dialogs;
+using System;
 using System.Linq;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -25,6 +27,7 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Conversations Conversations { get; set; }
+        private bool ContentDialogOpen { get; set; }
 
         public ConversationsSidebarPage()
         {
@@ -92,9 +95,12 @@ namespace OllamaClient.Views.Pages
 
         private void Conversations_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
-            DispatcherQueue?.TryEnqueue(() =>
+            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
+
+            DispatcherQueue?.TryEnqueue(async () =>
             {
-                new ErrorPopupWindow("An error occurred", e.ExceptionObject.ToString() ?? "").Activate();
+                await DialogService.ShowDialog(dialog);
+
             });
         }
 

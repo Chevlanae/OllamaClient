@@ -17,7 +17,7 @@ using Windows.Foundation.Collections;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace OllamaClient.Views.Pages
+namespace OllamaClient.Views.Dialogs
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -28,7 +28,7 @@ namespace OllamaClient.Views.Pages
 
         public TextBoxDialog(Paragraph content, string placeholderText)
         {
-            this.InitializeComponent();
+            InitializeComponent();
             ContentTextBlock.Blocks.Add(content);
             InputTextBox.PlaceholderText = placeholderText;
         }

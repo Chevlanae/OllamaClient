@@ -15,6 +15,7 @@
   <ItemGroup>
     <None Remove="Views\Pages\ConversationsBlankPage.xaml" />
     <None Remove="Views\Pages\CreateModelPage.xaml" />
+    <None Remove="Views\Pages\ErrorPopupContentDialog.xaml" />
     <None Remove="Views\Pages\ModelItemPage.xaml" />
     <None Remove="Views\Pages\TextBoxDialog.xaml" />
   </ItemGroup>
@@ -46,14 +47,17 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
-    <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250401001" />
     <PackageReference Include="WinUIEdit" Version="0.0.4-prerelease" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Pages\ErrorPopupContentDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Pages\TextBoxDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -72,22 +76,7 @@
     <Page Update="Views\Pages\ConversationsSidebarPage.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Views\Windows\ErrorPopupWindow.xaml">
-      <SubType>Designer</SubType>
-    </Page>
   </ItemGroup>
-  <ItemGroup>
-     <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-     <DotNetCliToolReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <SGenTypes>OllamaClient.ViewModels.Conversations</SGenTypes>
-    <SGenProxyTypes>false</SGenProxyTypes>
-    <SGenVerbose>true</SGenVerbose>
-  </PropertyGroup>
 
 
   <!--

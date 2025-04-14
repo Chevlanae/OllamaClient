@@ -63,7 +63,7 @@ namespace OllamaClient.ViewModels
                     {
                         License = response.license;
                         ModelFile = new(response.modelfile);
-                        ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true });
+                        ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
                         ParentModel = response.details?.parent_model ?? ParentModel;
                         Capabilities = response.capabilities;
                         Tensors = response.tensors;

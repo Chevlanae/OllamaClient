@@ -21,10 +21,15 @@
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <ComboBox x:Name="TemplateSelectorComboBox" Grid.Column="0" VerticalAlignment="Center">
+                <ComboBox x:Name="TemplateSelectorComboBox" Grid.Column="0" VerticalAlignment="Center" SelectionChanged="TemplateSelectorComboBox_SelectionChanged">
                     <ToolTipService.ToolTip>
                         <ToolTip Content="Select a model to copy settings from" />
                     </ToolTipService.ToolTip>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
                 </ComboBox>
                 <TextBlock Grid.Column="1" FontSize="20" VerticalAlignment="Center">
                     <Bold>

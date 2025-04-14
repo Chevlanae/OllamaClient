@@ -3,7 +3,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Services.Dialogs;
 using OllamaClient.ViewModels;
+using OllamaClient.Views.Dialogs;
 using System;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -40,6 +42,8 @@ namespace OllamaClient.Views.Pages
                 Item = args.SelectedItem;
                 ParentCollection = args.Collection;
 
+                Item.UnhandledException += Item_UnhandledException;
+
                 ItemGrid.DataContext = Item;
 
                 Paragraph detailsParagraph = new();
@@ -69,19 +73,30 @@ namespace OllamaClient.Views.Pages
             }
         }
 
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            if (Item is not null)
+            {
+                Item.UnhandledException -= Item_UnhandledException;
+            }
+        }
+
+        private void Item_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
+
+            DispatcherQueue?.TryEnqueue(async () =>
+            {
+                await DialogService.ShowDialog(dialog);
+
+            });
+        }
+
         private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            ContentDialog deleteDialog = new()
-            {
-                Title = $"Delete '{Item?.Name}'",
-                DefaultButton = ContentDialogButton.Primary,
-                Content = $"Are you sure you want to delete this model?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
-                XamlRoot = XamlRoot
-            };
+            DeleteModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
 
-            ContentDialogResult result = await deleteDialog.ShowAsync();
+            ContentDialogResult? result = await DialogService.ShowDialog(dialog);
 
             if (result == ContentDialogResult.Primary && ParentCollection is not null && Item is not null)
             {
@@ -91,26 +106,15 @@ namespace OllamaClient.Views.Pages
 
         private async void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            Paragraph dialogParagraph = new();
-            dialogParagraph.Inlines.Add(new Run() { Text = "Enter a name for the new copy" });
+            CopyModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
 
-            ContentDialog copyDialog = new()
-            {
-                Title = $"Copy '{Item?.Name}'",
-                DefaultButton = ContentDialogButton.Primary,
-                Content = new TextBoxDialog(dialogParagraph, "Model name"),
-                PrimaryButtonText = "Copy",
-                CloseButtonText = "Cancel",
-                XamlRoot = XamlRoot
-            };
-
-            ContentDialogResult result = await copyDialog.ShowAsync();
+            ContentDialogResult? result = await DialogService.ShowDialog(dialog);
 
             if
             (
                 result == ContentDialogResult.Primary
                 &&
-                (copyDialog.Content as TextBoxDialog)?.InputText is string newModelName
+                (dialog.Content as TextBoxDialog)?.InputText is string newModelName
                 &&
                 ParentCollection is not null
                 &&

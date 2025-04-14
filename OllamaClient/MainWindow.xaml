@@ -24,7 +24,7 @@
                     </Style>
                 </Grid.Resources>
                 <StackPanel Grid.Column="0">
-                    <AppBarButton x:Name="ToggleSidbarButton" Icon="GlobalNavigationButton" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidbarButton_Click" />
+                    <AppBarButton x:Name="ToggleSidbarButton" Icon="GlobalNavigationButton" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click" />
                     <AppBarButton x:Name="ConversationsButton" Icon="Message" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click" />
                     <AppBarButton x:Name="ModelsButton" Icon="Library" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click" />
                     <AppBarButton x:Name="SettingsButton" Icon="Setting" Style="{StaticResource NavBarButtonStyle}" Click="SettingsButton_Click" />
