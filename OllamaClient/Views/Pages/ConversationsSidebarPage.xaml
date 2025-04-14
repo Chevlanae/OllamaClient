@@ -29,7 +29,9 @@
                             </Underline>
                         </Bold>
                     </TextBlock>
-                    <AppBarButton Icon="Add" Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Click="AddConversationButton_Click" />
+                    <Button Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Background="Transparent" BorderBrush="Transparent" Click="AddConversationButton_Click">
+                        <FontIcon Glyph="&#xE710;" />
+                    </Button>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>

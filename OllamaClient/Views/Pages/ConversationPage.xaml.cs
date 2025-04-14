@@ -113,11 +113,8 @@ namespace OllamaClient.Views.Pages
             if (SendingMessage)
             {
                 Conversation?.Cancel();
-
-                return;
             }
-
-            if (Conversation != null)
+            else if (Conversation != null)
             {
                 string text = ChatInputTextBox.Text;
 

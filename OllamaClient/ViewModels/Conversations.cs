@@ -1,6 +1,6 @@
 ﻿using Microsoft.UI.Xaml.Data;
 using OllamaClient.LocalStorage;
-using OllamaClient.Models.Ollama;
+using OllamaClient.Models;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -148,10 +148,11 @@ namespace OllamaClient.ViewModels
         {
             if (SelectedModel == null) return;
             if (CancellationTokenSource == null) CancellationTokenSource = new();
+            if(Subject is null) Subject = "";
 
             CompletionRequest request = new()
             {
-                model = "llama3",
+                model = "llama3:8b",
                 prompt = "Summarize this string, in 4 words or less: " + prompt + ". This string is the opening message in a conversation. Do not include quotation marks.",
                 stream = true,
                 options = new()
@@ -168,7 +169,7 @@ namespace OllamaClient.ViewModels
             {
                 StringBuilder subject = new();
 
-                Progress<CompletionResponse> progress = new((response) => { subject.Append(response.response); });
+                Progress<CompletionResponse> progress = new(r => subject.Append(r.response));
 
                 await Task.Run(async () =>
                 {
@@ -324,7 +325,7 @@ namespace OllamaClient.ViewModels
                 {
                     if (await Api.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
                     {
-                        results = models.Select((m) => { return m.model; }).ToArray();
+                        results = models.Select(m => m.model).ToArray();
                     }
                 });
 

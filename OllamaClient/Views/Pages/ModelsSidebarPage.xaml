@@ -25,16 +25,24 @@
                             </Underline>
                         </Bold>
                     </TextBlock>
-                    <AppBarButton 
+                    <Button 
                         x:Name="CreateModelButton" 
+                        ToolTipService.ToolTip="Add or create new model"
                         AllowFocusOnInteraction="True"
-                        Icon="Add" 
+                        Background="Transparent"
+                        BorderBrush="Transparent"
                         Grid.Column="1" 
                         Margin="10,5,0,0" 
                         Height="50" 
-                        Width="50" 
-                        Click="CreateModelButton_Click">
-                    </AppBarButton>
+                        Width="50">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Create new model..." Click="CreateModelButton_Click" />
+                                <MenuFlyoutItem Text="Pull existing model..." Click="PullModelButton_Click" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                        <FontIcon Glyph="&#xE710;" />
+                    </Button>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>

@@ -16,7 +16,7 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ComboBox x:Name="ModelsComboBox" SelectionChanged="ModelsComboBox_SelectionChanged" />
+            <ComboBox x:Name="ModelsComboBox" ToolTipService.ToolTip="Selected model" SelectionChanged="ModelsComboBox_SelectionChanged" />
             <ScrollView Grid.Row="1" x:Name="ChatItemsScrollView" >
                 <ItemsControl x:Name="ChatItemsControl">
                     <ItemsControl.Resources>
@@ -90,12 +90,16 @@
                         x:Name="ScrollLockButton" 
                         Width="50" 
                         Height="50"
+                        ToolTipService.ToolTip="Scroll Lock"
                         Click="ScrollLockButton_Click">
+                        <AppBarToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="F1" />
+                        </AppBarToggleButton.KeyboardAccelerators>
                         <AppBarToggleButton.Icon>
                             <FontIcon Glyph="&#xE72E;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
-                    <AppBarButton Icon="Attach" Width="50" Height="50">
+                    <AppBarButton Icon="Attach" ToolTipService.ToolTip="Attach a file" Width="50" Height="50">
                         <AppBarButton.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Control" Key="T" />
                         </AppBarButton.KeyboardAccelerators>
@@ -103,8 +107,10 @@
                     <AppBarButton 
                         x:Name="SendChatButton"
                         Icon="Send"
+                        ToolTipService.ToolTip="Send message/Cancel message"
                         Width="50" 
-                        Height="50" Foreground="Aqua" 
+                        Height="50" 
+                        Foreground="Aqua" 
                         Click="SendChatButton_Click"  
                         PointerEntered="SendChatButton_PointerEntered"
                         PointerExited="SendChatButton_PointerExited">

@@ -16,13 +16,13 @@ namespace OllamaClient.LocalStorage
     internal class DataFile<T>
     {
         private Uri FileUri { get; set; }
-        private object FileLock = new();
-        private DataContractSerializer Serializer;
-        private Type[] AllowedTypes =
+        private readonly object FileLock = new();
+        private readonly DataContractSerializer Serializer = new(typeof(T));
+        private readonly Type[] AllowedTypes =
         {
-            typeof(Conversations),
+            typeof(ChatItem),
             typeof(Conversation),
-            typeof(ChatItem)
+            typeof(Conversations)
         };
 
         /// <summary>
@@ -49,7 +49,6 @@ namespace OllamaClient.LocalStorage
             else
             {
                 FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
-                Serializer = new(typeof(T));
             }
         }
 
@@ -136,7 +135,7 @@ namespace OllamaClient.LocalStorage
         /// <returns></returns>
         public T? Get<T>()
         {
-            if (Files.ContainsKey(typeof(T)) &&  Files[typeof(T)] is DataFile<T> dataFile)
+            if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
             {
                 return dataFile.Get();
             }

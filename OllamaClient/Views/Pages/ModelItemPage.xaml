@@ -10,27 +10,46 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <Grid x:Name="ItemGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="40" />
-                <RowDefinition Height="60" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid>
-                <TextBlock Text="{Binding Name}" FontSize="24" TextDecorations="Underline" FontWeight="Bold" TextWrapping="Wrap" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Column="1">
+            <Grid x:Name="ItemGrid" HorizontalAlignment="Stretch" VerticalAlignment="Center" MinWidth="200">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="60" />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <TextBlock Text="{Binding Name}" FontSize="24" TextDecorations="Underline" FontWeight="Bold" TextWrapping="Wrap" />
+                </Grid>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <Button x:Name="DeleteButton" ToolTipService.ToolTip="Delete" Margin="0,0,10,0" Click="DeleteButton_Click">
+                        <FontIcon Glyph="&#xE74D;" />
+                    </Button>
+                    <Button x:Name="CopyButton" ToolTipService.ToolTip="Copy" Margin="0,0,10,0" Click="CopyButton_Click">
+                        <FontIcon Glyph="&#xE8C8;" />
+                    </Button>
+                </StackPanel>
+                <Expander Grid.Row="2" IsExpanded="False" ExpandDirection="Down" Header="Summary" HorizontalAlignment="Stretch">
+                    <RichTextBlock x:Name="DetailsTextBox" />
+                </Expander>
+                <Expander Grid.Row="3" IsExpanded="False" ExpandDirection="Down" Header="Model File" HorizontalAlignment="Stretch">
+                    <RichTextBlock x:Name="ModelFileTextBox" />
+                </Expander>
+                <Expander Grid.Row="4" IsExpanded="False" ExpandDirection="Down" Header="Misc. Model Info" HorizontalAlignment="Stretch">
+                    <RichTextBlock x:Name="ModelInfoTextBox" />
+                </Expander>
+                <Expander Grid.Row="5" IsExpanded="False" ExpandDirection="Down" Header="License" HorizontalAlignment="Stretch">
+                    <RichTextBlock x:Name="LicenseTextBox" />
+                </Expander>
             </Grid>
-            <StackPanel Grid.Row="1" Orientation="Horizontal">
-                <Button x:Name="DeleteButton" Margin="0,0,10,0" Click="DeleteButton_Click">
-                    <FontIcon Glyph="&#xE74D;" />
-                </Button>
-                <Button x:Name="CopyButton" Margin="0,0,10,0" Click="CopyButton_Click">
-                    <FontIcon Glyph="&#xE8C8;" />
-                </Button>
-                <Button x:Name="InfoButton" Margin="0,0,10,0" Click="InfoButton_Click">
-                    <FontIcon Glyph="&#xE946;" />
-                </Button>
-            </StackPanel>
-            <TextBox x:Name="DetailsTextBox" Grid.Row="2" Background="Transparent" BorderThickness="0" IsReadOnly="True" TextWrapping="Wrap" />
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>

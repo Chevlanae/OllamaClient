@@ -1,14 +1,10 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Models.Ollama;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Windows;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -42,12 +38,22 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if(e.Parameter is ModelsSidebarPageNavigationArgs args)
+            if (e.Parameter is ModelsSidebarPageNavigationArgs args)
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
                 DispatcherQueue.TryEnqueue(async () => { await ModelList.LoadModels(); });
             }
+        }
+
+        private Paragraph CreatePullDialogParagraph()
+        {
+            Paragraph pullModelParagraph = new();
+            pullModelParagraph.Inlines.Add(new Run() { Text = "Enter the name of the model to pull from " });
+            Hyperlink link = new Hyperlink() { NavigateUri = new("https://ollama.com/library") };
+            link.Inlines.Add(new Run() { Text = "https://ollama.com/library" });
+            pullModelParagraph.Inlines.Add(link);
+            return pullModelParagraph;
         }
 
         private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
@@ -62,7 +68,7 @@ namespace OllamaClient.Views.Pages
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(ModelsListView.SelectedItem is ModelItem item && DispatcherQueue is not null)
+            if (ModelsListView.SelectedItem is ModelItem item && DispatcherQueue is not null)
             {
                 ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPageNavigationArgs(DispatcherQueue, item, ModelList));
             }
@@ -70,9 +76,29 @@ namespace OllamaClient.Views.Pages
 
         private void CreateModelButton_Click(object sender, RoutedEventArgs e)
         {
-            if(DispatcherQueue is not null)
+            if (DispatcherQueue is not null)
             {
                 ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPageNavigationArgs(DispatcherQueue, ModelList));
+            }
+        }
+
+        private async void PullModelButton_Click(object sender, RoutedEventArgs e)
+        {
+            ContentDialog contentDialog = new ContentDialog()
+            {
+                Title = "Pull Model",
+                DefaultButton = ContentDialogButton.Primary,
+                PrimaryButtonText = "Pull",
+                CloseButtonText = "Cancel",
+                Content = new TextBoxDialog(CreatePullDialogParagraph(), "Model name"),
+                XamlRoot = XamlRoot,
+            };
+
+            ContentDialogResult result = await contentDialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary && (contentDialog.Content as TextBoxDialog)?.InputText is string modelName)
+            {
+                DispatcherQueue?.TryEnqueue(async () => { await ModelList.PullModel(modelName); });
             }
         }
     }

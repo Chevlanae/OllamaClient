@@ -1,9 +1,11 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Models.Ollama;
+using OllamaClient.Models;
 using OllamaClient.ViewModels;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -49,8 +51,6 @@ namespace OllamaClient.Views.Pages
                 var existingItems = ModelList.Items.Select(m => m.Model);
                 if (existingItems is not null)
                 {
-                    TemplateSelectorOptions.Add("None");
-
                     foreach (string item in existingItems)
                     {
                         TemplateSelectorOptions.Add(item);
@@ -65,43 +65,22 @@ namespace OllamaClient.Views.Pages
             NewModelFromTextBox.Text = "";
             NewModelParameters.Clear();
             NewModelParameters.Add(new());
-            NewModelSystemTextBox.Document.SetText(Microsoft.UI.Text.TextSetOptions.None, "");
-            NewModelTemplateTextBox.Document.SetText(Microsoft.UI.Text.TextSetOptions.None, "");
+            NewModelSystemTextBox.Document.SetText(TextSetOptions.None, "");
+            NewModelTemplateTextBox.Document.SetText(TextSetOptions.None, "");
         }
 
         private void CreateModelSendButton_Click(object sender, RoutedEventArgs e)
         {
             if (NewModelNameTextBox.Text is not "" && ModelList is not null)
             {
-                string name = NewModelNameTextBox.Text;
-                string? from = null;
-                string? system = null;
-                string? template = null;
-                string? license = null;
-                ModelParameters? parameters = null;
-
-                if (NewModelFromTextBox.Text is not "") from = NewModelFromTextBox.Text;
-                NewModelSystemTextBox.Document.GetText(Microsoft.UI.Text.TextGetOptions.None, out system);
-                NewModelTemplateTextBox.Document.GetText(Microsoft.UI.Text.TextGetOptions.None, out template);
-                if (NewModelParameters.Any((p) => { return p.Value is not ""; }))
-                {
-                    ModelParameters modelParameters = new();
-
-                    foreach (ModelParameterItem item in NewModelParameters)
-                    {
-                        if (item.Value is not "")
-                        {
-                            ModelFile.AggregateParameter(item, modelParameters);
-                        }
-                    }
-
-                    parameters = modelParameters;
-                }
+                string system;
+                string template;
+                NewModelSystemTextBox.Document.GetText(TextGetOptions.None, out system);
+                NewModelTemplateTextBox.Document.GetText(TextGetOptions.None, out template);
 
                 DispatcherQueue?.TryEnqueue(async () =>
                 {
-                    await ModelList.CreateModel(name, from, system, template, license, parameters);
-                    await ModelList.LoadModels();
+                    await ModelList.CreateModel(NewModelNameTextBox.Text, NewModelFromTextBox.Text, system, template, null, NewModelParameters);
                 });
 
                 CreateModelClearButton_Click(this, e);

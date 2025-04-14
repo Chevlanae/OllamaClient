@@ -1,6 +1,5 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using OllamaClient.Models.Ollama;
 using OllamaClient.Views.Pages;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -39,13 +38,13 @@ namespace OllamaClient
 
                 if (!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
             }
-            
-            if(!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
+
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidbarButton_Click(sender, e);
         }
 
         private void ModelsButton_Click(object sender, RoutedEventArgs e)
         {
-            if(SidebarFrame.CurrentSourcePageType != typeof(ModelsSidebarPage))
+            if (SidebarFrame.CurrentSourcePageType != typeof(ModelsSidebarPage))
             {
                 ModelsSidebarPageNavigationArgs args = new(ContentFrame, DispatcherQueue);
 
