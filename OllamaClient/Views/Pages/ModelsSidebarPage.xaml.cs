@@ -1,8 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Services.Dialogs;
+using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
@@ -59,7 +58,7 @@ namespace OllamaClient.Views.Pages
 
         private void ModelList_ModelDeleted(object? sender, EventArgs e)
         {
-            ContentFrame?.Navigate(typeof(ConversationsBlankPage));
+            ContentFrame?.Navigate(typeof(BlankPage));
         }
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

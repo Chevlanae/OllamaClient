@@ -1,9 +1,8 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Services.Dialogs;
+using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
@@ -46,30 +45,12 @@ namespace OllamaClient.Views.Pages
 
                 ItemGrid.DataContext = Item;
 
-                Paragraph detailsParagraph = new();
-                detailsParagraph.Inlines.Add(new Run() { Text = Item.ToSummaryString() });
-                DetailsTextBox.Blocks.Add(detailsParagraph);
+                DetailsTextBox.Blocks.Add(Item.DetailsParagraph);
+                ModelInfoTextBox.Blocks.Add(Item.ModelInfoParagraph);
+                LicenseTextBox.Blocks.Add(Item.LicenseParagraph);
+                ModelFileTextBox.Blocks.Add(Item.ModelFileParagraph);
 
-                Paragraph modelInfoParagraph = new();
-                modelInfoParagraph.Inlines.Add(new Run() { Text = Item.ModelInfo });
-                ModelInfoTextBox.Blocks.Add(modelInfoParagraph);
-
-                Paragraph licenseParagraph = new();
-                if (Item.License is not null)
-                {
-                    licenseParagraph.Inlines.Add(new Run() { Text = Item.License });
-                    LicenseTextBox.Blocks.Add(licenseParagraph);
-                }
-                else
-                {
-                    LicenseTextBox.Blocks.Add(new Paragraph() { Inlines = { new Run() { Text = "No license information available." } } });
-                }
-                if (Item.ModelFile is not null)
-                {
-                    Paragraph modelFileParagraph = new();
-                    modelFileParagraph.Inlines.Add(new Run() { Text = Item.ModelFile.ToString() });
-                    ModelFileTextBox.Blocks.Add(modelFileParagraph);
-                }
+                DispatcherQueue.TryEnqueue(() => Item.GenerateParagraphText());
             }
         }
 
@@ -78,6 +59,11 @@ namespace OllamaClient.Views.Pages
             if (Item is not null)
             {
                 Item.UnhandledException -= Item_UnhandledException;
+
+                DetailsTextBox.Blocks.Clear();
+                ModelInfoTextBox.Blocks.Clear();
+                LicenseTextBox.Blocks.Clear();
+                ModelFileTextBox.Blocks.Clear();
             }
         }
 
@@ -85,11 +71,7 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () =>
-            {
-                await DialogService.ShowDialog(dialog);
-
-            });
+            DispatcherQueue?.TryEnqueue(async () => { await DialogService.ShowDialog(dialog); });
         }
 
         private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

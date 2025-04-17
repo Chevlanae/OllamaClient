@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Xaml.Data;
-using OllamaClient.Services.Persistence;
 using OllamaClient.Models;
 using System;
 using System.Collections.ObjectModel;
@@ -13,13 +12,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using OllamaClient.Services;
 
 namespace OllamaClient.ViewModels
 {
     [DataContract]
     public partial class ChatItem : INotifyPropertyChanged
     {
-        private bool ProgRingEnabled { get; set; } = false;
+        private bool RingEnabled { get; set; } = false;
 
         [DataMember]
         private DateTime? MessageTimestamp { get; set; }
@@ -30,10 +30,10 @@ namespace OllamaClient.ViewModels
 
         public bool ProgressRingEnabled
         {
-            get => ProgRingEnabled;
+            get => RingEnabled;
             set
             {
-                ProgRingEnabled = value;
+                RingEnabled = value;
                 OnPropertyChanged();
             }
         }
@@ -173,14 +173,11 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<CompletionResponse>? stream = await Api.CompletionStream(request);
+                    DelimitedJsonStream<CompletionResponse> stream = await Api.CompletionStream(request);
 
-                    if (stream is not null)
+                    using (stream)
                     {
-                        using (stream)
-                        {
-                            await stream.Read(progress, CancellationTokenSource.Token);
-                        }
+                        await stream.Read(progress, CancellationTokenSource.Token);
                     }
                 });
 
@@ -246,15 +243,11 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<ChatResponse>? stream = await Api.ChatStream(request);
-
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
-                    if (stream is not null)
+                    DelimitedJsonStream<ChatResponse> stream = await Api.ChatStream(request);
+                    using (stream)
                     {
-                        using (stream)
-                        {
-                            await stream.Read(progress, CancellationTokenSource.Token).ConfigureAwait(false);
-                        }
+                        await stream.Read(progress, CancellationTokenSource.Token).ConfigureAwait(false);
                     }
                 });
             }
@@ -296,13 +289,31 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public event EventHandler? LoadModelsResponse;
+        public event EventHandler? ModelsLoaded;
+        public event EventHandler? ModelsLoadFailed;
+        public event EventHandler? ConversationsLoaded;
+        public event EventHandler? ConversationsLoadFailed;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void OnLoadModelsResponse(EventArgs e)
+        protected void OnModelsLoaded(EventArgs e)
         {
-            LoadModelsResponse?.Invoke(this, e);
+            ModelsLoaded?.Invoke(this, e);
+        }
+
+        protected void OnModelsLoadFailed(EventArgs e)
+        {
+            ModelsLoadFailed?.Invoke(this, e);
+        }
+
+        protected void OnConversationsLoaded(EventArgs e)
+        {
+            ConversationsLoaded?.Invoke(this, e);
+        }
+
+        protected void OnConversationsLoadFailed(EventArgs e)
+        {
+            ConversationsLoadFailed?.Invoke(this, e);
         }
 
         protected void OnUnhandledException(UnhandledExceptionEventArgs e)
@@ -319,58 +330,46 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                string[] results = [];
-
-                await Task.Run(async () =>
+                string[] results = await Task.Run(async () =>
                 {
-                    if (await Api.ListModels() is ListModelsResponse response && response.models is ModelInfo[] models)
-                    {
-                        results = models.Select(m => m.model).ToArray();
-                    }
+                    ListModelsResponse response = await Api.ListModels();
+
+                    return response.models.Select(m => m.model).ToArray();
                 });
 
                 AvailableModels = [.. results];
+
+                OnModelsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new (e, false));
-            }
-            finally
-            {
-                OnLoadModelsResponse(EventArgs.Empty);
+                OnModelsLoadFailed(EventArgs.Empty);
             }
         }
 
-        public async Task LoadSaved()
+        public async Task LoadConversations()
         {
             try
             {
                 Items.Clear();
-                Conversations? result = null;
 
-                await Task.Run(() => { result = DataFileStorage.Get<Conversations>(); });
-
-                if(result is not null)
+                if(await Task.Run(DataFileService.Get<Conversations>) is Conversations result)
                 {
                     foreach (Conversation c in result.Items)
                     {
                         Items.Add(c);
                     }
                 }
-            }
-            catch (FileNotFoundException)
-            {
-                return;
-            }
-            catch (XmlException)
-            {
-                return;
+
+                OnConversationsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new (e, false));
+                OnConversationsLoadFailed(EventArgs.Empty);
             }
         }
 
@@ -378,7 +377,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(() => { DataFileStorage.Set(this); });
+                await Task.Run(() => { DataFileService.Set(this); });
             }
             catch (Exception e)
             {

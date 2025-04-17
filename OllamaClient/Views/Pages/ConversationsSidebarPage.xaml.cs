@@ -2,9 +2,9 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Services.Dialogs;
-using OllamaClient.ViewModels;
+using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
+using OllamaClient.ViewModels;
 using System;
 using System.Linq;
 
@@ -27,15 +27,17 @@ namespace OllamaClient.Views.Pages
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Conversations Conversations { get; set; }
-        private bool ContentDialogOpen { get; set; }
 
         public ConversationsSidebarPage()
         {
             Conversations = new();
             Conversations.Items.CollectionChanged += ConversationItems_CollectionChanged;
+            Conversations.ConversationsLoaded += Conversations_ConversationsLoaded;
             Conversations.UnhandledException += Conversations_UnhandledException;
 
             InitializeComponent();
+
+            ConversationsListView.ItemsSource = Conversations.Items;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -45,51 +47,52 @@ namespace OllamaClient.Views.Pages
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
                 DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadModels(); });
-
-                if (Conversations.Items.Count == 0)
-                {
-                    DispatcherQueue.TryEnqueue(async () =>
-                    {
-                        await Conversations.LoadSaved();
-
-                        foreach (Conversation conversation in Conversations.Items)
-                        {
-                            conversation.StartOfRequest += Conversation_StartOfMessage;
-                            conversation.EndOfResponse += Conversation_EndOfMessasge;
-                        }
-                    });
-
-                    ContentFrame?.Navigate(typeof(ConversationsBlankPage));
-                }
+                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadConversations(); });
             }
 
-            ConversationsListView.ItemsSource = Conversations.Items;
             ConversationsListView.SelectedIndex = -1;
 
             base.OnNavigatedTo(e);
         }
 
-        private void Conversation_StartOfMessage(object? sender, System.EventArgs e)
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            DispatcherQueue?.TryEnqueue(async () =>
+            foreach (Conversation conversation in Conversations.Items)
             {
-                await Conversations.Save();
-            });
+                conversation.StartOfRequest -= Conversation_StartOfMessage;
+                conversation.EndOfResponse -= Conversation_EndOfMessasge;
+            }
+            base.OnNavigatedFrom(e);
         }
 
-        private void Conversation_EndOfMessasge(object? sender, System.EventArgs e)
+        private void Conversation_StartOfMessage(object? sender, EventArgs e)
         {
-            DispatcherQueue?.TryEnqueue(async () =>
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
+        }
+
+        private void Conversation_EndOfMessasge(object? sender, EventArgs e)
+        {
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
+        }
+
+        private void Conversations_ConversationsLoaded(object? sender, EventArgs e)
+        {
+            if(Conversations.Items.Count == 0) ContentFrame?.Navigate(typeof(BlankPage));
+            else
             {
-                await Conversations.Save();
-            });
+                foreach (Conversation conversation in Conversations.Items)
+                {
+                    conversation.StartOfRequest += Conversation_StartOfMessage;
+                    conversation.EndOfResponse += Conversation_EndOfMessasge;
+                }
+            }
         }
 
         private void ConversationItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             if (Conversations.Items.Count == 0)
             {
-                ContentFrame?.Navigate(typeof(ConversationsBlankPage));
+                ContentFrame?.Navigate(typeof(BlankPage));
             }
         }
 
@@ -97,16 +100,12 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () =>
-            {
-                await DialogService.ShowDialog(dialog);
-
-            });
+            DispatcherQueue?.TryEnqueue(async () => { await DialogService.ShowDialog(dialog); });
         }
 
         private void ConversationsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue != null)
+            if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue is not null)
             {
                 ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels.ToList());
 

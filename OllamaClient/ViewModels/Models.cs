@@ -1,9 +1,11 @@
-﻿using OllamaClient.Models;
+﻿using Microsoft.UI.Xaml.Documents;
+using OllamaClient.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -31,18 +33,23 @@ namespace OllamaClient.ViewModels
         public string[]? Capabilities { get; set; }
         public TensorInfo[]? Tensors { get; set; }
 
-        public event EventHandler? ModelFileLoaded;
-        public event EventHandler? ModelFileFailed;
+        public Paragraph DetailsParagraph { get; set; } = new();
+        public Paragraph ModelInfoParagraph { get; set; } = new();
+        public Paragraph LicenseParagraph { get; set; } = new();
+        public Paragraph ModelFileParagraph { get; set; } = new();
+
+        public event EventHandler? ShowModelinfoLoaded;
+        public event EventHandler? ShowModelinfoFailed;
         public event UnhandledExceptionEventHandler? UnhandledException;
 
-        protected void OnModelFileLoaded(EventArgs e)
+        protected void OnShowModelinfoLoaded(EventArgs e)
         {
-            ModelFileLoaded?.Invoke(this, e);
+            ShowModelinfoLoaded?.Invoke(this, e);
         }
 
-        protected void OnModelFileFailed(EventArgs e)
+        protected void OnShowModelinfoFailed(EventArgs e)
         {
-            ModelFileFailed?.Invoke(this, e);
+            ShowModelinfoFailed?.Invoke(this, e);
         }
 
         protected void OnUnhandledException(UnhandledExceptionEventArgs e)
@@ -50,38 +57,33 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(this, e);
         }
 
-        public async Task GetModelDetails()
+        public async Task GetShowModelInfo()
         {
             try
             {
-                ShowModelRequest request = new() { model = Model };
-                bool success = false;
-
                 await Task.Run(async () =>
                 {
-                    if (await Api.ShowModel(request) is ShowModelResponse response)
-                    {
-                        License = response.license;
-                        ModelFile = new(response.modelfile);
-                        ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
-                        ParentModel = response.details?.parent_model ?? ParentModel;
-                        Capabilities = response.capabilities;
-                        Tensors = response.tensors;
-                        success = true;
-                    }
+                    ShowModelResponse response = await Api.ShowModel(new() { model = Model });
+
+                    License = response.license;
+                    ModelFile = new(response.modelfile);
+                    ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
+                    ParentModel = response.details?.parent_model ?? ParentModel;
+                    Capabilities = response.capabilities;
+                    Tensors = response.tensors;
                 });
 
-                if (success) OnModelFileLoaded(EventArgs.Empty);
-                else OnModelFileFailed(EventArgs.Empty);
+                OnShowModelinfoLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnShowModelinfoFailed(EventArgs.Empty);
             }
         }
 
-        public string ToSummaryString()
+        private string ToSummaryString()
         {
             StringBuilder sb = new();
 
@@ -89,7 +91,7 @@ namespace OllamaClient.ViewModels
             sb.AppendLine($"Modified At: {ModifiedAt}");
             sb.AppendLine($"Size: {Size / 1024 / 1024} MB");
             sb.AppendLine($"Digest: {Digest}");
-            if(ParentModel is not null and not "") sb.AppendLine($"Parent Model: {ParentModel}");
+            if(!string.IsNullOrEmpty(ParentModel)) sb.AppendLine($"Parent Model: {ParentModel}");
             sb.AppendLine($"Format: {Format}");
             sb.AppendLine($"Family: {Family}");
             if(Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
@@ -97,6 +99,33 @@ namespace OllamaClient.ViewModels
             sb.AppendLine($"Quantization Level: {QuantizationLevel}");
 
             return sb.ToString();
+        }
+
+        public void GenerateParagraphText()
+        {
+            DetailsParagraph.Inlines.Clear();
+            DetailsParagraph.Inlines.Add(new Run() { Text = ToSummaryString() });
+
+            if(ModelInfo is not null)
+            {
+                ModelInfoParagraph.Inlines.Clear();
+                ModelInfoParagraph.Inlines.Add(new Run() { Text = ModelInfo });
+            }
+
+            LicenseParagraph.Inlines.Clear();
+            if (License is not null)
+            {
+                LicenseParagraph.Inlines.Add(new Run() { Text = License });
+            }
+            else
+            {
+                LicenseParagraph.Inlines.Add(new Run() { Text = "No license information available." });
+            }
+            if (ModelFile is not null)
+            {
+                ModelFileParagraph.Inlines.Clear();
+                ModelFileParagraph.Inlines.Add(new Run() { Text = ModelFile.ToString() });
+            }
         }
     }
 
@@ -106,21 +135,21 @@ namespace OllamaClient.ViewModels
         public DateTime? LastUpdated { get; set; }
         public List<string> StatusStrings = [];
 
-        public event EventHandler? LoadModelsResponse;
+        public event EventHandler? ModelsLoaded;
         public event EventHandler? ModelCreated;
         public event EventHandler? ModelDeleted;
         public event EventHandler? ModelCopied;
         public event EventHandler? ModelPulled;
-        public event EventHandler? LoadModelsFailed;
+        public event EventHandler? ModelsLoadFailed;
         public event EventHandler? ModelCreateFailed;
         public event EventHandler? ModelDeleteFailed;
         public event EventHandler? ModelCopyFailed;
         public event EventHandler? ModelPullFailed;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        protected void OnLoadModelsResponse(EventArgs e)
+        protected void OnModelsLoaded(EventArgs e)
         {
-            LoadModelsResponse?.Invoke(this, e);
+            ModelsLoaded?.Invoke(this, e);
         }
 
         protected void OnModelCreated(EventArgs e)
@@ -143,9 +172,9 @@ namespace OllamaClient.ViewModels
             ModelPulled?.Invoke(this, e);
         }
 
-        protected void OnLoadModelsFailed(EventArgs e)
+        protected void OnModelsLoadFailed(EventArgs e)
         {
-            LoadModelsFailed?.Invoke(this, e);
+            ModelsLoadFailed?.Invoke(this, e);
         }
 
         protected void OnModelCreateFailed(EventArgs e)
@@ -179,81 +208,69 @@ namespace OllamaClient.ViewModels
             {
                 Items.Clear();
 
-                ListModelsResponse? response = null;
+                ListModelsResponse response = await Task.Run(Api.ListModels);
 
-                await Task.Run(async () => { response = await Api.ListModels(); });
+                foreach (ModelInfo obj in response.models) Items.Add(new(obj));
 
-                if (response is not null)
-                {
-                    foreach (ModelInfo obj in response.Value.models) Items.Add(new(obj));
+                foreach (ModelItem item in Items) await item.GetShowModelInfo();
 
-                    foreach (ModelItem item in Items) await item.GetModelDetails();
+                LastUpdated = DateTime.Now;
 
-                    LastUpdated = DateTime.Now;
-                    OnLoadModelsResponse(EventArgs.Empty);
-                }
-                else
-                {
-                    OnLoadModelsFailed(EventArgs.Empty);
-                }
+                OnModelsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnModelsLoadFailed(EventArgs.Empty);
             }
         }
 
         public async Task CreateModel(string name, string? from, string? system, string? template, string? license, IEnumerable<ModelParameterItem>? parameters)
         {
+            if(from == string.Empty || system == string.Empty || template == string.Empty)
+            {
+                OnModelCreateFailed(EventArgs.Empty);
+                return;
+            }
+
+            CreateModelRequest request = new()
+            {
+                model = name,
+                from = from,
+                system = system,
+                template = template,
+                license = license
+            };
+
+            if (parameters is not null)
+            {
+                request.parameters = new();
+
+                foreach (ModelParameterItem item in parameters.Where(p => p.Value is not null && p.Value != string.Empty))
+                {
+                    request.parameters[item.Key] = item.Value;
+                }
+            }
+
+            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
+
             try
             {
-                List<ModelParameter>? modelParameters = null;
-                if (parameters is not null)
-                {
-                    modelParameters = [];
-
-                    foreach (ModelParameterItem item in parameters)
-                    {
-                        if (item.Value is not "")
-                        {
-                            modelParameters.Add(new(item.Key, item.Value));
-                        }
-                    }
-                }
-
-                CreateModelRequest request = new()
-                {
-                    model = name,
-                    from = from,
-                    system = system,
-                    template = template,
-                    license = license,
-                    parameters = modelParameters?.ToArray()
-                };
-
-                IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
-
-                bool success = false;
-
                 await Task.Run(async () =>
                 {
                     DelimitedJsonStream<StatusResponse>? stream = await Api.CreateModelStream(request);
 
-                    if(stream is not null)
-                    {
-                        await stream.Read(progress, new());
-                        success = true;
-                    }
+                    await stream.Read(progress, new());
                 });
 
-                if (success) OnModelCreated(EventArgs.Empty);
-                else OnModelCreateFailed(EventArgs.Empty);
+                OnModelCreated(EventArgs.Empty);
             }
             catch(Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnModelCreateFailed(EventArgs.Empty);
             }
             finally
             {
@@ -265,17 +282,20 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                bool success = false;
-
-                await Task.Run(async () => {success = await Api.DeleteModel(new() { model = modelName }); });
-
-                if(success) OnModelDeleted(EventArgs.Empty);
-                else OnModelDeleteFailed(EventArgs.Empty);
+                if(await Task.Run(async () => { return await Api.DeleteModel(new() { model = modelName }); }))
+                {
+                    OnModelDeleted(EventArgs.Empty);
+                }
+                else
+                {
+                    OnModelDeleteFailed(EventArgs.Empty);
+                }
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnModelDeleteFailed(EventArgs.Empty);
             }
             finally
             {
@@ -287,39 +307,24 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                bool success = false;
-
-                await Task.Run(async () => { success = await Api.CopyModel(new() { source = modelName, destination = newModelName }); });
-
-                if(success) OnModelCopied(EventArgs.Empty);
-                else OnModelCopyFailed(EventArgs.Empty);
+                if(await Task.Run(async () => { return await Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
+                {
+                    OnModelCopied(EventArgs.Empty);
+                }
+                else
+                {
+                    OnModelCopyFailed(EventArgs.Empty);
+                }
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnModelCopyFailed(EventArgs.Empty);
             }
             finally
             {
                 await LoadModels();
-            }
-        }
-
-        public async Task<ModelDetails?> GetModelDetails(string modelName)
-        {
-            try
-            {
-                ModelDetails? result = null;
-
-                await Task.Run(async () => { await Api.ShowModel(new() { model = modelName }); });
-
-                return result;
-            }
-            catch (Exception e)
-            {
-                Debug.Write(e);
-                OnUnhandledException(new(e, false));
-                return null;
             }
         }
 
@@ -328,26 +333,21 @@ namespace OllamaClient.ViewModels
             try
             {
                 IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
-                bool success = false;
 
                 await Task.Run(async () => 
                 { 
-                    DelimitedJsonStream<StatusResponse>? stream = await Api.PullModelStream(new() { model = modelName }); 
+                    DelimitedJsonStream<StatusResponse> stream = await Api.PullModelStream(new() { model = modelName });
 
-                    if (stream is not null)
-                    {
-                        await stream.Read(progress, new());
-                        success = true;
-                    }
+                    await stream.Read(progress, new());
                 });
 
-                if(success) OnModelPulled(EventArgs.Empty);
-                else OnModelPullFailed(EventArgs.Empty);
+                OnModelPulled(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Debug.Write(e);
                 OnUnhandledException(new(e, false));
+                OnModelPullFailed(EventArgs.Empty);
             }
             finally
             {

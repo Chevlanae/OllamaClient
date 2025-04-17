@@ -54,7 +54,13 @@ namespace OllamaClient
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
+            if(SidebarFrame.CurrentSourcePageType != typeof(SettingsSidebarPage))
+            {
+                SettingsSidebarPageNavigationArgs args = new(DispatcherQueue);
+                SidebarFrame.Navigate(typeof(SettingsSidebarPage), args);
+            }
 
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
         }
     }
 }

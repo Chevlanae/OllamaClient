@@ -1,4 +1,5 @@
-﻿using OllamaClient.ViewModels;
+﻿using OllamaClient.Services.Persistence;
+using OllamaClient.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,11 +12,89 @@ namespace OllamaClient.Services
 {
     internal static class Paths
     {
-        public static string AppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        public static string ParentDirectory = Path.Combine(AppData, "OllamaClient");
-        public static string Persistence = Path.Combine(ParentDirectory, "Persistence");
-        public static string Logs = Path.Combine(ParentDirectory, "Logs");
-        public static string Settings = Path.Combine(ParentDirectory, "Settings");
+        private static readonly string AppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        public static readonly string ParentDirectory = Path.Combine(AppData, "OllamaClient");
+        public static readonly string Persistence = Path.Combine(ParentDirectory, "Persistence");
+        public static readonly string Logs = Path.Combine(ParentDirectory, "Logs");
+        public static readonly string Settings = Path.Combine(ParentDirectory, "Settings");
+
+        static Paths()
+        {
+            if (!Directory.Exists(ParentDirectory)) Directory.CreateDirectory(ParentDirectory);
+            if (!Directory.Exists(Persistence)) Directory.CreateDirectory(Persistence);
+            if (!Directory.Exists(Logs)) Directory.CreateDirectory(Logs);
+            if (!Directory.Exists(Settings)) Directory.CreateDirectory(Settings);
+        }
+    }
+
+    /// <summary>
+    /// Class for managing a dictionary of DataFile objects, allowing easy access to serialized data files.
+    /// </summary>
+    internal static class DataFileService
+    {
+        private static Uri DirectoryUri { get; set; }
+        private static Dictionary<Type, object> Files { get; set; }
+
+        /// <summary>
+        /// Constructor for DataFileDictionary, takes a directory URI as the location for the parent directory
+        /// </summary>
+        /// <param name="dirUri"></param>
+        static DataFileService()
+        {
+            DirectoryUri = new(Paths.Persistence);
+            Files = [];
+
+            Assembly currentAssembly = Assembly.GetExecutingAssembly();
+
+            foreach (string file in Directory.GetFiles(DirectoryUri.LocalPath))
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file);
+
+                if (currentAssembly.GetType(fileName) is Type fileType)
+                {
+                    Type genericType = typeof(DataFile<>).MakeGenericType(fileType);
+
+                    if (Activator.CreateInstance(genericType, DirectoryUri) is object instance)
+                    {
+                        Files.Add(fileType, instance);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get a saved object with a given type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T? Get<T>()
+        {
+            if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
+            {
+                return dataFile.Get();
+            }
+            else return default;
+
+        }
+
+        /// <summary>
+        /// Set a saved object with a given type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        public static void Set<T>(T obj)
+        {
+            if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
+            {
+                dataFile.Set(obj);
+            }
+            else
+            {
+                DataFile<T> newFile = new(DirectoryUri);
+                newFile.Set(obj);
+                Files.Add(typeof(T), newFile);
+            }
+        }
     }
 
     namespace Persistence
@@ -27,7 +106,7 @@ namespace OllamaClient.Services
         internal class DataFile<T>
         {
             private Uri FileUri { get; set; }
-            private readonly object FileLock = new();
+            private object FileLock = new();
             private readonly DataContractSerializer Serializer = new(typeof(T));
             private readonly Type[] AllowedTypes =
             {
@@ -93,83 +172,6 @@ namespace OllamaClient.Services
                     using FileStream file = File.Create(FileUri.LocalPath);
                     using XmlWriter writer = XmlWriter.Create(file);
                     Serializer.WriteObject(writer, obj);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Class for managing a dictionary of DataFile objects, allowing easy access to serialized data files.
-        /// </summary>
-        internal static class DataFileStorage
-        {
-            private static Uri DirectoryUri { get; set; }
-            private static Dictionary<Type, object> Files { get; set; }
-
-            /// <summary>
-            /// Constructor for DataFileDictionary, takes a directory URI as the location for the parent directory
-            /// </summary>
-            /// <param name="dirUri"></param>
-            static DataFileStorage()
-            {
-                DirectoryUri = new(Paths.Persistence);
-                Files = [];
-
-                if (!Directory.Exists(DirectoryUri.LocalPath))
-                {
-                    Directory.CreateDirectory(DirectoryUri.LocalPath);
-                }
-                else
-                {
-                    Assembly currentAssembly = Assembly.GetExecutingAssembly();
-
-                    foreach (string file in Directory.GetFiles(DirectoryUri.LocalPath))
-                    {
-                        string fileName = Path.GetFileNameWithoutExtension(file);
-
-                        if (currentAssembly.GetType(fileName) is Type fileType)
-                        {
-                            Type genericType = typeof(DataFile<>).MakeGenericType(fileType);
-
-                            if (Activator.CreateInstance(genericType, DirectoryUri) is object instance)
-                            {
-                                Files.Add(fileType, instance);
-                            }
-                        }
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Get a saved object with a given type
-            /// </summary>
-            /// <typeparam name="T"></typeparam>
-            /// <returns></returns>
-            public static T? Get<T>()
-            {
-                if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
-                {
-                    return dataFile.Get();
-                }
-                else return default;
-
-            }
-
-            /// <summary>
-            /// Set a saved object with a given type
-            /// </summary>
-            /// <typeparam name="T"></typeparam>
-            /// <param name="obj"></param>
-            public static void Set<T>(T obj)
-            {
-                if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
-                {
-                    dataFile.Set(obj);
-                }
-                else
-                {
-                    DataFile<T> newFile = new(DirectoryUri);
-                    newFile.Set(obj);
-                    Files.Add(typeof(T), newFile);
                 }
             }
         }

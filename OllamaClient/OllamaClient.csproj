@@ -13,10 +13,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Views\Pages\ConversationsBlankPage.xaml" />
     <None Remove="Views\Pages\CreateModelPage.xaml" />
     <None Remove="Views\Pages\ErrorPopupContentDialog.xaml" />
     <None Remove="Views\Pages\ModelItemPage.xaml" />
+    <None Remove="Views\Pages\SettingsSidebarPage.xaml" />
     <None Remove="Views\Pages\TextBoxDialog.xaml" />
   </ItemGroup>
 
@@ -55,6 +55,9 @@
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Pages\SettingsSidebarPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Pages\ErrorPopupContentDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -70,7 +73,7 @@
     <Page Update="Views\Pages\ModelsSidebarPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Update="Views\Pages\ConversationsBlankPage.xaml">
+    <Page Update="Views\Pages\BlankPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Views\Pages\ConversationsSidebarPage.xaml">

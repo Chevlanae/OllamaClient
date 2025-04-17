@@ -2,8 +2,9 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Services.Dialogs;
+using OllamaClient.Services;
 using OllamaClient.ViewModels;
+using OllamaClient.Views.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -83,7 +84,7 @@ namespace OllamaClient.Views.Pages
 
         private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ChatItemsControl_ScrollToBottom(sender, new());
+            ChatItemsControl_AutoScrollToBottom(sender, new());
         }
 
         private void Conversation_StartOfMessage(object? sender, EventArgs e)
@@ -92,7 +93,7 @@ namespace OllamaClient.Views.Pages
             ChatInputTextBox.IsEnabled = false;
         }
 
-        private void Conversation_EndOfMessage(object? sender, System.EventArgs e)
+        private void Conversation_EndOfMessage(object? sender, EventArgs e)
         {
             SendingMessage = false;
             ChatInputTextBox.IsEnabled = true;
@@ -131,12 +132,10 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private async void ChatItemsControl_ScrollToBottom(object? sender, RoutedEventArgs e)
+        private void ChatItemsControl_AutoScrollToBottom(object? sender, RoutedEventArgs e)
         {
-            if (EnableAutoScroll)
+            if (EnableAutoScroll && ChatItemsScrollView.State == ScrollingInteractionState.Idle)
             {
-                while (ChatItemsScrollView.State != ScrollingInteractionState.Idle) await Task.Delay(100);
-
                 ChatItemsScrollView.ScrollTo(ChatItemsScrollView.HorizontalOffset, ChatItemsScrollView.ScrollableHeight);
             }
         }
@@ -151,7 +150,7 @@ namespace OllamaClient.Views.Pages
 
         private void ChatItemGrid_Loaded(object sender, RoutedEventArgs e)
         {
-            ChatItemsControl_ScrollToBottom(sender, e);
+            ChatItemsControl_AutoScrollToBottom(sender, e);
         }
 
         private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)

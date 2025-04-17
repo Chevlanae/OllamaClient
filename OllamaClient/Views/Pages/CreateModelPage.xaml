@@ -21,16 +21,6 @@
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <ComboBox x:Name="TemplateSelectorComboBox" Grid.Column="0" VerticalAlignment="Center" SelectionChanged="TemplateSelectorComboBox_SelectionChanged">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="Select a model to copy settings from" />
-                    </ToolTipService.ToolTip>
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
                 <TextBlock Grid.Column="1" FontSize="20" VerticalAlignment="Center">
                     <Bold>
                         <Underline>
@@ -66,7 +56,16 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" Text="Name: " />
                 <TextBox x:Name="NewModelNameTextBox" Grid.Row="0" Grid.Column="1" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="new model name"/>
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="From: " />
-                <TextBox x:Name="NewModelFromTextBox" Grid.Row="1" Grid.Column="1" Template="{StaticResource DefaultInputTextBoxControlTemplate}" TextAlignment="Left" PlaceholderText="(optional) name of source model"/>
+                <ComboBox x:Name="FromComboBox" Grid.Row="1" Grid.Column="1">
+                    <ToolTipService.ToolTip>
+                        <ToolTip Content="Select a model to copy settings from" />
+                    </ToolTipService.ToolTip>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Template: " />
                 <RichEditBox x:Name="NewModelTemplateTextBox" Grid.Row="2" Grid.Column="1" PlaceholderText="(optional) prompt template"/>
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Parameters: " />
