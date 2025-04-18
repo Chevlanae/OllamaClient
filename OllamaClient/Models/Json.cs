@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OllamaClient.Models
 {
@@ -289,94 +282,5 @@ namespace OllamaClient.Models
     [JsonSerializable(typeof(VersionResponse))]
     internal partial class SourceGenerationContext : JsonSerializerContext
     {
-    }
-
-    /// <summary>
-    /// A stream reader that reads a stream of JSON objects delimited by a given character
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public partial class DelimitedJsonStream<T> : IDisposable
-    {
-        private StreamReader Reader { get; set; }
-        private StringBuilder PartialObject { get; set; }
-        private JsonTypeInfo<T> JsonTypeInfo { get; set; }
-
-        public Stream BaseStream { get; set; }
-        public char Delimiter { get; set; }
-        public bool EndOfStream => Reader.EndOfStream;
-
-        /// <summary>
-        /// Create a new DelimitedJsonStream with given BaseStream and Delimiter
-        /// </summary>
-        /// <param name="sourceStream"></param>
-        /// <param name="delimiter"></param>
-        public DelimitedJsonStream(Stream sourceStream, char delimiter, JsonTypeInfo<T> jsonTypeInfo)
-        {
-            PartialObject = new();
-            JsonTypeInfo = jsonTypeInfo;
-            BaseStream = sourceStream;
-            Delimiter = delimiter;
-            Reader = new(BaseStream);
-        }
-
-        public void Dispose()
-        {
-            BaseStream.Dispose();
-            Reader.Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Reads the source stream into a string and attempts to deserialize the string at each delimiter into an object of type T.
-        /// Passes any deserialized objects to the given IProgress parameter.
-        /// </summary>
-        /// <param name="progress"></param>
-        /// <param name="cancellationToken"></param>
-        /// <param name="bufferSize"></param>
-        /// <returns></returns>
-        public async Task Read(IProgress<T> progress, CancellationToken cancellationToken, int bufferSize = 32)
-        {
-            //buffer
-            char[] buffer = new char[bufferSize];
-            while (!Reader.EndOfStream)
-            {
-                //read BaseStream
-                await Reader.ReadAsync(buffer, cancellationToken);
-                foreach (char c in buffer)
-                {
-                    //check for delimiter, else append char to PartialObject
-                    if (c == Delimiter)
-                    {
-                        try
-                        {
-                            //Cleanup any leading characters preceding the opening bracket.
-                            //This pattern: "(^.*?{){1}" will match any characters before the first
-                            //opening bracket of the json string, including the first opening bracket, only once.
-                            string objString = Regex.Replace(PartialObject.ToString(), "(^.*?{){1}", "{");
-
-                            //Serialize PartialObject and pass serialized object to given IProgess parameter if obj not null
-                            T? obj = JsonSerializer.Deserialize(objString, JsonTypeInfo);
-                            if (obj is not null)
-                            {
-                                progress.Report(obj);
-                            }
-                        }
-                        //skip object if deserialize operation fails
-                        catch (JsonException)
-                        {
-                            continue;
-                        }
-                        finally
-                        {
-                            PartialObject.Clear();
-                        }
-                    }
-                    else
-                    {
-                        PartialObject.Append(c);
-                    }
-                }
-            }
-        }
     }
 }

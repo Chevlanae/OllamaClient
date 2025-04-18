@@ -71,14 +71,14 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () => { await DialogService.ShowDialog(dialog); });
+            DispatcherQueue?.TryEnqueue(async () => { await Services.Dialogs.ShowDialog(dialog); });
         }
 
         private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
             DeleteModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
 
-            ContentDialogResult? result = await DialogService.ShowDialog(dialog);
+            ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
 
             if (result == ContentDialogResult.Primary && ParentCollection is not null && Item is not null)
             {
@@ -90,7 +90,7 @@ namespace OllamaClient.Views.Pages
         {
             CopyModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
 
-            ContentDialogResult? result = await DialogService.ShowDialog(dialog);
+            ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
 
             if
             (

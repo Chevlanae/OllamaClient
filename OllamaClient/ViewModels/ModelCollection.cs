@@ -1,134 +1,14 @@
-﻿using Microsoft.UI.Xaml.Documents;
+﻿using Microsoft.Extensions.Logging;
 using OllamaClient.Models;
+using OllamaClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class ModelItem(ModelInfo source)
-    {
-        public string Name { get; set; } = source.name;
-        public string Model { get; set; } = source.model;
-        public DateTime ModifiedAt { get; set; } = source.modified_at;
-        public long Size { get; set; } = source.size;
-        public string Digest { get; set; } = source.digest;
-        public string? ParentModel { get; set; } = source.details.parent_model;
-        public string Format { get; set; } = source.details.format;
-        public string Family { get; set; } = source.details.family;
-        public string[]? Families { get; set; } = source.details.families;
-        public string ParameterSize { get; set; } = source.details.parameter_size;
-        public string QuantizationLevel { get; set; } = source.details.quantization_level;
-
-        public string? License { get; set; }
-        public ModelFile? ModelFile { get; set; }
-        public string? ModelInfo { get; set; }
-        public string[]? Capabilities { get; set; }
-        public TensorInfo[]? Tensors { get; set; }
-
-        public Paragraph DetailsParagraph { get; set; } = new();
-        public Paragraph ModelInfoParagraph { get; set; } = new();
-        public Paragraph LicenseParagraph { get; set; } = new();
-        public Paragraph ModelFileParagraph { get; set; } = new();
-
-        public event EventHandler? ShowModelinfoLoaded;
-        public event EventHandler? ShowModelinfoFailed;
-        public event UnhandledExceptionEventHandler? UnhandledException;
-
-        protected void OnShowModelinfoLoaded(EventArgs e)
-        {
-            ShowModelinfoLoaded?.Invoke(this, e);
-        }
-
-        protected void OnShowModelinfoFailed(EventArgs e)
-        {
-            ShowModelinfoFailed?.Invoke(this, e);
-        }
-
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
-        {
-            UnhandledException?.Invoke(this, e);
-        }
-
-        public async Task GetShowModelInfo()
-        {
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    ShowModelResponse response = await Api.ShowModel(new() { model = Model });
-
-                    License = response.license;
-                    ModelFile = new(response.modelfile);
-                    ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
-                    ParentModel = response.details?.parent_model ?? ParentModel;
-                    Capabilities = response.capabilities;
-                    Tensors = response.tensors;
-                });
-
-                OnShowModelinfoLoaded(EventArgs.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Write(e);
-                OnUnhandledException(new(e, false));
-                OnShowModelinfoFailed(EventArgs.Empty);
-            }
-        }
-
-        private string ToSummaryString()
-        {
-            StringBuilder sb = new();
-
-            sb.AppendLine($"Model: {Model}");
-            sb.AppendLine($"Modified At: {ModifiedAt}");
-            sb.AppendLine($"Size: {Size / 1024 / 1024} MB");
-            sb.AppendLine($"Digest: {Digest}");
-            if(!string.IsNullOrEmpty(ParentModel)) sb.AppendLine($"Parent Model: {ParentModel}");
-            sb.AppendLine($"Format: {Format}");
-            sb.AppendLine($"Family: {Family}");
-            if(Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
-            sb.AppendLine($"Parameter Size: {ParameterSize}");
-            sb.AppendLine($"Quantization Level: {QuantizationLevel}");
-
-            return sb.ToString();
-        }
-
-        public void GenerateParagraphText()
-        {
-            DetailsParagraph.Inlines.Clear();
-            DetailsParagraph.Inlines.Add(new Run() { Text = ToSummaryString() });
-
-            if(ModelInfo is not null)
-            {
-                ModelInfoParagraph.Inlines.Clear();
-                ModelInfoParagraph.Inlines.Add(new Run() { Text = ModelInfo });
-            }
-
-            LicenseParagraph.Inlines.Clear();
-            if (License is not null)
-            {
-                LicenseParagraph.Inlines.Add(new Run() { Text = License });
-            }
-            else
-            {
-                LicenseParagraph.Inlines.Add(new Run() { Text = "No license information available." });
-            }
-            if (ModelFile is not null)
-            {
-                ModelFileParagraph.Inlines.Clear();
-                ModelFileParagraph.Inlines.Add(new Run() { Text = ModelFile.ToString() });
-            }
-        }
-    }
-
     public class ModelCollection
     {
         public ObservableCollection<ModelItem> Items { get; set; } = [];
@@ -220,7 +100,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                Debug.Write(e);
+                Logging.Log($"Failed to load model list", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
                 OnModelsLoadFailed(EventArgs.Empty);
             }
@@ -228,7 +108,7 @@ namespace OllamaClient.ViewModels
 
         public async Task CreateModel(string name, string? from, string? system, string? template, string? license, IEnumerable<ModelParameterItem>? parameters)
         {
-            if(from == string.Empty || system == string.Empty || template == string.Empty)
+            if (from == string.Empty || system == string.Empty || template == string.Empty)
             {
                 OnModelCreateFailed(EventArgs.Empty);
                 return;
@@ -245,7 +125,7 @@ namespace OllamaClient.ViewModels
 
             if (parameters is not null)
             {
-                request.parameters = new();
+                request.parameters = [];
 
                 foreach (ModelParameterItem item in parameters.Where(p => p.Value is not null && p.Value != string.Empty))
                 {
@@ -266,9 +146,9 @@ namespace OllamaClient.ViewModels
 
                 OnModelCreated(EventArgs.Empty);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Debug.Write(e);
+                Logging.Log($"Failed to create model {name}", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
                 OnModelCreateFailed(EventArgs.Empty);
             }
@@ -282,7 +162,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                if(await Task.Run(async () => { return await Api.DeleteModel(new() { model = modelName }); }))
+                if (await Task.Run(async () => { return await Api.DeleteModel(new() { model = modelName }); }))
                 {
                     OnModelDeleted(EventArgs.Empty);
                 }
@@ -293,7 +173,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                Debug.Write(e);
+                Logging.Log($"Failed to delete model {modelName}", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
                 OnModelDeleteFailed(EventArgs.Empty);
             }
@@ -307,7 +187,7 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                if(await Task.Run(async () => { return await Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
+                if (await Task.Run(async () => { return await Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
                 {
                     OnModelCopied(EventArgs.Empty);
                 }
@@ -318,7 +198,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                Debug.Write(e);
+                Logging.Log($"Failed to copy model {modelName} to {newModelName}", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
                 OnModelCopyFailed(EventArgs.Empty);
             }
@@ -334,8 +214,8 @@ namespace OllamaClient.ViewModels
             {
                 IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
 
-                await Task.Run(async () => 
-                { 
+                await Task.Run(async () =>
+                {
                     DelimitedJsonStream<StatusResponse> stream = await Api.PullModelStream(new() { model = modelName });
 
                     await stream.Read(progress, new());
@@ -345,7 +225,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                Debug.Write(e);
+                Logging.Log($"Failed to pull model {modelName}", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
                 OnModelPullFailed(EventArgs.Empty);
             }
@@ -353,40 +233,6 @@ namespace OllamaClient.ViewModels
             {
                 await LoadModels();
             }
-        }
-    }
-
-    public class ModelParameterItem : IModelParameter, INotifyPropertyChanged
-    {
-        private ModelParameterKey K { get; set; }
-        private string V { get; set; } = "";
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        public ModelParameterKey[] KeyOptions => Enum.GetValues<ModelParameterKey>();
-
-        public ModelParameterKey Key
-        {
-            get => K;
-            set
-            {
-                K = value;
-                OnPropertyChanged();
-            }
-        }
-        public string Value
-        {
-            get => V;
-            set
-            {
-                V = value;
-                OnPropertyChanged();
-            }
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new (propertyName));
         }
     }
 }

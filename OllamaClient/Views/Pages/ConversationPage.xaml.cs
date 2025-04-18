@@ -106,7 +106,7 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await DialogService.ShowDialog(dialog);
+                await Services.Dialogs.ShowDialog(dialog);
 
             });
         }

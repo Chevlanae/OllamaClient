@@ -100,7 +100,7 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () => { await DialogService.ShowDialog(dialog); });
+            DispatcherQueue?.TryEnqueue(async () => { await Services.Dialogs.ShowDialog(dialog); });
         }
 
         private void ConversationsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

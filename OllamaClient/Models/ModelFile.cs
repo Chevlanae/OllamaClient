@@ -43,7 +43,6 @@ namespace OllamaClient.Models
             MESSAGE
         }
 
-        private string FileString { get; set; } = string.Empty;
         public string From { get; set; }
         public string? Template { get; set; }
         public List<ModelParameter>? Parameters { get; set; }
@@ -63,8 +62,6 @@ namespace OllamaClient.Models
         /// <exception cref="OverflowException" />
         public ModelFile(string fileString)
         {
-            FileString = fileString;
-
             Match fromMatch = RegularExpressions.FROM.Match(fileString);
             Match templateMatch = RegularExpressions.TEMPLATE.Match(fileString);
             MatchCollection parameterMatches = RegularExpressions.PARAMETER.Matches(fileString);
@@ -184,7 +181,8 @@ namespace OllamaClient.Models
             StringBuilder sb = new();
             sb.AppendLine($"FROM {From}");
             if (Template is not null) sb.AppendLine($"TEMPLATE {Template}");
-
+            if (Adapter is not null) sb.AppendLine($"ADAPTER {Adapter}");
+            if (System is not null) sb.AppendLine($"SYSTEM {System}");
             if (Parameters is not null)
             {
                 foreach (ModelParameter parameter in Parameters)
@@ -193,9 +191,6 @@ namespace OllamaClient.Models
                 }
             }
 
-            if (System is not null) sb.AppendLine($"SYSTEM {System}");
-            if (Adapter is not null) sb.AppendLine($"ADAPTER {Adapter}");
-            if (License is not null) sb.AppendLine($"LICENSE {License}");
             if (Messages is not null)
             {
                 foreach (Message message in Messages)
@@ -203,6 +198,7 @@ namespace OllamaClient.Models
                     sb.AppendLine($"MESSAGE {message.role} {message.content}");
                 }
             }
+            if (License is not null) sb.AppendLine($"LICENSE {License}");
             return sb.ToString();
         }
     }

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Services
 {
-    internal static class DialogService
+    internal static class Dialogs
     {
         private static bool IsDialogOpen { get; set; } = false;
 
