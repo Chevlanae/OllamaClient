@@ -12,11 +12,11 @@ using System;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ModelItemPageNavigationArgs(DispatcherQueue dispatcherQueue, ModelItem modelItem, ModelCollection collection)
+    public class ModelItemPageNavigationArgs(DispatcherQueue dispatcherQueue, Model modelItem, ViewModels.Models collection)
     {
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public ModelItem SelectedItem { get; set; } = modelItem;
-        public ModelCollection Collection { get; set; } = collection;
+        public Model SelectedItem { get; set; } = modelItem;
+        public ViewModels.Models Collection { get; set; } = collection;
     }
 
     /// <summary>
@@ -25,8 +25,8 @@ namespace OllamaClient.Views.Pages
     public sealed partial class ModelItemPage : Page
     {
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ModelItem? Item { get; set; }
-        private ModelCollection? ParentCollection { get; set; }
+        private Model? Item { get; set; }
+        private ViewModels.Models? ParentCollection { get; set; }
 
         public ModelItemPage()
         {
@@ -50,7 +50,18 @@ namespace OllamaClient.Views.Pages
                 LicenseTextBox.Blocks.Add(Item.LicenseParagraph);
                 ModelFileTextBox.Blocks.Add(Item.ModelFileParagraph);
 
-                DispatcherQueue.TryEnqueue(() => Item.GenerateParagraphText());
+                if(Item.LastUpdated == null || Item.LastUpdated < DateTime.Now.AddMinutes(-5))
+                {
+                    DispatcherQueue.TryEnqueue(async () => 
+                    { 
+                        await Item.GetShowModelInfo();
+                        Item.GenerateParagraphText();
+                    });
+                }
+                else
+                {
+                    DispatcherQueue.TryEnqueue(() => Item.GenerateParagraphText());
+                }
             }
         }
 
@@ -76,19 +87,19 @@ namespace OllamaClient.Views.Pages
 
         private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            DeleteModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
+            DeleteModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
 
             ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
 
             if (result == ContentDialogResult.Primary && ParentCollection is not null && Item is not null)
             {
-                DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item.Model); });
+                DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item._Model); });
             }
         }
 
         private async void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            CopyModelContentDialog dialog = new(XamlRoot, Item?.Model ?? "");
+            CopyModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
 
             ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
 

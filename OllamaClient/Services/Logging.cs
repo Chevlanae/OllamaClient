@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Debug;
 using OllamaClient.Models;
 using System;
 using System.Collections.Generic;
@@ -17,12 +16,10 @@ namespace OllamaClient.Services
 
     internal static class Logging
     {
-        private static Dictionary<string, ILogger> Loggers { get; } = new();
-        private static DebugLoggerProvider DebugFactory { get; } = new();
-        private static FileLoggerProvider FileFactory { get; } = new(Paths.Logs);
-        private static ILoggerFactory ConsoleFactory { get; } = LoggerFactory.Create(b => b.AddConsole());
+        private static Dictionary<string, ILogger> Loggers { get; } = [];
+        private static FileLoggerProvider Factory { get; } = new(Paths.Logs);
 
-        private static ILogger GetLogger(string category, LogProvider? provider = null)
+        private static ILogger GetLogger(string category)
         {
             if (Loggers.ContainsKey(category))
             {
@@ -30,13 +27,7 @@ namespace OllamaClient.Services
             }
             else
             {
-                ILogger logger = provider switch
-                {
-                    LogProvider.Console => ConsoleFactory.CreateLogger(category),
-                    LogProvider.File => FileFactory.CreateLogger(category),
-                    LogProvider.Debug => DebugFactory.CreateLogger(category),
-                    _ => FileFactory.CreateLogger(category)
-                };
+                ILogger logger = Factory.CreateLogger(category);
                 Loggers.Add(category, logger);
                 return logger;
             }

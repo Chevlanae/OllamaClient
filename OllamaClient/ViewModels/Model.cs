@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class ModelItem(ModelInfo source)
+    public class Model(ModelInfo source)
     {
         public string Name { get; set; } = source.name;
-        public string Model { get; set; } = source.model;
+        public string _Model { get; set; } = source.model;
         public DateTime ModifiedAt { get; set; } = source.modified_at;
         public long Size { get; set; } = source.size;
         public string Digest { get; set; } = source.digest;
@@ -28,6 +28,7 @@ namespace OllamaClient.ViewModels
         public string? ModelInfo { get; set; }
         public string[]? Capabilities { get; set; }
         public TensorInfo[]? Tensors { get; set; }
+        public DateTime? LastUpdated { get; set; }
 
         public Paragraph DetailsParagraph { get; set; } = new();
         public Paragraph ModelInfoParagraph { get; set; } = new();
@@ -53,37 +54,11 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(this, e);
         }
 
-        public async Task GetShowModelInfo()
-        {
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    ShowModelResponse response = await Api.ShowModel(new() { model = Model });
-
-                    License = response.license;
-                    ModelFile = new(response.modelfile);
-                    ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
-                    ParentModel = response.details?.parent_model ?? ParentModel;
-                    Capabilities = response.capabilities;
-                    Tensors = response.tensors;
-                });
-
-                OnShowModelinfoLoaded(EventArgs.Empty);
-            }
-            catch (Exception e)
-            {
-                Logging.Log($"Failed to load model info for {Model}", LogLevel.Error, e);
-                OnUnhandledException(new(e, false));
-                OnShowModelinfoFailed(EventArgs.Empty);
-            }
-        }
-
         private string ToSummaryString()
         {
             StringBuilder sb = new();
 
-            sb.AppendLine($"Model: {Model}");
+            sb.AppendLine($"Model: {_Model}");
             sb.AppendLine($"Modified At: {ModifiedAt}");
             sb.AppendLine($"Size: {Size / 1024 / 1024} MB");
             sb.AppendLine($"Digest: {Digest}");
@@ -95,6 +70,30 @@ namespace OllamaClient.ViewModels
             sb.AppendLine($"Quantization Level: {QuantizationLevel}");
 
             return sb.ToString();
+        }
+
+        public async Task GetShowModelInfo()
+        {
+            try
+            {
+                ShowModelResponse response = await Task.Run(async () => await Api.ShowModel(new() { model = _Model }));
+
+                License = response.license;
+                ModelFile = new(response.modelfile);
+                ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
+                ParentModel = response.details?.parent_model ?? ParentModel;
+                Capabilities = response.capabilities;
+                Tensors = response.tensors;
+                LastUpdated = DateTime.Now;
+                Logging.Log($"Loaded model info for '{_Model}'", LogLevel.Information);
+                OnShowModelinfoLoaded(EventArgs.Empty);
+            }
+            catch (Exception e)
+            {
+                Logging.Log($"Failed to load model info for '{_Model}'", LogLevel.Error, e);
+                OnUnhandledException(new(e, false));
+                OnShowModelinfoFailed(EventArgs.Empty);
+            }
         }
 
         public void GenerateParagraphText()

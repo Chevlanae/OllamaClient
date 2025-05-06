@@ -1,27 +1,57 @@
 ﻿using OllamaClient.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace OllamaClient.Services
 {
-    [KnownType(typeof(CompletionRequest))]
-    [DataContract]
     internal static class Settings
     {
-        [DataMember]
-        public static Uri ConnectionUri { get; set; }
-        [DataMember]
-        public static bool UseHttps { get; set; }
-        [DataMember]
-        public static TimeSpan RequestTimeout { get; set; }
-        [DataMember]
-        public static CompletionRequest SubjectGenerationOptions { get; set; }
-        [DataMember]
-        public static bool EnableModelParametersForChat { get; set; }
+        private static SettingsFile _SettingsFile { get; } = new(Paths.State);
 
+        public static string SocketAddress
+        {
+            get => _SettingsFile.SocketAddress;
+            set
+            {
+                _SettingsFile.SocketAddress = value;
+                _SettingsFile.Save();
+            }
+        }
+        public static bool UseHttps
+        {
+            get => _SettingsFile.UseHttps;
+            set
+            {
+                _SettingsFile.UseHttps = value;
+                _SettingsFile.Save();
+            }
+        }
+        public static TimeSpan RequestTimeout
+        {
+            get => _SettingsFile.RequestTimeout;
+            set
+            {
+                _SettingsFile.RequestTimeout = value;
+                _SettingsFile.Save();
+            }
+        }
+        public static CompletionRequest SubjectGenerationOptions
+        {
+            get => _SettingsFile.SubjectGenerationOptions;
+            set
+            {
+                _SettingsFile.SubjectGenerationOptions = value;
+                _SettingsFile.Save();
+            }
+        }
+        public static bool EnableModelParametersForChat
+        {
+            get => _SettingsFile.EnableModelParametersForChat;
+            set
+            {
+                _SettingsFile.EnableModelParametersForChat = value;
+                _SettingsFile.Save();
+            }
+        }
     }
 }

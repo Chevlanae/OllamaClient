@@ -11,17 +11,18 @@ namespace OllamaClient.Models
     /// <summary>
     /// Generic class for encapsulating a DataContract object to a file. Automatically serializes and deserializes the object to/from XML.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Desired type of data file</typeparam>
     public class DataFile<T>
     {
-        private Uri FileUri { get; set; }
-        private object FileLock = new();
-        private readonly DataContractSerializer Serializer = new(typeof(T));
-        private readonly Type[] AllowedTypes =
+        private Uri _FileUri { get; set; }
+        private object _FileLock = new();
+        private readonly DataContractSerializer _Serializer = new(typeof(T));
+        private readonly Type[] _AllowedTypes =
         {
-                typeof(ChatItem),
+                typeof(ChatMessage),
                 typeof(Conversation),
-                typeof(Conversations)
+                typeof(Conversations),
+                typeof(SettingsFile),
         };
 
         /// <summary>
@@ -41,13 +42,13 @@ namespace OllamaClient.Models
             {
                 throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts types with a DataContractAttribute", "T");
             }
-            else if (!AllowedTypes.Contains(typeof(T)))
+            else if (!_AllowedTypes.Contains(typeof(T)))
             {
-                throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts these types: {String.Join(", ", AllowedTypes.Select(t => t.FullName))}", "T");
+                throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts these types: {String.Join(", ", _AllowedTypes.Select(t => t.FullName))}", "T");
             }
             else
             {
-                FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
+                _FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
             }
         }
 
@@ -60,11 +61,11 @@ namespace OllamaClient.Models
         /// <returns></returns>
         public T? Get()
         {
-            lock (FileLock)
+            lock (_FileLock)
             {
-                using FileStream file = File.OpenRead(FileUri.LocalPath);
+                using FileStream file = File.OpenRead(_FileUri.LocalPath);
                 using XmlReader reader = XmlReader.Create(file);
-                return (T?)Serializer.ReadObject(reader);
+                return (T?)_Serializer.ReadObject(reader);
             }
         }
 
@@ -76,11 +77,11 @@ namespace OllamaClient.Models
         /// <returns></returns>
         public void Set(T obj)
         {
-            lock (FileLock)
+            lock (_FileLock)
             {
-                using FileStream file = File.Create(FileUri.LocalPath);
+                using FileStream file = File.Create(_FileUri.LocalPath);
                 using XmlWriter writer = XmlWriter.Create(file);
-                Serializer.WriteObject(writer, obj);
+                _Serializer.WriteObject(writer, obj);
             }
         }
     }

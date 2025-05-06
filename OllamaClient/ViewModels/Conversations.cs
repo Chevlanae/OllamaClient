@@ -11,22 +11,24 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    [KnownType(typeof(ChatItem))]
+    [KnownType(typeof(ChatMessage))]
     [KnownType(typeof(Conversation))]
     [DataContract]
     public class Conversations : INotifyPropertyChanged
     {
         [DataMember]
-        private ObservableCollection<Conversation> ConversationCollection { get; set; } = [];
+        private ObservableCollection<Conversation> _ConversationCollection { get; set; } = [];
 
         public ObservableCollection<string> AvailableModels { get; set; } = [];
 
+        public DateTime? LastUpdated { get; set; }
+
         public ObservableCollection<Conversation> Items
         {
-            get => ConversationCollection;
+            get => _ConversationCollection;
             set
             {
-                ConversationCollection = value;
+                _ConversationCollection = value;
                 OnPropertyChanged();
             }
         }
@@ -68,7 +70,7 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(this, new(name));
         }
 
-        public async Task LoadModels()
+        public async Task LoadAvailableModels()
         {
             try
             {
@@ -81,6 +83,7 @@ namespace OllamaClient.ViewModels
 
                 AvailableModels = [.. results];
 
+                Logging.Log($"Loaded {AvailableModels.Count} models", LogLevel.Information);
                 OnModelsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
@@ -103,9 +106,16 @@ namespace OllamaClient.ViewModels
                     {
                         Items.Add(c);
                     }
-                }
 
-                OnConversationsLoaded(EventArgs.Empty);
+                    LastUpdated = DateTime.Now;
+                    Logging.Log($"Loaded {Items.Count} conversations", LogLevel.Information);
+                    OnConversationsLoaded(EventArgs.Empty);
+                }
+                else
+                {
+                    Logging.Log($"Failed to load saved conversations", LogLevel.Error);
+                    OnConversationsLoadFailed(EventArgs.Empty);
+                }
             }
             catch (Exception e)
             {
@@ -120,6 +130,7 @@ namespace OllamaClient.ViewModels
             try
             {
                 await Task.Run(() => { LocalStorage.Set(this); });
+                Logging.Log($"Saved {Items.Count} conversations", LogLevel.Information);
             }
             catch (Exception e)
             {

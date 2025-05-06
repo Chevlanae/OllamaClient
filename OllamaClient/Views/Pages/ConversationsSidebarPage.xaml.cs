@@ -46,8 +46,10 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadModels(); });
-                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadConversations(); });
+                if(Conversations.LastUpdated == null || Conversations.LastUpdated < DateTime.Now.AddMinutes(-5))
+                {
+                    Refresh();
+                }
             }
 
             ConversationsListView.SelectedIndex = -1;
@@ -63,6 +65,12 @@ namespace OllamaClient.Views.Pages
                 conversation.EndOfResponse -= Conversation_EndOfMessasge;
             }
             base.OnNavigatedFrom(e);
+        }
+
+        private void Refresh()
+        {
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadConversations(); });
         }
 
         private void Conversation_StartOfMessage(object? sender, EventArgs e)
@@ -132,6 +140,11 @@ namespace OllamaClient.Views.Pages
             conversation.EndOfResponse += Conversation_EndOfMessasge;
             Conversations.Items.Add(conversation);
             DispatcherQueue?.TryEnqueue(async () => { await Conversations.Save(); });
+        }
+
+        private void RefreshConversationsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Refresh();
         }
     }
 }

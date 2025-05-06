@@ -25,7 +25,7 @@ namespace OllamaClient.Views.Pages
     {
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ModelCollection ModelList { get; set; } = new();
+        private ViewModels.Models ModelList { get; set; } = new();
 
         public ModelsSidebarPage()
         {
@@ -42,8 +42,24 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
-                DispatcherQueue.TryEnqueue(async () => { await ModelList.LoadModels(); });
+                
+                if(ModelList.LastUpdated == null || ModelList.LastUpdated < DateTime.Now.AddMinutes(-5))
+                {
+                    Refresh();
+                }
             }
+        }
+
+        private void Refresh()
+        {
+            DispatcherQueue?.TryEnqueue(async () =>
+            {
+                await ModelList.LoadModels();
+                foreach (Model item in ModelList.Items)
+                {
+                    item.LastUpdated = null;
+                }
+            });
         }
 
         private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
@@ -63,7 +79,7 @@ namespace OllamaClient.Views.Pages
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ModelsListView.SelectedItem is ModelItem item && DispatcherQueue is not null)
+            if (ModelsListView.SelectedItem is Model item && DispatcherQueue is not null)
             {
                 ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPageNavigationArgs(DispatcherQueue, item, ModelList));
             }
@@ -87,6 +103,11 @@ namespace OllamaClient.Views.Pages
             {
                 DispatcherQueue?.TryEnqueue(async () => { await ModelList.PullModel(modelName); });
             }
+        }
+
+        private void RefreshModelsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Refresh();
         }
     }
 }

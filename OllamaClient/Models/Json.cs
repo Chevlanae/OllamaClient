@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace OllamaClient.Models
@@ -60,6 +61,17 @@ namespace OllamaClient.Models
         string Value { get; set; }
     }
 
+    public record struct ModelParameterKeyValue : IModelParameter
+    {
+        public ModelParameterKey Key { get; set; }
+        public string Value { get; set; }
+        public ModelParameterKeyValue(ModelParameterKey key, string value)
+        {
+            Key = key;
+            Value = value;
+        }
+    }
+
     public record struct Message : IMessage
     {
         public string? role { get; set; }
@@ -69,17 +81,6 @@ namespace OllamaClient.Models
         {
             this.role = Enum.GetName(role);
             this.content = content;
-        }
-    }
-
-    public record struct ModelParameter : IModelParameter
-    {
-        public ModelParameterKey Key { get; set; }
-        public string Value { get; set; }
-        public ModelParameter(ModelParameterKey key, string value)
-        {
-            Key = key;
-            Value = value;
         }
     }
 
@@ -157,13 +158,20 @@ namespace OllamaClient.Models
         public long? eval_duration { get; set; }
     }
 
+    [DataContract]
     public record struct CompletionRequest
     {
+        [DataMember]
         public string model { get; set; }
+        [DataMember]
         public string prompt { get; set; }
+        [DataMember]
         public bool? stream { get; set; }
+        [DataMember]
         public string? system { get; set; }
+        [DataMember]
         public string? template { get; set; }
+        [DataMember]
         public ModelParameters? options { get; set; }
     }
 

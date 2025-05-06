@@ -39,9 +39,10 @@
                             <MenuFlyout>
                                 <MenuFlyoutItem Text="Create new model..." Click="CreateModelButton_Click" />
                                 <MenuFlyoutItem Text="Pull existing model..." Click="PullModelButton_Click" />
+                                <MenuFlyoutItem Text="Refresh..." Click="RefreshModelsButton_Click" />
                             </MenuFlyout>
                         </Button.Flyout>
-                        <FontIcon Glyph="&#xE710;" />
+                        <FontIcon Glyph="&#xE712;" />
                     </Button>
                 </Grid>
             </ListView.Header>

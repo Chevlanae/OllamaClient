@@ -12,10 +12,10 @@ using System.Collections.ObjectModel;
 
 namespace OllamaClient.Views.Pages
 {
-    public class CreateModelPageNavigationArgs(DispatcherQueue dispatcherQueue, ModelCollection modelCollection)
+    public class CreateModelPageNavigationArgs(DispatcherQueue dispatcherQueue, ViewModels.Models modelCollection)
     {
         public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public ModelCollection ModelList { get; set; } = modelCollection;
+        public ViewModels.Models ModelList { get; set; } = modelCollection;
     }
 
     /// <summary>
@@ -24,8 +24,8 @@ namespace OllamaClient.Views.Pages
     public sealed partial class CreateModelPage : Page
     {
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ObservableCollection<ModelParameterItem> NewModelParameters { get; set; } = [];
-        private ModelCollection? ParentCollection { get; set; }
+        private ObservableCollection<ModelParameter> NewModelParameters { get; set; } = [];
+        private ViewModels.Models? ParentCollection { get; set; }
 
         public CreateModelPage()
         {
@@ -75,11 +75,18 @@ namespace OllamaClient.Views.Pages
             if (NewModelNameTextBox.Text is not "" && ParentCollection is not null)
             {
                 string name = NewModelNameTextBox.Text;
-                string? from = FromComboBox.SelectedItem as string;
-                string system;
-                string template;
+                string? from = (FromComboBox.SelectedItem as Model)?.Name;
+                string? system;
+                string? template;
+
                 NewModelSystemTextBox.Document.GetText(TextGetOptions.None, out system);
                 NewModelTemplateTextBox.Document.GetText(TextGetOptions.None, out template);
+
+                system = system?.Trim();
+                template = template?.Trim();
+
+                if (system == string.Empty) system = null;
+                if (template == string.Empty) template = null;
 
                 DispatcherQueue?.TryEnqueue(async () =>
                 {

@@ -18,28 +18,28 @@ namespace OllamaClient.Services
             public TimeSpan RequestTimeout { get; set; } = requestTimeout;
         }
 
-        private static Endpoints Endpoints { get; set; }
+        private static Endpoints _Endpoints { get; set; }
 
-        private static HttpClient HttpClient { get; set; }
+        private static HttpClient _HttpClient { get; set; }
 
         static Api()
         {
-            Endpoints = new Endpoints(Environment.GetEnvironmentVariable("OLLAMA_HOST") ?? "localhost:11434");
-            HttpClient = new HttpClient
+            _Endpoints = new(Settings.SocketAddress, Settings.UseHttps);
+            _HttpClient = new HttpClient
             {
-                Timeout = Timeout.InfiniteTimeSpan
+                Timeout = Settings.RequestTimeout
             };
         }
 
         public static void SetOptions(ClientOptions options)
         {
-            Endpoints = new Endpoints(options.SocketAddress, options.UseHttps);
-            HttpClient.Timeout = options.RequestTimeout;
+            _Endpoints = new Endpoints(options.SocketAddress, options.UseHttps);
+            _HttpClient.Timeout = options.RequestTimeout;
         }
 
         private static async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
         {
-            HttpResponseMessage httpResp = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (httpResp.IsSuccessStatusCode)
             {
@@ -56,7 +56,7 @@ namespace OllamaClient.Services
         {
             request.stream = true;
 
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Chat)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Chat)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.ChatRequest)
             };
@@ -68,7 +68,7 @@ namespace OllamaClient.Services
         {
             request.stream = true;
 
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.GenerateCompletion)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.GenerateCompletion)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CompletionRequest)
             };
@@ -80,7 +80,7 @@ namespace OllamaClient.Services
         {
             request.stream = true;
 
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Create)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Create)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CreateModelRequest)
             };
@@ -89,8 +89,8 @@ namespace OllamaClient.Services
 
         public static async Task<ListModelsResponse> ListModels()
         {
-            using HttpRequestMessage req = new(HttpMethod.Get, Endpoints.List);
-            using HttpResponseMessage httpResp = await HttpClient.SendAsync(req);
+            using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.List);
+            using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.ListModelsResponse);
@@ -103,11 +103,11 @@ namespace OllamaClient.Services
 
         public static async Task<ShowModelResponse> ShowModel(ShowModelRequest request)
         {
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Show)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Show)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.ShowModelRequest)
             };
-            using HttpResponseMessage httpResp = await HttpClient.SendAsync(req);
+            using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.ShowModelResponse);
@@ -120,27 +120,27 @@ namespace OllamaClient.Services
 
         public static async Task<bool> CopyModel(CopyModelRequest request)
         {
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Copy)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Copy)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CopyModelRequest)
             };
-            using HttpResponseMessage resp = await HttpClient.SendAsync(req);
+            using HttpResponseMessage resp = await _HttpClient.SendAsync(req);
             return resp.IsSuccessStatusCode;
         }
 
         public static async Task<bool> DeleteModel(DeleteModelRequest request)
         {
-            using HttpRequestMessage req = new(HttpMethod.Delete, Endpoints.Delete)
+            using HttpRequestMessage req = new(HttpMethod.Delete, _Endpoints.Delete)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.DeleteModelRequest)
             };
-            using HttpResponseMessage resp = await HttpClient.SendAsync(req);
+            using HttpResponseMessage resp = await _HttpClient.SendAsync(req);
             return resp.IsSuccessStatusCode;
         }
 
         public static async Task<DelimitedJsonStream<StatusResponse>> PullModelStream(PullModelRequest request)
         {
-            using HttpRequestMessage req = new(HttpMethod.Post, Endpoints.Pull)
+            using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Pull)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.PullModelRequest)
             };
@@ -149,8 +149,8 @@ namespace OllamaClient.Services
 
         public static async Task<RunningModelsResponse> ListRunningModels()
         {
-            using HttpRequestMessage req = new(HttpMethod.Get, Endpoints.Ps);
-            using HttpResponseMessage httpResp = await HttpClient.SendAsync(req);
+            using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Ps);
+            using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.RunningModelsResponse);
@@ -163,8 +163,8 @@ namespace OllamaClient.Services
 
         public static async Task<VersionResponse> GetVersion()
         {
-            using HttpRequestMessage req = new(HttpMethod.Get, Endpoints.Version);
-            using HttpResponseMessage httpResp = await HttpClient.SendAsync(req);
+            using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Version);
+            using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.VersionResponse);

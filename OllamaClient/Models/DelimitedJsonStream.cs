@@ -37,6 +37,9 @@ namespace OllamaClient.Models
             Reader = new(BaseStream);
         }
 
+        /// <summary>
+        /// Disposes the stream reader and the base stream
+        /// </summary>
         public void Dispose()
         {
             BaseStream.Dispose();
@@ -67,7 +70,7 @@ namespace OllamaClient.Models
                         try
                         {
                             //Cleanup any leading characters preceding the opening bracket.
-                            //This pattern: "(^.*?{){1}" will match any characters before the first
+                            //This pattern: "(^.*?{){1}" will match all characters before the first
                             //opening bracket of the json string, including the first opening bracket, only once.
                             string objString = Regex.Replace(PartialObject.ToString(), "(^.*?{){1}", "{");
 
@@ -77,18 +80,20 @@ namespace OllamaClient.Models
                                 progress.Report(obj);
                             }
                         }
-                        //skip object if deserialize operation fails
                         catch (JsonException)
                         {
+                            //skip object if deserialize operation fails
                             continue;
                         }
                         finally
                         {
+                            //clear PartialObject for next object
                             PartialObject.Clear();
                         }
                     }
                     else
                     {
+                        //append char to PartialObject
                         PartialObject.Append(c);
                     }
                 }

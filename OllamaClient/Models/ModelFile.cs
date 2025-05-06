@@ -45,7 +45,7 @@ namespace OllamaClient.Models
 
         public string From { get; set; }
         public string? Template { get; set; }
-        public List<ModelParameter>? Parameters { get; set; }
+        public List<IModelParameter>? Parameters { get; set; }
         public string? System { get; set; }
         public string? Adapter { get; set; }
         public string? License { get; set; }
@@ -117,7 +117,7 @@ namespace OllamaClient.Models
 
             string[] keyValue = parameterValueString.Split(" ", 2, StringSplitOptions.TrimEntries);
 
-            Parameters?.Add(new(Enum.Parse<ModelParameterKey>(keyValue[0]), keyValue[1]));
+            Parameters?.Add(new ModelParameterKeyValue(Enum.Parse<ModelParameterKey>(keyValue[0]), keyValue[1]));
         }
 
         /// <summary>
@@ -146,34 +146,25 @@ namespace OllamaClient.Models
         /// <exception cref="ArgumentException" />
         private string ParseInstructionValue(Instruction instruction, string sourceString)
         {
-            string value = string.Empty;
-
             switch (instruction)
             {
                 case Instruction.FROM:
-                    value = sourceString.Replace("\nFROM ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nFROM ", string.Empty);
                 case Instruction.TEMPLATE:
-                    value = sourceString.Replace("\nTEMPLATE ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nTEMPLATE ", string.Empty);
                 case Instruction.PARAMETER:
-                    value = sourceString.Replace("\nPARAMETER ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nPARAMETER ", string.Empty);
                 case Instruction.SYSTEM:
-                    value = sourceString.Replace("\nSYSTEM ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nSYSTEM ", string.Empty);
                 case Instruction.ADAPTER:
-                    value = sourceString.Replace("\nADAPTER ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nADAPTER ", string.Empty);
                 case Instruction.LICENSE:
-                    value = sourceString.Replace("\nLICENSE ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nLICENSE ", string.Empty);
                 case Instruction.MESSAGE:
-                    value = sourceString.Replace("\nMESSAGE ", string.Empty);
-                    break;
+                    return sourceString.Replace("\nMESSAGE ", string.Empty);
+                default:
+                    return sourceString;
             }
-
-            return value;
         }
 
         public new string ToString()
@@ -185,15 +176,14 @@ namespace OllamaClient.Models
             if (System is not null) sb.AppendLine($"SYSTEM {System}");
             if (Parameters is not null)
             {
-                foreach (ModelParameter parameter in Parameters)
+                foreach (IModelParameter parameter in Parameters)
                 {
                     sb.AppendLine($"PARAMETER {parameter.Key.ToString()} {parameter.Value}");
                 }
             }
-
             if (Messages is not null)
             {
-                foreach (Message message in Messages)
+                foreach (IMessage message in Messages)
                 {
                     sb.AppendLine($"MESSAGE {message.role} {message.content}");
                 }

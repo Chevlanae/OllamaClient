@@ -20,7 +20,7 @@
                     <TextBlock Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30,0,0,0" FontSize="20">
                         <Bold>
                             <Underline>
-                                Models
+                                Settings
                             </Underline>
                         </Bold>
                     </TextBlock>
@@ -46,7 +46,7 @@
             </ListView.Header>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Name}" Grid.Column="0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Name}" />
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

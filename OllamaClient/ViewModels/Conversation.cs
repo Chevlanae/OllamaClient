@@ -13,37 +13,35 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    [KnownType(typeof(ChatItem))]
+    [KnownType(typeof(ChatMessage))]
     [DataContract]
     public partial class Conversation : INotifyPropertyChanged
     {
-        private CancellationTokenSource? CancellationTokenSource { get; set; }
+        private CancellationTokenSource? _CancellationTokenSource { get; set; }
 
         [DataMember]
-        private ObservableCollection<ChatItem> ChatItemCollection { get; set; } = [];
+        private ObservableCollection<ChatMessage> _ChatMessageCollection { get; set; } = [];
         [DataMember]
-        private string? SubjectString { get; set; }
+        private string? _Subject { get; set; }
         [DataMember]
         public string? SelectedModel { get; set; }
-        [DataMember]
-        public DateTime Timestamp { get; set; } = DateTime.Now;
 
-        public ObservableCollection<ChatItem> Items
+        public ObservableCollection<ChatMessage> Items
         {
-            get => ChatItemCollection;
+            get => _ChatMessageCollection;
             set
             {
-                ChatItemCollection = value;
+                _ChatMessageCollection = value;
                 OnPropertyChanged();
             }
         }
 
-        public string? Subject
+        public string Subject
         {
-            get => SubjectString;
+            get => _Subject ?? "New Conversation";
             set
             {
-                SubjectString = value;
+                _Subject = value;
                 OnPropertyChanged();
             }
         }
@@ -75,31 +73,25 @@ namespace OllamaClient.ViewModels
 
         public void Cancel()
         {
-            if (CancellationTokenSource != null)
+            if (_CancellationTokenSource != null)
             {
-                CancellationTokenSource.Cancel();
+                _CancellationTokenSource.Cancel();
             }
-            CancellationTokenSource = new();
+            _CancellationTokenSource = new();
         }
 
         public async Task GenerateSubject(string prompt)
         {
             if (SelectedModel == null) return;
-            if (CancellationTokenSource == null) CancellationTokenSource = new();
+            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
             if (Subject is null) Subject = "";
 
-            CompletionRequest request = new()
+            CompletionRequest request = Settings.SubjectGenerationOptions;
+
+            if (request.prompt.Contains("$Prompt$"))
             {
-                model = "llama3:8b",
-                prompt = "Summarize this string, in 4 words or less: " + prompt + ". This string is the opening message in a conversation. Do not include quotation marks.",
-                stream = true,
-                options = new()
-                {
-                    num_predict = 10,
-                    top_k = 10,
-                    top_p = (float?)0.5
-                }
-            };
+                request.prompt = request.prompt.Replace("$Prompt$", prompt);
+            }
 
             OnStartOfRequest(EventArgs.Empty);
 
@@ -115,19 +107,20 @@ namespace OllamaClient.ViewModels
 
                     using (stream)
                     {
-                        await stream.Read(progress, CancellationTokenSource.Token);
+                        await stream.Read(progress, _CancellationTokenSource.Token);
                     }
                 });
 
                 Subject = subject.ToString();
+                Logging.Log($"Subject generation for conversation with '{SelectedModel}' successful", LogLevel.Information);
             }
             catch (TaskCanceledException)
             {
-                Logging.Log($"Subject generation cancelled for conversation with {SelectedModel}", LogLevel.Information);
+                Logging.Log($"Subject generation for conversation with '{SelectedModel}' cancelled", LogLevel.Information);
             }
             catch (Exception e)
             {
-                Logging.Log($"Subject generation failed for conversation with {SelectedModel}", LogLevel.Error, e);
+                Logging.Log($"Subject generation for conversation with '{SelectedModel}' failed", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
             }
         }
@@ -137,19 +130,20 @@ namespace OllamaClient.ViewModels
             //return early if no model selected
             if (SelectedModel == null) return;
 
-            if (CancellationTokenSource == null) CancellationTokenSource = new();
+            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
 
-            ChatItem newChatItem = new()
+            ChatMessage newChatItem = new()
             {
-                Content = prompt,
-                Timestamp = DateTime.Now
+                Content = prompt
             };
+
+            newChatItem.SetTimestamp(DateTime.Now);
 
             //add user message
             Items.Add(newChatItem);
 
             //initialize assistant response with empty content
-            ChatItem responseChatItem = new()
+            ChatMessage responseChatItem = new()
             {
                 Role = "assistant",
                 ProgressRingEnabled = true
@@ -181,23 +175,25 @@ namespace OllamaClient.ViewModels
                     DelimitedJsonStream<ChatResponse> stream = await Api.ChatStream(request);
                     using (stream)
                     {
-                        await stream.Read(progress, CancellationTokenSource.Token).ConfigureAwait(false);
+                        await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
                     }
                 });
+
+                Logging.Log($"Chat completion for conversation with '{SelectedModel}' successful", LogLevel.Information);
             }
             catch (TaskCanceledException)
             {
-                Logging.Log($"Chat completion cancelled for conversation with '{SelectedModel}'", LogLevel.Information);
+                Logging.Log($"Chat completion for conversation with '{SelectedModel}' cancelled", LogLevel.Information);
             }
             catch (Exception e)
             {
-                Logging.Log($"Chat completion failed for conversation with '{SelectedModel}'", LogLevel.Error, e);
+                Logging.Log($"Chat completion for conversation with '{SelectedModel}' failed", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
             }
             finally
             {
                 responseChatItem.ProgressRingEnabled = false;
-                responseChatItem.Timestamp = DateTime.Now;
+                responseChatItem.SetTimestamp(DateTime.Now);
                 OnEndOfResponse(EventArgs.Empty);
             }
         }

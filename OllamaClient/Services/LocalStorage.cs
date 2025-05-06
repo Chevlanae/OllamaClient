@@ -9,7 +9,7 @@ namespace OllamaClient.Services
     /// <summary>
     /// Class for managing a dictionary of DataFile objects, allowing easy access to serialized data files.
     /// </summary>
-    internal class LocalStorage
+    internal static class LocalStorage
     {
         private static Uri DirectoryUri { get; set; }
         private static Dictionary<Type, object> Files { get; set; }
@@ -20,7 +20,7 @@ namespace OllamaClient.Services
         /// <param name="dirUri"></param>
         static LocalStorage()
         {
-            DirectoryUri = new(Paths.Persistence);
+            DirectoryUri = new(Paths.State);
             Files = [];
 
             Assembly currentAssembly = Assembly.GetExecutingAssembly();
