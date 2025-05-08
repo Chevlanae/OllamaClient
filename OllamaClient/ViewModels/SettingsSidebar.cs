@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace OllamaClient.ViewModels
 {
-    internal class Settings
+    internal class SettingsSidebar
     {
         public string[] OptionsArray = typeof(Services.Settings).GetProperties().Select(i => i.Name).ToArray();
 

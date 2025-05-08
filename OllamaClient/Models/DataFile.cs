@@ -21,7 +21,7 @@ namespace OllamaClient.Models
         {
                 typeof(ChatMessage),
                 typeof(Conversation),
-                typeof(Conversations),
+                typeof(ConversationSidebar),
                 typeof(SettingsFile),
         };
 

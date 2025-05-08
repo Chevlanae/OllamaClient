@@ -35,18 +35,18 @@ namespace OllamaClient.ViewModels
         public Paragraph LicenseParagraph { get; set; } = new();
         public Paragraph ModelFileParagraph { get; set; } = new();
 
-        public event EventHandler? ShowModelinfoLoaded;
-        public event EventHandler? ShowModelinfoFailed;
+        public event EventHandler? DetailsLoaded;
+        public event EventHandler? DetailsLoadFailed;
         public event UnhandledExceptionEventHandler? UnhandledException;
 
-        protected void OnShowModelinfoLoaded(EventArgs e)
+        protected void OnDetailsLoaded(EventArgs e)
         {
-            ShowModelinfoLoaded?.Invoke(this, e);
+            DetailsLoaded?.Invoke(this, e);
         }
 
-        protected void OnShowModelinfoFailed(EventArgs e)
+        protected void OnDetailsFailed(EventArgs e)
         {
-            ShowModelinfoFailed?.Invoke(this, e);
+            DetailsLoadFailed?.Invoke(this, e);
         }
 
         protected void OnUnhandledException(UnhandledExceptionEventArgs e)
@@ -72,7 +72,7 @@ namespace OllamaClient.ViewModels
             return sb.ToString();
         }
 
-        public async Task GetShowModelInfo()
+        public async Task GetDetails()
         {
             try
             {
@@ -86,13 +86,13 @@ namespace OllamaClient.ViewModels
                 Tensors = response.tensors;
                 LastUpdated = DateTime.Now;
                 Logging.Log($"Loaded model info for '{_Model}'", LogLevel.Information);
-                OnShowModelinfoLoaded(EventArgs.Empty);
+                OnDetailsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
                 Logging.Log($"Failed to load model info for '{_Model}'", LogLevel.Error, e);
                 OnUnhandledException(new(e, false));
-                OnShowModelinfoFailed(EventArgs.Empty);
+                OnDetailsFailed(EventArgs.Empty);
             }
         }
 

@@ -14,18 +14,18 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ConversationPageNavigationArgs(Conversation conversation, DispatcherQueue dispatcherQueue, List<string> availableModels)
-    {
-        public Conversation Conversation { get; set; } = conversation;
-        public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public List<string> AvailableModels { get; set; } = availableModels;
-    }
-
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public partial class ConversationPage : Page
     {
+        public class NavArgs(Conversation conversation, DispatcherQueue dispatcherQueue, List<string> availableModels)
+        {
+            public Conversation Conversation { get; set; } = conversation;
+            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+            public List<string> AvailableModels { get; set; } = availableModels;
+        }
+
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Conversation? Conversation { get; set; }
         private List<string>? AvailableModels { get; set; }
@@ -42,7 +42,7 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is ConversationPageNavigationArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 Conversation = args.Conversation;
                 DispatcherQueue = args.DispatcherQueue;

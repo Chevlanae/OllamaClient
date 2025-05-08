@@ -14,7 +14,7 @@ namespace OllamaClient.ViewModels
     [KnownType(typeof(ChatMessage))]
     [KnownType(typeof(Conversation))]
     [DataContract]
-    public class Conversations : INotifyPropertyChanged
+    public class ConversationSidebar : INotifyPropertyChanged
     {
         [DataMember]
         private ObservableCollection<Conversation> _ConversationCollection { get; set; } = [];
@@ -100,7 +100,7 @@ namespace OllamaClient.ViewModels
             {
                 Items.Clear();
 
-                if (await Task.Run(LocalStorage.Get<Conversations>) is Conversations result)
+                if (await Task.Run(LocalStorage.Get<ConversationSidebar>) is ConversationSidebar result)
                 {
                     foreach (Conversation c in result.Items)
                     {

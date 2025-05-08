@@ -47,8 +47,9 @@ namespace OllamaClient.Models
         }
 
         /// <summary>
-        /// Reads the source stream into a string and attempts to deserialize the string at each delimiter into an object of type T.
-        /// Passes any deserialized objects to the given IProgress parameter.
+        /// Reads the source stream into a string builder and attempts to deserialize the string at each delimiter into an object of type <typeparamref name="T"/>.
+        /// Once deserialized, each object is passed to the given IProgress&lt;<typeparamref name="T"/>&gt; parameter via the IProgress&lt;<typeparamref name="T"/>&gt;.Report method.
+        /// If the deserialization operation fails, the object is skipped and the next object is attempted.
         /// </summary>
         /// <param name="progress"></param>
         /// <param name="cancellationToken"></param>

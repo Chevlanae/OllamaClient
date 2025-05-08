@@ -13,22 +13,22 @@ using System.Linq;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ConversationsSideBarPageNavigationArgs(Frame contentFrame, DispatcherQueue dispatcherQueue)
-    {
-        public Frame ContentFrame { get; set; } = contentFrame;
-        public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-    }
 
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ConversationsSidebarPage : Page
+    public sealed partial class ConversationSidebarPage : Page
     {
+        public class NavArgs(Frame contentFrame, DispatcherQueue dispatcherQueue)
+        {
+            public Frame ContentFrame { get; set; } = contentFrame;
+            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+        }
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private Conversations Conversations { get; set; }
+        private ConversationSidebar Conversations { get; set; }
 
-        public ConversationsSidebarPage()
+        public ConversationSidebarPage()
         {
             Conversations = new();
             Conversations.Items.CollectionChanged += ConversationItems_CollectionChanged;
@@ -42,7 +42,7 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is ConversationsSideBarPageNavigationArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
@@ -115,7 +115,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue is not null)
             {
-                ConversationPageNavigationArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels.ToList());
+                ConversationPage.NavArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels.ToList());
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }

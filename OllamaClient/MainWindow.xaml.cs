@@ -30,11 +30,11 @@ namespace OllamaClient
 
         private void ConversationsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SidebarFrame.CurrentSourcePageType != typeof(ConversationsSidebarPage))
+            if (SidebarFrame.CurrentSourcePageType != typeof(ConversationSidebarPage))
             {
-                ConversationsSideBarPageNavigationArgs args = new(ContentFrame, DispatcherQueue);
+                ConversationSidebarPage.NavArgs args = new(ContentFrame, DispatcherQueue);
 
-                SidebarFrame.Navigate(typeof(ConversationsSidebarPage), args);
+                SidebarFrame.Navigate(typeof(ConversationSidebarPage), args);
             }
 
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
@@ -42,11 +42,11 @@ namespace OllamaClient
 
         private void ModelsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SidebarFrame.CurrentSourcePageType != typeof(ModelsSidebarPage))
+            if (SidebarFrame.CurrentSourcePageType != typeof(ModelSidebarPage))
             {
-                ModelsSidebarPageNavigationArgs args = new(ContentFrame, DispatcherQueue);
+                ModelSidebarPage.NavArgs args = new(ContentFrame, DispatcherQueue);
 
-                SidebarFrame.Navigate(typeof(ModelsSidebarPage), args);
+                SidebarFrame.Navigate(typeof(ModelSidebarPage), args);
             }
 
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
@@ -56,7 +56,7 @@ namespace OllamaClient
         {
             if(SidebarFrame.CurrentSourcePageType != typeof(SettingsSidebarPage))
             {
-                SettingsSidebarPageNavigationArgs args = new(DispatcherQueue);
+                SettingsSidebarPage.NavArgs args = new(DispatcherQueue);
                 SidebarFrame.Navigate(typeof(SettingsSidebarPage), args);
             }
 

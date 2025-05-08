@@ -5,12 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class Models
+    public class ModelSidebar
     {
+        private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
+
         public ObservableCollection<Model> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
         public ObservableCollection<string> StatusStrings = [];
@@ -82,6 +85,12 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(this, e);
         }
 
+        public void Cancel()
+        {
+            _CancellationTokenSource.Cancel();
+            _CancellationTokenSource = new();
+        }
+
         public async Task LoadModels()
         {
             try
@@ -121,11 +130,19 @@ namespace OllamaClient.ViewModels
                 license = license
             };
 
-            if (parameters?.Where(p => p.Value is not null && p.Value != string.Empty) is IEnumerable<ModelParameter> resolvedItems && resolvedItems.Count() != 0)
+            IEnumerable<IModelParameter>? resolvedParameters = parameters?.Where
+            (
+                p =>
+                p.Value is not null
+                &&
+                p.Value != string.Empty
+            );
+
+            if (resolvedParameters is not null && resolvedParameters.Count() > 0)
             {
                 request.parameters = [];
 
-                foreach (ModelParameter item in resolvedItems)
+                foreach (ModelParameter item in resolvedParameters)
                 {
                     request.parameters[item.Key] = item.Value;
                 }
@@ -139,7 +156,7 @@ namespace OllamaClient.ViewModels
                 {
                     DelimitedJsonStream<StatusResponse>? stream = await Api.CreateModelStream(request);
 
-                    await stream.Read(progress, new());
+                    await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
                 Logging.Log($"Model '{name}' created successfully", LogLevel.Information);
@@ -221,7 +238,7 @@ namespace OllamaClient.ViewModels
                 {
                     DelimitedJsonStream<StatusResponse> stream = await Api.PullModelStream(new() { model = modelName });
 
-                    await stream.Read(progress, new());
+                    await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
                 Logging.Log($"Model '{modelName}' pulled successfully", LogLevel.Information);

@@ -14,26 +14,28 @@ namespace OllamaClient.Services
         private static Uri DirectoryUri { get; set; }
         private static Dictionary<Type, object> Files { get; set; }
 
-        /// <summary>
-        /// Constructor for DataFileDictionary, takes a directory URI as the location for the parent directory
-        /// </summary>
-        /// <param name="dirUri"></param>
         static LocalStorage()
         {
             DirectoryUri = new(Paths.State);
             Files = [];
 
+            // Get the current assembly. Usually OllamaClient (I hope), pls don't reference my library. It's private! >:( 
             Assembly currentAssembly = Assembly.GetExecutingAssembly();
 
+            // Iterate through all files in Paths.State
             foreach (string file in Directory.GetFiles(DirectoryUri.LocalPath))
             {
+                // Get the file name without the extension, yay long method names!
                 string fileName = Path.GetFileNameWithoutExtension(file);
 
+                // Check if the file name matches a type in the current assembly.
                 if (currentAssembly.GetType(fileName) is Type fileType)
                 {
-                    Type genericType = typeof(DataFile<>).MakeGenericType(fileType);
+                    // Attempt to create an instance of the DataFile<T> class using reflection, where T is the matched type 'fileType'.
+                    Type dataFileType = typeof(DataFile<>).MakeGenericType(fileType);
 
-                    if (Activator.CreateInstance(genericType, DirectoryUri) is object instance)
+                    // Run the constructor of DataFile<T> and pass DirectoryUri as an argument, then add the constructed instance to the Files dictionary.
+                    if (Activator.CreateInstance(dataFileType, DirectoryUri) is object instance)
                     {
                         Files.Add(fileType, instance);
                     }
@@ -48,6 +50,7 @@ namespace OllamaClient.Services
         /// <returns></returns>
         public static T? Get<T>()
         {
+            // Check if the type exists in the dictionary and if it's value is of type DataFile<T>, then return it. Returns the default value if not.
             if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
             {
                 return dataFile.Get();
@@ -63,6 +66,8 @@ namespace OllamaClient.Services
         /// <param name="obj"></param>
         public static void Set<T>(T obj)
         {
+            // If the type exists in the dictionary and if it's value is of type DataFile<T>, then call DataFile<T>.Set on the value.
+            // If not, create a new DataFile<T> instance and add it to the dictionary.
             if (Files.ContainsKey(typeof(T)) && Files[typeof(T)] is DataFile<T> dataFile)
             {
                 dataFile.Set(obj);

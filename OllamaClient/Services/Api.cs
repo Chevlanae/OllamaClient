@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Services
 {
-    public static class Api
+    internal static class Api
     {
         public class ClientOptions(string socketAddress, bool useHttps, TimeSpan requestTimeout)
         {

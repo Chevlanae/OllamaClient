@@ -7,13 +7,6 @@ using System.Runtime.CompilerServices;
 
 namespace OllamaClient.Services
 {
-    public enum LogProvider
-    {
-        Console,
-        File,
-        Debug
-    }
-
     internal static class Logging
     {
         private static Dictionary<string, ILogger> Loggers { get; } = [];

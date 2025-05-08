@@ -72,13 +72,13 @@
     <Page Update="Views\Pages\ModelItemPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Update="Views\Pages\ModelsSidebarPage.xaml">
+    <Page Update="Views\Pages\ModelSidebarPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Views\Pages\BlankPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Update="Views\Pages\ConversationsSidebarPage.xaml">
+    <Page Update="Views\Pages\ConversationSidebarPage.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

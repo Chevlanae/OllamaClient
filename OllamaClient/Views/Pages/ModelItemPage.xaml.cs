@@ -1,8 +1,6 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
@@ -12,21 +10,21 @@ using System;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ModelItemPageNavigationArgs(DispatcherQueue dispatcherQueue, Model modelItem, ViewModels.Models collection)
-    {
-        public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public Model SelectedItem { get; set; } = modelItem;
-        public ViewModels.Models Collection { get; set; } = collection;
-    }
-
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ModelItemPage : Page
     {
+        public class NavArgs(DispatcherQueue dispatcherQueue, Model modelItem, ModelSidebar collection)
+        {
+            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+            public Model SelectedItem { get; set; } = modelItem;
+            public ModelSidebar Collection { get; set; } = collection;
+        }
+
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private Model? Item { get; set; }
-        private ViewModels.Models? ParentCollection { get; set; }
+        private ModelSidebar? ParentCollection { get; set; }
 
         public ModelItemPage()
         {
@@ -35,7 +33,7 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is ModelItemPageNavigationArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 DispatcherQueue = args.DispatcherQueue;
                 Item = args.SelectedItem;
@@ -50,11 +48,11 @@ namespace OllamaClient.Views.Pages
                 LicenseTextBox.Blocks.Add(Item.LicenseParagraph);
                 ModelFileTextBox.Blocks.Add(Item.ModelFileParagraph);
 
-                if(Item.LastUpdated == null || Item.LastUpdated < DateTime.Now.AddMinutes(-5))
+                if (Item.LastUpdated == null || Item.LastUpdated < DateTime.Now.AddMinutes(-5))
                 {
-                    DispatcherQueue.TryEnqueue(async () => 
-                    { 
-                        await Item.GetShowModelInfo();
+                    DispatcherQueue.TryEnqueue(async () =>
+                    {
+                        await Item.GetDetails();
                         Item.GenerateParagraphText();
                     });
                 }

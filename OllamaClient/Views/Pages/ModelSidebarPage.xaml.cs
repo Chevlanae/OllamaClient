@@ -12,22 +12,22 @@ using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 namespace OllamaClient.Views.Pages
 {
-    public class ModelsSidebarPageNavigationArgs(Frame contentFrame, DispatcherQueue dispatcherQueue)
-    {
-        public Frame ContentFrame { get; set; } = contentFrame;
-        public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-    }
-
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ModelsSidebarPage : Page
+    public sealed partial class ModelSidebarPage : Page
     {
+        public class NavArgs(Frame contentFrame, DispatcherQueue dispatcherQueue)
+        {
+            public Frame ContentFrame { get; set; } = contentFrame;
+            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+        }
+
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ViewModels.Models ModelList { get; set; } = new();
+        private ModelSidebar ModelList { get; set; } = new();
 
-        public ModelsSidebarPage()
+        public ModelSidebarPage()
         {
             InitializeComponent();
             ModelsListView.ItemsSource = ModelList.Items;
@@ -38,7 +38,7 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is ModelsSidebarPageNavigationArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
@@ -81,7 +81,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ModelsListView.SelectedItem is Model item && DispatcherQueue is not null)
             {
-                ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPageNavigationArgs(DispatcherQueue, item, ModelList));
+                ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(DispatcherQueue, item, ModelList));
             }
         }
 
@@ -89,7 +89,7 @@ namespace OllamaClient.Views.Pages
         {
             if (DispatcherQueue is not null)
             {
-                ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPageNavigationArgs(DispatcherQueue, ModelList));
+                ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPage.NavArgs(DispatcherQueue, ModelList));
             }
         }
 

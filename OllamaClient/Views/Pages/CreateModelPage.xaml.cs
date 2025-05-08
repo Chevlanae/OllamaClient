@@ -12,20 +12,21 @@ using System.Collections.ObjectModel;
 
 namespace OllamaClient.Views.Pages
 {
-    public class CreateModelPageNavigationArgs(DispatcherQueue dispatcherQueue, ViewModels.Models modelCollection)
-    {
-        public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-        public ViewModels.Models ModelList { get; set; } = modelCollection;
-    }
 
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class CreateModelPage : Page
     {
+        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebar modelCollection)
+        {
+            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
+            public ModelSidebar ModelList { get; set; } = modelCollection;
+        }
+
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ObservableCollection<ModelParameter> NewModelParameters { get; set; } = [];
-        private ViewModels.Models? ParentCollection { get; set; }
+        private ModelSidebar? ParentCollection { get; set; }
 
         public CreateModelPage()
         {
@@ -38,7 +39,7 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is CreateModelPageNavigationArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 ParentCollection = args.ModelList;
                 DispatcherQueue = args.DispatcherQueue;

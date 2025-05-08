@@ -17,7 +17,7 @@ namespace OllamaClient.ViewModels
     [DataContract]
     public partial class Conversation : INotifyPropertyChanged
     {
-        private CancellationTokenSource? _CancellationTokenSource { get; set; }
+        private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
 
         [DataMember]
         private ObservableCollection<ChatMessage> _ChatMessageCollection { get; set; } = [];
@@ -73,20 +73,16 @@ namespace OllamaClient.ViewModels
 
         public void Cancel()
         {
-            if (_CancellationTokenSource != null)
-            {
-                _CancellationTokenSource.Cancel();
-            }
+            _CancellationTokenSource.Cancel();
             _CancellationTokenSource = new();
         }
 
         public async Task GenerateSubject(string prompt)
         {
             if (SelectedModel == null) return;
-            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
             if (Subject is null) Subject = "";
 
-            CompletionRequest request = Settings.SubjectGenerationOptions;
+            CompletionRequest request = SettingsSidebar.SubjectGenerationOptions;
 
             if (request.prompt.Contains("$Prompt$"))
             {
@@ -129,8 +125,6 @@ namespace OllamaClient.ViewModels
         {
             //return early if no model selected
             if (SelectedModel == null) return;
-
-            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
 
             ChatMessage newChatItem = new()
             {
