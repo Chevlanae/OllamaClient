@@ -13,29 +13,22 @@
                MinWidth="300">
         <SplitView.Pane>
             <Grid>
+                <Grid.Resources>
+                    <Style x:Key="NavBarButtonStyle" TargetType="AppBarButton">
+                        <Setter Property="Height" Value="50" />
+                        <Setter Property="Width" Value="50" />
+                    </Style>
+                </Grid.Resources>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="50" />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <Grid.Resources>
-                        <Style x:Key="NavBarButtonStyle" TargetType="AppBarButton">
-                            <Setter Property="Height" Value="50" />
-                            <Setter Property="Width" Value="50" />
-                        </Style>
-                    </Grid.Resources>
-                    <StackPanel Grid.Row="0">
-                        <AppBarButton x:Name="ToggleSidbarButton" Icon="GlobalNavigationButton" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click" />
-                        <AppBarButton x:Name="ConversationsButton" Icon="Message" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click" />
-                        <AppBarButton x:Name="ModelsButton" Icon="Library" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click" />
-                        <AppBarButton x:Name="SettingsButton" Icon="Setting" Style="{StaticResource NavBarButtonStyle}" Click="SettingsButton_Click" />
-                    </StackPanel>
-                    <AppBarButton Grid.Row="1" x:Name="NotificationButton" Icon="Bullets" Style="{StaticResource NavBarButtonStyle}" VerticalAlignment="Bottom" />
-                </Grid>
+                <StackPanel Grid.Column="0">
+                    <AppBarButton x:Name="ToggleSidbarButton" Icon="GlobalNavigationButton" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click" />
+                    <AppBarButton x:Name="ConversationsButton" Icon="Message" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click" />
+                    <AppBarButton x:Name="ModelsButton" Icon="Library" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click" />
+                    <AppBarButton x:Name="SettingsButton" Icon="Setting" Style="{StaticResource NavBarButtonStyle}" Click="SettingsButton_Click" />
+                </StackPanel>
                 <Frame Grid.Column="1" x:Name="SidebarFrame" />
             </Grid>
         </SplitView.Pane>

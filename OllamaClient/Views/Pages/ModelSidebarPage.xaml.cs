@@ -48,6 +48,8 @@ namespace OllamaClient.Views.Pages
                     Refresh();
                 }
             }
+
+            ModelsListView.SelectedIndex = -1;
         }
 
         private void Refresh()

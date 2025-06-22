@@ -23,9 +23,17 @@ namespace OllamaClient
             ConversationsButton_Click(this, new());
         }
 
-        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
+        private void ToggleSidebar()
         {
             TopLevelSplitView.IsPaneOpen = !TopLevelSplitView.IsPaneOpen;
+        }
+
+        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
+        {
+            if(ContentFrame.CurrentSourcePageType != typeof(SettingsPage))
+            {
+                ToggleSidebar();
+            }
         }
 
         private void ConversationsButton_Click(object sender, RoutedEventArgs e)
@@ -37,7 +45,7 @@ namespace OllamaClient
                 SidebarFrame.Navigate(typeof(ConversationSidebarPage), args);
             }
 
-            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
 
         private void ModelsButton_Click(object sender, RoutedEventArgs e)
@@ -49,18 +57,19 @@ namespace OllamaClient
                 SidebarFrame.Navigate(typeof(ModelSidebarPage), args);
             }
 
-            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            if(SidebarFrame.CurrentSourcePageType != typeof(SettingsSidebarPage))
+            if (SidebarFrame.CurrentSourcePageType != typeof(SettingsPage))
             {
-                SettingsSidebarPage.NavArgs args = new(DispatcherQueue);
-                SidebarFrame.Navigate(typeof(SettingsSidebarPage), args);
+                SettingsPage.NavArgs args = new(DispatcherQueue);
+                SidebarFrame.Navigate(typeof(BlankPage));
+                ContentFrame.Navigate(typeof(SettingsPage), args);
             }
 
-            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebarButton_Click(sender, e);
+            if (TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
     }
 }

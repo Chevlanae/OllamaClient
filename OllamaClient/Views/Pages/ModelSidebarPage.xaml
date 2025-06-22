@@ -37,9 +37,9 @@
                         Width="50">
                         <Button.Flyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem Text="Create new model..." Click="CreateModelButton_Click" />
-                                <MenuFlyoutItem Text="Pull existing model..." Click="PullModelButton_Click" />
-                                <MenuFlyoutItem Text="Refresh..." Click="RefreshModelsButton_Click" />
+                                <MenuFlyoutItem Text="Create new model" Click="CreateModelButton_Click" />
+                                <MenuFlyoutItem Text="Pull existing model" Click="PullModelButton_Click" />
+                                <MenuFlyoutItem Text="Refresh" Click="RefreshModelsButton_Click" />
                             </MenuFlyout>
                         </Button.Flyout>
                         <FontIcon Glyph="&#xE712;" />

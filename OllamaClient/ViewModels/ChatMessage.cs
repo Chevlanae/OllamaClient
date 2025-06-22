@@ -11,7 +11,7 @@ namespace OllamaClient.ViewModels
     {
         private bool _ProgressRingEnabled { get; set; } = false;
 
-        private Role _Role { get; set; } = OllamaClient.Models.Role.user;
+        private Role _Role { get; set; } = Models.Role.user;
 
         [DataMember]
         private DateTime? _Timestamp { get; set; }
@@ -58,12 +58,12 @@ namespace OllamaClient.ViewModels
 
         public string HorizontalAlignment
         {
-            get => _Role == OllamaClient.Models.Role.assistant ? "Left" : "Right";
+            get => _Role == Models.Role.assistant ? "Left" : "Right";
         }
 
         public string BackgroundColor
         {
-            get => _Role == OllamaClient.Models.Role.assistant ? "Transparent" : "DimGray";
+            get => _Role == Models.Role.assistant ? "Transparent" : "DimGray";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

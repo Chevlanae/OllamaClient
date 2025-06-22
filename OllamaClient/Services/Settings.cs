@@ -1,12 +1,13 @@
 ﻿using OllamaClient.Models;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace OllamaClient.Services
 {
     internal static class Settings
     {
-        private static SettingsFile _SettingsFile { get; } = new(Paths.State);
+        private static SettingsFile _SettingsFile { get; } = new(new(Paths.State));
 
         public static string SocketAddress
         {

@@ -26,12 +26,10 @@ namespace OllamaClient.Services
             }
         }
 
-        public static void Log(string message, LogLevel level, Exception? exception = null, [CallerFilePath] string? callerPath = null)
+        public static void Log(string message, LogLevel level, Exception? exception = null, [CallerMemberName] string? callerName = null)
         {
-            // Ensure category is not null or empty
-            string resolvedCategory = string.IsNullOrEmpty(callerPath) ? "Default" : Path.GetFileNameWithoutExtension(callerPath);
 
-            ILogger logger = GetLogger(resolvedCategory);
+            ILogger logger = GetLogger(callerName ?? "Default");
 
             switch (level)
             {
@@ -42,24 +40,10 @@ namespace OllamaClient.Services
                     logger.LogWarning(message);
                     break;
                 case LogLevel.Error:
-                    if (exception != null)
-                    {
-                        logger.LogError(exception, message);
-                    }
-                    else
-                    {
-                        logger.LogError(message);
-                    }
+                    logger.LogError(exception, message);
                     break;
                 case LogLevel.Critical:
-                    if (exception != null)
-                    {
-                        logger.LogCritical(exception, message);
-                    }
-                    else
-                    {
-                        logger.LogCritical(message);
-                    }
+                    logger.LogCritical(exception, message);
                     break;
             }
         }

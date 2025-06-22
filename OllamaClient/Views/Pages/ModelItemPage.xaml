@@ -9,14 +9,9 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition Width="4*" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <ScrollViewer Grid.Column="1">
-            <Grid x:Name="ItemGrid" HorizontalAlignment="Stretch" VerticalAlignment="Center" MinWidth="200">
+    <ScrollViewer>
+        <Grid>
+            <Grid x:Name="ItemGrid"  Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="10" MinWidth="200" MaxWidth="600">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="40" />
                     <RowDefinition Height="60" />
@@ -50,6 +45,7 @@
                     <RichTextBlock x:Name="LicenseTextBox" />
                 </Expander>
             </Grid>
-        </ScrollViewer>
-    </Grid>
+        </Grid>
+    </ScrollViewer>
+    
 </Page>

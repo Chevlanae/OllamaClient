@@ -36,9 +36,9 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public string Subject
+        public string? Subject
         {
-            get => _Subject ?? "New Conversation";
+            get => _Subject;
             set
             {
                 _Subject = value;
@@ -73,7 +73,10 @@ namespace OllamaClient.ViewModels
 
         public void Cancel()
         {
-            _CancellationTokenSource.Cancel();
+            if(_CancellationTokenSource is not null)
+            {
+                _CancellationTokenSource.Cancel();
+            }
             _CancellationTokenSource = new();
         }
 
@@ -82,7 +85,7 @@ namespace OllamaClient.ViewModels
             if (SelectedModel == null) return;
             if (Subject is null) Subject = "";
 
-            CompletionRequest request = SettingsSidebar.SubjectGenerationOptions;
+            CompletionRequest request = Settings.SubjectGenerationOptions;
 
             if (request.prompt.Contains("$Prompt$"))
             {
@@ -123,28 +126,28 @@ namespace OllamaClient.ViewModels
 
         public async Task SendUserMessage(string prompt)
         {
+            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
+
             //return early if no model selected
             if (SelectedModel == null) return;
 
-            ChatMessage newChatItem = new()
+            ChatMessage userChatMessage = new()
             {
                 Content = prompt
             };
 
-            newChatItem.SetTimestamp(DateTime.Now);
-
             //add user message
-            Items.Add(newChatItem);
+            Items.Add(userChatMessage);
 
             //initialize assistant response with empty content
-            ChatMessage responseChatItem = new()
+            ChatMessage assistantChatMessage = new()
             {
                 Role = "assistant",
                 ProgressRingEnabled = true
             };
 
             //add assistant message
-            Items.Add(responseChatItem);
+            Items.Add(assistantChatMessage);
 
             //build HTTP request data
             ChatRequest request = new()
@@ -161,16 +164,13 @@ namespace OllamaClient.ViewModels
             {
                 StringBuilder content = new();
 
-                Progress<ChatResponse> progress = new(s => responseChatItem.Content = content.Append(s.message?.content ?? "").ToString());
+                Progress<ChatResponse> progress = new(s => assistantChatMessage.Content = content.Append(s.message?.content ?? "").ToString());
 
                 await Task.Run(async () =>
                 {
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
-                    DelimitedJsonStream<ChatResponse> stream = await Api.ChatStream(request);
-                    using (stream)
-                    {
-                        await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
-                    }
+                    using DelimitedJsonStream<ChatResponse> stream = await Api.ChatStream(request);
+                    await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
                 });
 
                 Logging.Log($"Chat completion for conversation with '{SelectedModel}' successful", LogLevel.Information);
@@ -186,8 +186,8 @@ namespace OllamaClient.ViewModels
             }
             finally
             {
-                responseChatItem.ProgressRingEnabled = false;
-                responseChatItem.SetTimestamp(DateTime.Now);
+                assistantChatMessage.ProgressRingEnabled = false;
+                assistantChatMessage.SetTimestamp(DateTime.Now);
                 OnEndOfResponse(EventArgs.Empty);
             }
         }

@@ -84,5 +84,10 @@ namespace OllamaClient.Models
                 _Serializer.WriteObject(writer, obj);
             }
         }
+
+        public bool Exists()
+        {
+            return File.Exists(_FileUri.LocalPath);
+        }
     }
 }

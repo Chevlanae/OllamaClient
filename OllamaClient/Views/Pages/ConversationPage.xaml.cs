@@ -7,6 +7,8 @@ using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,11 +21,11 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        public class NavArgs(Conversation conversation, DispatcherQueue dispatcherQueue, List<string> availableModels)
+        public class NavArgs(Conversation conversation, DispatcherQueue dispatcherQueue, ObservableCollection<string> availableModels)
         {
             public Conversation Conversation { get; set; } = conversation;
             public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-            public List<string> AvailableModels { get; set; } = availableModels;
+            public ObservableCollection<string> AvailableModels { get; set; } = availableModels;
         }
 
         private new DispatcherQueue? DispatcherQueue { get; set; }
@@ -46,7 +48,7 @@ namespace OllamaClient.Views.Pages
             {
                 Conversation = args.Conversation;
                 DispatcherQueue = args.DispatcherQueue;
-                AvailableModels = args.AvailableModels;
+                AvailableModels = args.AvailableModels.ToList();
 
                 Conversation.StartOfRequest += Conversation_StartOfMessage;
                 Conversation.EndOfResponse += Conversation_EndOfMessage;
@@ -117,7 +119,7 @@ namespace OllamaClient.Views.Pages
             {
                 Conversation?.Cancel();
             }
-            else if (Conversation != null)
+            else if (Conversation is not null)
             {
                 string text = ChatInputTextBox.Text;
 

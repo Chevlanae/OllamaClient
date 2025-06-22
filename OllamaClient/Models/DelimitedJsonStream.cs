@@ -71,7 +71,7 @@ namespace OllamaClient.Models
                         try
                         {
                             //Cleanup any leading characters preceding the opening bracket.
-                            //This pattern: "(^.*?{){1}" will match all characters before the first
+                            //This pattern: " (^.*?{){1} " will match all characters before the first
                             //opening bracket of the json string, including the first opening bracket, only once.
                             string objString = Regex.Replace(PartialObject.ToString(), "(^.*?{){1}", "{");
 

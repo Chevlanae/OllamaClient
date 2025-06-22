@@ -7,6 +7,7 @@ using OllamaClient.Views.Dialogs;
 using OllamaClient.ViewModels;
 using System;
 using System.Linq;
+using System.Timers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -46,13 +47,22 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
                 DispatcherQueue = args.DispatcherQueue;
-                if(Conversations.LastUpdated == null || Conversations.LastUpdated < DateTime.Now.AddMinutes(-5))
-                {
-                    Refresh();
-                }
-            }
 
-            ConversationsListView.SelectedIndex = -1;
+                if (Conversations.Items.Count == 0)
+                {
+                    DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadConversations(); });
+                    DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+                    ContentFrame.Navigate(typeof(BlankPage));
+                }
+
+                foreach (Conversation conversation in Conversations.Items)
+                {
+                    conversation.StartOfRequest += Conversation_StartOfMessage;
+                    conversation.EndOfResponse += Conversation_EndOfMessasge;
+                }
+
+                ConversationsListView.SelectedIndex = -1;
+            }
 
             base.OnNavigatedTo(e);
         }
@@ -65,12 +75,6 @@ namespace OllamaClient.Views.Pages
                 conversation.EndOfResponse -= Conversation_EndOfMessasge;
             }
             base.OnNavigatedFrom(e);
-        }
-
-        private void Refresh()
-        {
-            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
-            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadConversations(); });
         }
 
         private void Conversation_StartOfMessage(object? sender, EventArgs e)
@@ -115,7 +119,9 @@ namespace OllamaClient.Views.Pages
         {
             if (ConversationsListView.SelectedItem is Conversation conversation && DispatcherQueue is not null)
             {
-                ConversationPage.NavArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels.ToList());
+                DispatcherQueue.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+
+                ConversationPage.NavArgs args = new(conversation, DispatcherQueue, Conversations.AvailableModels);
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }
@@ -136,6 +142,7 @@ namespace OllamaClient.Views.Pages
         private void AddConversationButton_Click(object sender, RoutedEventArgs e)
         {
             Conversation conversation = new();
+            conversation.Subject = "New Conversation";
             conversation.StartOfRequest += Conversation_StartOfMessage;
             conversation.EndOfResponse += Conversation_EndOfMessasge;
             Conversations.Items.Add(conversation);
@@ -144,7 +151,8 @@ namespace OllamaClient.Views.Pages
 
         private void RefreshConversationsButton_Click(object sender, RoutedEventArgs e)
         {
-            Refresh();
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadAvailableModels(); });
+            DispatcherQueue?.TryEnqueue(async () => { await Conversations.LoadConversations(); });
         }
     }
 }

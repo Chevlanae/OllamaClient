@@ -154,7 +154,7 @@ namespace OllamaClient.ViewModels
             {
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<StatusResponse>? stream = await Api.CreateModelStream(request);
+                    using DelimitedJsonStream<StatusResponse>? stream = await Api.CreateModelStream(request);
 
                     await stream.Read(progress, _CancellationTokenSource.Token);
                 });
