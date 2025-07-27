@@ -25,7 +25,7 @@ namespace OllamaClient.Views.Pages
 
         private Frame? ContentFrame { get; set; }
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ModelSidebar ModelList { get; set; } = new();
+        private ModelSidebarViewModel ModelList { get; set; } = new();
 
         public ModelSidebarPage()
         {
@@ -57,7 +57,7 @@ namespace OllamaClient.Views.Pages
             DispatcherQueue?.TryEnqueue(async () =>
             {
                 await ModelList.LoadModels();
-                foreach (Model item in ModelList.Items)
+                foreach (ModelViewModel item in ModelList.Items)
                 {
                     item.LastUpdated = null;
                 }
@@ -70,7 +70,7 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await Services.Dialogs.ShowDialog(dialog);
+                await Services.DialogsService.ShowDialog(dialog);
             });
         }
 
@@ -81,7 +81,7 @@ namespace OllamaClient.Views.Pages
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ModelsListView.SelectedItem is Model item && DispatcherQueue is not null)
+            if (ModelsListView.SelectedItem is ModelViewModel item && DispatcherQueue is not null)
             {
                 ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(DispatcherQueue, item, ModelList));
             }

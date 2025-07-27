@@ -9,27 +9,48 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class Model(ModelInfo source)
+    public class ModelViewModel
     {
-        public string Name { get; set; } = source.name;
-        public string _Model { get; set; } = source.model;
-        public DateTime ModifiedAt { get; set; } = source.modified_at;
-        public long Size { get; set; } = source.size;
-        public string Digest { get; set; } = source.digest;
-        public string? ParentModel { get; set; } = source.details.parent_model;
-        public string Format { get; set; } = source.details.format;
-        public string Family { get; set; } = source.details.family;
-        public string[]? Families { get; set; } = source.details.families;
-        public string ParameterSize { get; set; } = source.details.parameter_size;
-        public string QuantizationLevel { get; set; } = source.details.quantization_level;
+        public class SourceInfo
+        {
+            public string Name { get; set; }
+            public string Model { get; set; }
+            public DateTime ModifiedAt { get; set; }
+            public long Size { get; set; }
+            public string Digest { get; set; }
+            public string? ParentModel { get; set; }
+            public string Format { get; set; }
+            public string Family { get; set; }
+            public string[]? Families { get; set; }
+            public string ParameterSize { get; set; }
+            public string QuantizationLevel { get; set; }
 
+            public SourceInfo(ModelInfo source)
+            {
+                Name = source.name;
+                Model = source.model;
+                ModifiedAt = source.modified_at;
+                Size = source.size;
+                Digest = source.digest;
+                ParentModel = source.details.parent_model;
+                Format = source.details.format;
+                Family = source.details.family;
+                Families = source.details.families;
+                ParameterSize = source.details.parameter_size;
+                QuantizationLevel = source.details.quantization_level;
+            }
+        }
+
+        private readonly ILogger _Logger;   
+        private OllamaApiService _Api;
+
+        public SourceInfo? Source { get; set; }
         public string? License { get; set; }
         public ModelFile? ModelFile { get; set; }
         public string? ModelInfo { get; set; }
         public string[]? Capabilities { get; set; }
         public TensorInfo[]? Tensors { get; set; }
         public DateTime? LastUpdated { get; set; }
-
         public Paragraph DetailsParagraph { get; set; } = new();
         public Paragraph ModelInfoParagraph { get; set; } = new();
         public Paragraph LicenseParagraph { get; set; } = new();
@@ -54,43 +75,55 @@ namespace OllamaClient.ViewModels
             UnhandledException?.Invoke(this, e);
         }
 
+        public ModelViewModel(ILogger<ModelViewModel> logger)
+        {
+            _Logger = logger;
+            if (App.GetService<OllamaApiService>() is OllamaApiService api)
+            {
+                _Api = api;
+            }
+            else throw new ArgumentNullException(nameof(api));
+        }
+
         private string ToSummaryString()
         {
             StringBuilder sb = new();
 
-            sb.AppendLine($"Model: {_Model}");
-            sb.AppendLine($"Modified At: {ModifiedAt}");
-            sb.AppendLine($"Size: {Size / 1024 / 1024} MB");
-            sb.AppendLine($"Digest: {Digest}");
-            if (!string.IsNullOrEmpty(ParentModel)) sb.AppendLine($"Parent Model: {ParentModel}");
-            sb.AppendLine($"Format: {Format}");
-            sb.AppendLine($"Family: {Family}");
+            sb.AppendLine($"Model: {Source?.Model}");
+            sb.AppendLine($"Modified At: {Source?.ModifiedAt}");
+            sb.AppendLine($"Size: {Source?.Size / 1024 / 1024} MB");
+            sb.AppendLine($"Digest: {Source?.Digest}");
+            if (!string.IsNullOrEmpty(Source?.ParentModel)) sb.AppendLine($"Parent Model: {Source?.ParentModel}");
+            sb.AppendLine($"Format: {Source?.Format}");
+            sb.AppendLine($"Family: {Source?.Family}");
             if (Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
-            sb.AppendLine($"Parameter Size: {ParameterSize}");
-            sb.AppendLine($"Quantization Level: {QuantizationLevel}");
+            sb.AppendLine($"Parameter Size: {Source?.ParameterSize}");
+            sb.AppendLine($"Quantization Level: {Source?.QuantizationLevel}");
 
             return sb.ToString();
         }
 
         public async Task GetDetails()
         {
+            if (Source is null) return;
+
             try
             {
-                ShowModelResponse response = await Task.Run(async () => await Api.ShowModel(new() { model = _Model }));
+                ShowModelResponse response = await Task.Run(async () => await _Api.ShowModel(new() { model = Source.Model }));
 
                 License = response.license;
                 ModelFile = new(response.modelfile);
                 ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
-                ParentModel = response.details?.parent_model ?? ParentModel;
+                Source.ParentModel = response.details?.parent_model ?? Source?.ParentModel;
                 Capabilities = response.capabilities;
                 Tensors = response.tensors;
                 LastUpdated = DateTime.Now;
-                Logging.Log($"Loaded model info for '{_Model}'", LogLevel.Information);
+                _Logger.LogInformation("Loaded model info for '{SourceModel}'", Source?.Model);
                 OnDetailsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to load model info for '{_Model}'", LogLevel.Error, e);
+                _Logger.LogError("Failed to load model info for '{SourceModel}'", Source?.Model, e);
                 OnUnhandledException(new(e, false));
                 OnDetailsFailed(EventArgs.Empty);
             }

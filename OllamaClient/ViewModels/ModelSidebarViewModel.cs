@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class ModelSidebar
+    public class ModelSidebarViewModel
     {
+        private readonly ILogger _Logger;
+        private readonly OllamaApiService _Api;
         private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
 
-        public ObservableCollection<Model> Items { get; set; } = [];
+        public ObservableCollection<ModelViewModel> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
         public ObservableCollection<string> StatusStrings = [];
 
@@ -29,6 +31,16 @@ namespace OllamaClient.ViewModels
         public event EventHandler? ModelCopyFailed;
         public event EventHandler? ModelPullFailed;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+
+        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger)
+        {
+            _Logger = logger;
+            if (App.GetService<OllamaApiService>() is OllamaApiService api)
+            {
+                _Api = api;
+            }
+            else throw new ArgumentNullException(nameof(api));
+        }
 
         protected void OnModelsLoaded(EventArgs e)
         {
@@ -97,23 +109,30 @@ namespace OllamaClient.ViewModels
             {
                 Items.Clear();
 
-                ListModelsResponse response = await Task.Run(Api.ListModels);
+                ListModelsResponse response = await Task.Run(_Api.ListModels);
 
-                foreach (ModelInfo obj in response.models) Items.Add(new(obj));
+                foreach (ModelInfo obj in response.models)
+                {
+                    if (App.GetService<ModelViewModel>() is ModelViewModel model)
+                    {
+                        model.Source = new(obj);
+                        Items.Add(model);
+                    }
+                }
 
                 LastUpdated = DateTime.Now;
-                Logging.Log($"Loaded {Items.Count} models", LogLevel.Information);
+                _Logger.LogInformation("Loaded {ItemsCount} models", Items.Count);
                 OnModelsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to load model list", LogLevel.Error, e);
+                _Logger.LogError($"Failed to load model list", e);
                 OnUnhandledException(new(e, false));
                 OnModelsLoadFailed(EventArgs.Empty);
             }
         }
 
-        public async Task CreateModel(string name, string? from, string? system, string? template, string? license, IEnumerable<ModelParameter>? parameters)
+        public async Task CreateModel(string name, string? from, string? system, string? template, string? license, IEnumerable<ModelParameterViewModel>? parameters)
         {
             if (from == string.Empty || system == string.Empty || template == string.Empty)
             {
@@ -142,7 +161,7 @@ namespace OllamaClient.ViewModels
             {
                 request.parameters = [];
 
-                foreach (ModelParameter item in resolvedParameters)
+                foreach (ModelParameterViewModel item in resolvedParameters)
                 {
                     request.parameters[item.Key] = item.Value;
                 }
@@ -154,17 +173,17 @@ namespace OllamaClient.ViewModels
             {
                 await Task.Run(async () =>
                 {
-                    using DelimitedJsonStream<StatusResponse>? stream = await Api.CreateModelStream(request);
+                    using DelimitedJsonStream<StatusResponse>? stream = await _Api.CreateModelStream(request);
 
                     await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
-                Logging.Log($"Model '{name}' created successfully", LogLevel.Information);
+                _Logger.LogInformation("Model '{Name}' created successfully", name);
                 OnModelCreated(EventArgs.Empty);
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to create model '{name}'", LogLevel.Error, e);
+                _Logger.LogError("Failed to create model '{Name}'", name, e);
                 OnUnhandledException(new(e, false));
                 OnModelCreateFailed(EventArgs.Empty);
             }
@@ -178,20 +197,20 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                if (await Task.Run(async () => { return await Api.DeleteModel(new() { model = modelName }); }))
+                if (await Task.Run(async () => { return await _Api.DeleteModel(new() { model = modelName }); }))
                 {
-                    Logging.Log($"Model '{modelName}' deleted successfully", LogLevel.Information);
+                    _Logger.LogInformation("Model '{ModelName}' deleted successfully", modelName);
                     OnModelDeleted(EventArgs.Empty);
                 }
                 else
                 {
-                    Logging.Log($"Failed to delete model '{modelName}'", LogLevel.Error);
+                    _Logger.LogInformation("Failed to delete model '{ModelName}'", modelName);
                     OnModelDeleteFailed(EventArgs.Empty);
                 }
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to delete model '{modelName}'", LogLevel.Error, e);
+                _Logger.LogError("Failed to delete model '{ModelName}'", modelName, e);
                 OnUnhandledException(new(e, false));
                 OnModelDeleteFailed(EventArgs.Empty);
             }
@@ -205,20 +224,20 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                if (await Task.Run(async () => { return await Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
+                if (await Task.Run(async () => { return await _Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
                 {
-                    Logging.Log($"Model '{modelName}' copied to '{newModelName}' successfully", LogLevel.Information);
+                    _Logger.LogInformation("Model '{ModelName}' copied to '{NewModelName}' successfully", modelName, newModelName);
                     OnModelCopied(EventArgs.Empty);
                 }
                 else
                 {
-                    Logging.Log($"Failed to copy model '{modelName}' to '{newModelName}'", LogLevel.Error);
+                    _Logger.LogInformation("Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
                     OnModelCopyFailed(EventArgs.Empty);
                 }
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to copy model '{modelName}' to '{newModelName}'", LogLevel.Error, e);
+                _Logger.LogError("Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName, e);
                 OnUnhandledException(new(e, false));
                 OnModelCopyFailed(EventArgs.Empty);
             }
@@ -236,17 +255,17 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<StatusResponse> stream = await Api.PullModelStream(new() { model = modelName });
+                    DelimitedJsonStream<StatusResponse> stream = await _Api.PullModelStream(new() { model = modelName });
 
                     await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
-                Logging.Log($"Model '{modelName}' pulled successfully", LogLevel.Information);
+                _Logger.LogInformation("Model '{ModelName}' pulled successfully", modelName);
                 OnModelPulled(EventArgs.Empty);
             }
             catch (Exception e)
             {
-                Logging.Log($"Failed to pull model '{modelName}'", LogLevel.Error, e);
+                _Logger.LogError("Failed to pull model '{ModelName}'", modelName, e);
                 OnUnhandledException(new(e, false));
                 OnModelPullFailed(EventArgs.Empty);
             }

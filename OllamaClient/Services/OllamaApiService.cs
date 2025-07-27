@@ -1,43 +1,75 @@
-﻿using OllamaClient.Models;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using OllamaClient.Models;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OllamaClient.Services
 {
-    internal static class Api
+    internal class OllamaApiService
     {
-        public class ClientOptions(string socketAddress, bool useHttps, TimeSpan requestTimeout)
+        public class Settings(string socketAddress, bool useHttps, TimeSpan requestTimeout)
         {
             public string SocketAddress { get; set; } = socketAddress;
             public bool UseHttps { get; set; } = useHttps;
             public TimeSpan RequestTimeout { get; set; } = requestTimeout;
         }
 
-        private static Endpoints _Endpoints { get; set; }
-
-        private static HttpClient _HttpClient { get; set; }
-
-        static Api()
+        public class Endpoints
         {
-            _Endpoints = new(Settings.SocketAddress, Settings.UseHttps);
+            public string BaseUrl { get; private set; }
+            public string GenerateCompletion { get; private set; }
+            public string Chat { get; private set; }
+            public string Create { get; private set; }
+            public string List { get; private set; }
+            public string Show { get; private set; }
+            public string Copy { get; private set; }
+            public string Delete { get; private set; }
+            public string Pull { get; private set; }
+            public string Push { get; private set; }
+            public string Embed { get; private set; }
+            public string Ps { get; private set; }
+            public string Version { get; private set; }
+
+            public Endpoints(string socketAddress, bool useHttps = false)
+            {
+                BaseUrl = useHttps ? "https" : "http" + "://" + socketAddress + "/api/";
+                GenerateCompletion = BaseUrl + "generate";
+                Chat = BaseUrl + "chat";
+                Create = BaseUrl + "create";
+                List = BaseUrl + "tags";
+                Show = BaseUrl + "show";
+                Copy = BaseUrl + "copy";
+                Delete = BaseUrl + "delete";
+                Pull = BaseUrl + "pull";
+                Push = BaseUrl + "push";
+                Embed = BaseUrl + "embed";
+                Ps = BaseUrl + "ps";
+                Version = BaseUrl + "version";
+            }
+        }
+
+        private ILogger _Logger { get; set; }
+        private Settings _Settings { get; set; }
+        private Endpoints _Endpoints { get; set; }
+        private HttpClient _HttpClient { get; set; }
+
+        public OllamaApiService(ILogger<OllamaApiService> logger, IOptions<Settings> settings)
+        {
+            _Logger = logger;
+            _Settings = settings.Value;
+            _Endpoints = new(_Settings.SocketAddress, _Settings.UseHttps);
             _HttpClient = new HttpClient
             {
-                Timeout = Settings.RequestTimeout
+                Timeout = _Settings.RequestTimeout
             };
         }
 
-        public static void SetOptions(ClientOptions options)
-        {
-            _Endpoints = new Endpoints(options.SocketAddress, options.UseHttps);
-            _HttpClient.Timeout = options.RequestTimeout;
-        }
-
-        private static async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
+        private async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
         {
             HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
@@ -52,7 +84,7 @@ namespace OllamaClient.Services
 
         }
 
-        public static async Task<DelimitedJsonStream<ChatResponse>> ChatStream(ChatRequest request)
+        public async Task<DelimitedJsonStream<ChatResponse>> ChatStream(ChatRequest request)
         {
             request.stream = true;
 
@@ -64,7 +96,7 @@ namespace OllamaClient.Services
             return await GetJsonStream(req, SourceGenerationContext.Default.ChatResponse);
         }
 
-        public static async Task<DelimitedJsonStream<CompletionResponse>> CompletionStream(CompletionRequest request)
+        public async Task<DelimitedJsonStream<CompletionResponse>> CompletionStream(CompletionRequest request)
         {
             request.stream = true;
 
@@ -76,7 +108,7 @@ namespace OllamaClient.Services
             return await GetJsonStream(req, SourceGenerationContext.Default.CompletionResponse);
         }
 
-        public static async Task<DelimitedJsonStream<StatusResponse>> CreateModelStream(CreateModelRequest request)
+        public async Task<DelimitedJsonStream<StatusResponse>> CreateModelStream(CreateModelRequest request)
         {
             request.stream = true;
 
@@ -87,7 +119,7 @@ namespace OllamaClient.Services
             return await GetJsonStream(req, SourceGenerationContext.Default.StatusResponse);
         }
 
-        public static async Task<ListModelsResponse> ListModels()
+        public async Task<ListModelsResponse> ListModels()
         {
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.List);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
@@ -101,7 +133,7 @@ namespace OllamaClient.Services
             }
         }
 
-        public static async Task<ShowModelResponse> ShowModel(ShowModelRequest request)
+        public async Task<ShowModelResponse> ShowModel(ShowModelRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Show)
             {
@@ -118,7 +150,7 @@ namespace OllamaClient.Services
             }
         }
 
-        public static async Task<bool> CopyModel(CopyModelRequest request)
+        public async Task<bool> CopyModel(CopyModelRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Copy)
             {
@@ -128,7 +160,7 @@ namespace OllamaClient.Services
             return resp.IsSuccessStatusCode;
         }
 
-        public static async Task<bool> DeleteModel(DeleteModelRequest request)
+        public async Task<bool> DeleteModel(DeleteModelRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Delete, _Endpoints.Delete)
             {
@@ -138,7 +170,7 @@ namespace OllamaClient.Services
             return resp.IsSuccessStatusCode;
         }
 
-        public static async Task<DelimitedJsonStream<StatusResponse>> PullModelStream(PullModelRequest request)
+        public async Task<DelimitedJsonStream<StatusResponse>> PullModelStream(PullModelRequest request)
         {
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Pull)
             {
@@ -147,7 +179,7 @@ namespace OllamaClient.Services
             return await GetJsonStream(req, SourceGenerationContext.Default.StatusResponse);
         }
 
-        public static async Task<RunningModelsResponse> ListRunningModels()
+        public async Task<RunningModelsResponse> ListRunningModels()
         {
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Ps);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
@@ -161,7 +193,7 @@ namespace OllamaClient.Services
             }
         }
 
-        public static async Task<VersionResponse> GetVersion()
+        public async Task<VersionResponse> GetVersion()
         {
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Version);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);

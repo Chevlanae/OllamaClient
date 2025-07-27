@@ -18,15 +18,15 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class CreateModelPage : Page
     {
-        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebar modelCollection)
+        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebarViewModel modelCollection)
         {
             public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-            public ModelSidebar ModelList { get; set; } = modelCollection;
+            public ModelSidebarViewModel ModelList { get; set; } = modelCollection;
         }
 
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ObservableCollection<ModelParameter> NewModelParameters { get; set; } = [];
-        private ModelSidebar? ParentCollection { get; set; }
+        private ObservableCollection<ModelParameterViewModel> NewModelParameters { get; set; } = [];
+        private ModelSidebarViewModel? ParentCollection { get; set; }
 
         public CreateModelPage()
         {
@@ -76,7 +76,7 @@ namespace OllamaClient.Views.Pages
             if (NewModelNameTextBox.Text is not "" && ParentCollection is not null)
             {
                 string name = NewModelNameTextBox.Text;
-                string? from = (FromComboBox.SelectedItem as Model)?.Name;
+                string? from = (FromComboBox.SelectedItem as ModelViewModel)?.Name;
                 string? system;
                 string? template;
 

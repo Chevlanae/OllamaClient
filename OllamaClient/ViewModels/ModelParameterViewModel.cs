@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace OllamaClient.ViewModels
 {
-    public class ModelParameter : IModelParameter, INotifyPropertyChanged
+    public class ModelParameterViewModel : IModelParameter, INotifyPropertyChanged
     {
         private ModelParameterKey _Key { get; set; }
         private string _Value { get; set; } = "";

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using System;
@@ -13,20 +14,28 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    [KnownType(typeof(ChatMessage))]
+    [KnownType(typeof(ChatMessageViewModel))]
     [DataContract]
-    public partial class Conversation : INotifyPropertyChanged
+    public partial class ConversationViewModel : INotifyPropertyChanged
     {
+        public class Settings(CompletionRequest subjectRequest)
+        {
+            public CompletionRequest SubjectRequest { get; set; } = subjectRequest;
+        }
+
+        private readonly ILogger _Logger;
+        private readonly Settings _Settings;
+        private readonly OllamaApiService _Api;
         private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
 
         [DataMember]
-        private ObservableCollection<ChatMessage> _ChatMessageCollection { get; set; } = [];
+        private ObservableCollection<ChatMessageViewModel> _ChatMessageCollection { get; set; } = [];
         [DataMember]
         private string? _Subject { get; set; }
         [DataMember]
         public string? SelectedModel { get; set; }
 
-        public ObservableCollection<ChatMessage> Items
+        public ObservableCollection<ChatMessageViewModel> Items
         {
             get => _ChatMessageCollection;
             set
@@ -50,6 +59,18 @@ namespace OllamaClient.ViewModels
         public event EventHandler? StartOfRequest;
         public event EventHandler? EndOfResponse;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+
+        public ConversationViewModel(ILogger<ConversationViewModel> logger, IOptions<Settings> options)
+        {
+            _Logger = logger;
+            _Settings = options.Value;
+
+            if(App.GetService<OllamaApiService>() is OllamaApiService api)
+            {
+                _Api = api;
+            }
+            else throw new ArgumentNullException(nameof(api));
+        }
 
         protected void OnStartOfRequest(EventArgs e)
         {
@@ -85,7 +106,7 @@ namespace OllamaClient.ViewModels
             if (SelectedModel == null) return;
             if (Subject is null) Subject = "";
 
-            CompletionRequest request = Settings.SubjectGenerationOptions;
+            CompletionRequest request = _Settings.SubjectRequest;
 
             if (request.prompt.Contains("$Prompt$"))
             {
@@ -102,7 +123,7 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    DelimitedJsonStream<CompletionResponse> stream = await Api.CompletionStream(request);
+                    DelimitedJsonStream<CompletionResponse> stream = await _Api.CompletionStream(request);
 
                     using (stream)
                     {
@@ -111,15 +132,15 @@ namespace OllamaClient.ViewModels
                 });
 
                 Subject = subject.ToString();
-                Logging.Log($"Subject generation for conversation with '{SelectedModel}' successful", LogLevel.Information);
+                _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' successful", SelectedModel);
             }
             catch (TaskCanceledException)
             {
-                Logging.Log($"Subject generation for conversation with '{SelectedModel}' cancelled", LogLevel.Information);
+                _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' cancelled", SelectedModel);
             }
             catch (Exception e)
             {
-                Logging.Log($"Subject generation for conversation with '{SelectedModel}' failed", LogLevel.Error, e);
+                _Logger.LogError("Subject generation for conversation with '{SelectedModel}' failed", SelectedModel, e);
                 OnUnhandledException(new(e, false));
             }
         }
@@ -131,7 +152,7 @@ namespace OllamaClient.ViewModels
             //return early if no model selected
             if (SelectedModel == null) return;
 
-            ChatMessage userChatMessage = new()
+            ChatMessageViewModel userChatMessage = new()
             {
                 Content = prompt
             };
@@ -140,7 +161,7 @@ namespace OllamaClient.ViewModels
             Items.Add(userChatMessage);
 
             //initialize assistant response with empty content
-            ChatMessage assistantChatMessage = new()
+            ChatMessageViewModel assistantChatMessage = new()
             {
                 Role = "assistant",
                 ProgressRingEnabled = true
@@ -169,19 +190,19 @@ namespace OllamaClient.ViewModels
                 await Task.Run(async () =>
                 {
                     //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
-                    using DelimitedJsonStream<ChatResponse> stream = await Api.ChatStream(request);
+                    using DelimitedJsonStream<ChatResponse> stream = await _Api.ChatStream(request);
                     await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
                 });
 
-                Logging.Log($"Chat completion for conversation with '{SelectedModel}' successful", LogLevel.Information);
+                _Logger.LogInformation("Chat completion for conversation with '{SelectedModel}' successful", SelectedModel);
             }
             catch (TaskCanceledException)
             {
-                Logging.Log($"Chat completion for conversation with '{SelectedModel}' cancelled", LogLevel.Information);
+                _Logger.LogInformation("Chat completion for conversation with '{SelectedModel}' cancelled", SelectedModel);
             }
             catch (Exception e)
             {
-                Logging.Log($"Chat completion for conversation with '{SelectedModel}' failed", LogLevel.Error, e);
+                _Logger.LogError("Chat completion for conversation with '{SelectedModel}' failed", SelectedModel, e);
                 OnUnhandledException(new(e, false));
             }
             finally

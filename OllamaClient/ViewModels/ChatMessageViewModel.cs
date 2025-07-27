@@ -7,16 +7,16 @@ using System.Runtime.Serialization;
 namespace OllamaClient.ViewModels
 {
     [DataContract]
-    public partial class ChatMessage : INotifyPropertyChanged
+    public partial class ChatMessageViewModel : INotifyPropertyChanged
     {
         private bool _ProgressRingEnabled { get; set; } = false;
 
-        private Role _Role { get; set; } = Models.Role.user;
+        private Role _Role { get; set; }
 
         [DataMember]
         private DateTime? _Timestamp { get; set; }
         [DataMember]
-        private string _String { get; set; } = "";
+        private string _Content { get; set; } = "";
 
         [DataMember]
         public string Role
@@ -48,10 +48,10 @@ namespace OllamaClient.ViewModels
 
         public string Content
         {
-            get => _String;
+            get => _Content;
             set
             {
-                _String = value;
+                _Content = value;
                 OnPropertyChanged();
             }
         }
@@ -67,6 +67,13 @@ namespace OllamaClient.ViewModels
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public ChatMessageViewModel(Role role, string content, DateTime? timestamp = null)
+        {
+            _Role = role;
+            _Content = content;
+            _Timestamp = timestamp;
+        }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {

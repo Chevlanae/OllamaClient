@@ -21,46 +21,54 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        public class NavArgs(Conversation conversation, DispatcherQueue dispatcherQueue, ObservableCollection<string> availableModels)
+        public class NavArgs(ObservableCollection<string> availableModels)
         {
-            public Conversation Conversation { get; set; } = conversation;
-            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
             public ObservableCollection<string> AvailableModels { get; set; } = availableModels;
         }
 
-        private new DispatcherQueue? DispatcherQueue { get; set; }
-        private Conversation? Conversation { get; set; }
-        private List<string>? AvailableModels { get; set; }
-        private bool EnableAutoScroll { get; set; }
-        private bool SendingMessage { get; set; }
+        private DialogsService _DialogsService;
+        private ConversationViewModel _ConversationViewModel { get; set; }
+        private List<string>? _AvailableModels { get; set; }
+        private bool _EnableAutoScroll { get; set; }
+        private bool _SendingMessage { get; set; }
 
         public ConversationPage()
         {
+            if (App.GetService<ConversationViewModel>() is ConversationViewModel conversationViewModel)
+            {
+                _ConversationViewModel = conversationViewModel;
+            }
+            else throw new ArgumentException(nameof(conversationViewModel));
+
+            if (App.GetService<DialogsService>() is DialogsService dialogs)
+            {
+                _DialogsService = dialogs;
+            }
+            else throw new ArgumentException(nameof(dialogs));
+
             InitializeComponent();
 
-            EnableAutoScroll = false;
-            SendingMessage = false;
+            _EnableAutoScroll = false;
+            _SendingMessage = false;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             if (e.Parameter is NavArgs args)
             {
-                Conversation = args.Conversation;
-                DispatcherQueue = args.DispatcherQueue;
-                AvailableModels = args.AvailableModels.ToList();
+                _AvailableModels = args.AvailableModels.ToList();
 
-                Conversation.StartOfRequest += Conversation_StartOfMessage;
-                Conversation.EndOfResponse += Conversation_EndOfMessage;
-                Conversation.UnhandledException += Conversation_UnhandledException;
+                _ConversationViewModel.StartOfRequest += Conversation_StartOfMessage;
+                _ConversationViewModel.EndOfResponse += Conversation_EndOfMessage;
+                _ConversationViewModel.UnhandledException += Conversation_UnhandledException;
 
-                ChatMessagesControl.ItemsSource = Conversation.Items;
-                ModelsComboBox.ItemsSource = AvailableModels;
+                ChatMessagesControl.ItemsSource = _ConversationViewModel.Items;
+                ModelsComboBox.ItemsSource = _AvailableModels;
 
                 ScrollLockButton.IsChecked = true;
-                EnableAutoScroll = true;
+                _EnableAutoScroll = true;
 
-                int index = AvailableModels.IndexOf(Conversation.SelectedModel ?? "");
+                int index = _AvailableModels.IndexOf(_ConversationViewModel.SelectedModel ?? "");
                 if(index == -1)
                 {
                     ModelsComboBox.SelectedIndex = 0;
@@ -75,11 +83,11 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (Conversation is not null)
+            if (_ConversationViewModel is not null)
             {
-                Conversation.StartOfRequest -= Conversation_StartOfMessage;
-                Conversation.EndOfResponse -= Conversation_EndOfMessage;
-                Conversation.UnhandledException -= Conversation_UnhandledException;
+                _ConversationViewModel.StartOfRequest -= Conversation_StartOfMessage;
+                _ConversationViewModel.EndOfResponse -= Conversation_EndOfMessage;
+                _ConversationViewModel.UnhandledException -= Conversation_UnhandledException;
             }
             base.OnNavigatedFrom(e);
         }
@@ -91,13 +99,13 @@ namespace OllamaClient.Views.Pages
 
         private void Conversation_StartOfMessage(object? sender, EventArgs e)
         {
-            SendingMessage = true;
+            _SendingMessage = true;
             ChatInputTextBox.IsEnabled = false;
         }
 
         private void Conversation_EndOfMessage(object? sender, EventArgs e)
         {
-            SendingMessage = false;
+            _SendingMessage = false;
             ChatInputTextBox.IsEnabled = true;
             SendChatButton.Icon = new SymbolIcon(Symbol.Send);
         }
@@ -108,27 +116,27 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await Services.Dialogs.ShowDialog(dialog);
+                await _DialogsService.ShowDialog(dialog);
 
             });
         }
 
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (SendingMessage)
+            if (_SendingMessage)
             {
-                Conversation?.Cancel();
+                _ConversationViewModel?.Cancel();
             }
-            else if (Conversation is not null)
+            else if (_ConversationViewModel is not null)
             {
                 string text = ChatInputTextBox.Text;
 
-                if(Conversation.Subject == null)
+                if(_ConversationViewModel.Subject == null)
                 {
-                    DispatcherQueue?.TryEnqueue(async () => { await Conversation.GenerateSubject(text); });
+                    DispatcherQueue?.TryEnqueue(async () => { await _ConversationViewModel.GenerateSubject(text); });
                 }
 
-                DispatcherQueue?.TryEnqueue(async () => { await Conversation.SendUserMessage(text); });
+                DispatcherQueue?.TryEnqueue(async () => { await _ConversationViewModel.SendUserMessage(text); });
 
                 ChatInputTextBox.Text = "";
             }
@@ -136,7 +144,7 @@ namespace OllamaClient.Views.Pages
 
         private void ChatMessagesControl_AutoScrollToBottom(object? sender, RoutedEventArgs e)
         {
-            if (EnableAutoScroll && ChatMessagesScrollView.State == ScrollingInteractionState.Idle)
+            if (_EnableAutoScroll && ChatMessagesScrollView.State == ScrollingInteractionState.Idle)
             {
                 ChatMessagesScrollView.ScrollTo(ChatMessagesScrollView.HorizontalOffset, ChatMessagesScrollView.ScrollableHeight);
             }
@@ -144,9 +152,9 @@ namespace OllamaClient.Views.Pages
 
         private void ModelsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(ModelsComboBox.SelectedItem is string selectedModel && Conversation != null)
+            if(ModelsComboBox.SelectedItem is string selectedModel && _ConversationViewModel != null)
             {
-                Conversation.SelectedModel = selectedModel;
+                _ConversationViewModel.SelectedModel = selectedModel;
             }
         }
 
@@ -157,7 +165,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            if (SendingMessage)
+            if (_SendingMessage)
             {
                 SendChatButton.Opacity = 0;
                 SendChatButton.Icon = new SymbolIcon(Symbol.Cancel);
@@ -167,7 +175,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            if(SendingMessage)
+            if(_SendingMessage)
             {
                 SendChatButton.Opacity = 0;
                 SendChatButton.Icon = new SymbolIcon(Symbol.Send);
@@ -177,7 +185,7 @@ namespace OllamaClient.Views.Pages
 
         private void ScrollLockButton_Click(object sender, RoutedEventArgs e)
         {
-            EnableAutoScroll = ScrollLockButton.IsChecked == true;
+            _EnableAutoScroll = ScrollLockButton.IsChecked == true;
         }
     }
 }

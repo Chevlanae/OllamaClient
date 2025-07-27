@@ -15,16 +15,16 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class ModelItemPage : Page
     {
-        public class NavArgs(DispatcherQueue dispatcherQueue, Model modelItem, ModelSidebar collection)
+        public class NavArgs(DispatcherQueue dispatcherQueue, ModelViewModel modelItem, ModelSidebarViewModel collection)
         {
             public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-            public Model SelectedItem { get; set; } = modelItem;
-            public ModelSidebar Collection { get; set; } = collection;
+            public ModelViewModel SelectedItem { get; set; } = modelItem;
+            public ModelSidebarViewModel Collection { get; set; } = collection;
         }
 
         private new DispatcherQueue? DispatcherQueue { get; set; }
-        private Model? Item { get; set; }
-        private ModelSidebar? ParentCollection { get; set; }
+        private ModelViewModel? Item { get; set; }
+        private ModelSidebarViewModel? ParentCollection { get; set; }
 
         public ModelItemPage()
         {
@@ -80,14 +80,14 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () => { await Services.Dialogs.ShowDialog(dialog); });
+            DispatcherQueue?.TryEnqueue(async () => { await Services.DialogsService.ShowDialog(dialog); });
         }
 
         private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
             DeleteModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
 
-            ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
+            ContentDialogResult? result = await Services.DialogsService.ShowDialog(dialog);
 
             if (result == ContentDialogResult.Primary && ParentCollection is not null && Item is not null)
             {
@@ -99,7 +99,7 @@ namespace OllamaClient.Views.Pages
         {
             CopyModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
 
-            ContentDialogResult? result = await Services.Dialogs.ShowDialog(dialog);
+            ContentDialogResult? result = await Services.DialogsService.ShowDialog(dialog);
 
             if
             (

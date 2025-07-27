@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using OllamaClient.Views.Pages;
+using Serilog;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -28,14 +30,6 @@ namespace OllamaClient
             TopLevelSplitView.IsPaneOpen = !TopLevelSplitView.IsPaneOpen;
         }
 
-        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
-        {
-            if(ContentFrame.CurrentSourcePageType != typeof(SettingsPage))
-            {
-                ToggleSidebar();
-            }
-        }
-
         private void ConversationsButton_Click(object sender, RoutedEventArgs e)
         {
             if (SidebarFrame.CurrentSourcePageType != typeof(ConversationSidebarPage))
@@ -58,18 +52,6 @@ namespace OllamaClient
             }
 
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (SidebarFrame.CurrentSourcePageType != typeof(SettingsPage))
-            {
-                SettingsPage.NavArgs args = new(DispatcherQueue);
-                SidebarFrame.Navigate(typeof(BlankPage));
-                ContentFrame.Navigate(typeof(SettingsPage), args);
-            }
-
-            if (TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
     }
 }
