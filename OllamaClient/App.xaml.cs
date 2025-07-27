@@ -1,15 +1,11 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog.Extensions.Hosting;
-using Serilog.Sinks.File;
-using Serilog.Sinks.SystemConsole;
-using Serilog;
-using Microsoft.Extensions.Configuration;
+using Microsoft.UI.Xaml;
 using OllamaClient.Services;
-using System;
-using System.Threading;
 using OllamaClient.ViewModels;
+using Serilog;
+using System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,10 +17,10 @@ namespace OllamaClient
     /// </summary>
     public partial class App : Application
     {
-
-        private Window? m_window;
+        public static string LocalAppDataPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\OllamaClient";
 
         private static readonly IHost _host = Host.CreateDefaultBuilder()
+            .UseEnvironment("Development")
             .ConfigureAppConfiguration((context, config) =>
             {
                 config
@@ -33,10 +29,17 @@ namespace OllamaClient
             })
             .ConfigureServices((context, services) =>
             {
+                services.AddSerilog((context, config) =>
+                {
+                    config.WriteTo.Debug();
+                    config.WriteTo.File($"{LocalAppDataPath}\\log.txt");
+                });
+
                 //Settings
-                services.Configure<OllamaApiService.Settings>(context.Configuration.GetSection("OllamaApi.Settings"));
-                services.Configure<SerializeableStorageService.Settings>(context.Configuration.GetSection("SerializableStorage.Settings"));
-                
+                services.Configure<OllamaApiService.Settings>(context.Configuration.GetSection("OllamaApiService.Settings"));
+                services.Configure<SerializeableStorageService.Settings>(context.Configuration.GetSection("SerializableStorageService.Settings"));
+                services.Configure<ConversationViewModel.Settings>(context.Configuration.GetSection("ConversationViewModel.Settings"));
+
                 //Singleton Services
                 services.AddSingleton<DialogsService>();
                 services.AddSingleton<OllamaApiService>();
@@ -48,16 +51,9 @@ namespace OllamaClient
                 services.AddTransient<ModelViewModel>();
                 services.AddSingleton<ModelSidebarViewModel>();
             })
-            .ConfigureLogging((context, logging) =>
-            {
-                logging.AddSerilog(new LoggerConfiguration()
-                    .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
-                    .WriteTo.Debug(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Debug)
-                    .WriteTo.File("logs.txt")
-                    .CreateLogger()
-                );
-            })
             .Build();
+
+        private Window? m_window;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code

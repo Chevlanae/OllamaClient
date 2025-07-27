@@ -12,11 +12,13 @@ namespace OllamaClient.Services
 {
     internal class OllamaApiService
     {
-        public class Settings(string socketAddress, bool useHttps, TimeSpan requestTimeout)
+        public class Settings
         {
-            public string SocketAddress { get; set; } = socketAddress;
-            public bool UseHttps { get; set; } = useHttps;
-            public TimeSpan RequestTimeout { get; set; } = requestTimeout;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+            public string SocketAddress { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+            public bool UseHttps { get; set; }
+            public TimeSpan RequestTimeout { get; set; }
         }
 
         public class Endpoints

@@ -76,7 +76,7 @@ namespace OllamaClient.Views.Pages
             if (NewModelNameTextBox.Text is not "" && ParentCollection is not null)
             {
                 string name = NewModelNameTextBox.Text;
-                string? from = (FromComboBox.SelectedItem as ModelViewModel)?.Name;
+                string? from = (FromComboBox.SelectedItem as ModelViewModel)?.Source?.Name;
                 string? system;
                 string? template;
 

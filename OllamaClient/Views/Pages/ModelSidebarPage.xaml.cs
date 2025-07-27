@@ -5,7 +5,6 @@ using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
-using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,33 +16,43 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class ModelSidebarPage : Page
     {
-        public class NavArgs(Frame contentFrame, DispatcherQueue dispatcherQueue)
+        public class NavArgs(Frame contentFrame)
         {
             public Frame ContentFrame { get; set; } = contentFrame;
-            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
         }
 
-        private Frame? ContentFrame { get; set; }
-        private new DispatcherQueue? DispatcherQueue { get; set; }
-        private ModelSidebarViewModel ModelList { get; set; } = new();
+        private Frame? _ContentFrame { get; set; }
+        private DialogsService _DialogsService { get; set; }
+        private ModelSidebarViewModel _SidebarViewModel { get; set; }
 
         public ModelSidebarPage()
         {
-            InitializeComponent();
-            ModelsListView.ItemsSource = ModelList.Items;
+            if (App.GetService<DialogsService>() is DialogsService dialogsService)
+            {
+                _DialogsService = dialogsService;
+            }
+            else throw new ArgumentException(nameof(dialogsService));
 
-            ModelList.UnhandledException += ModelList_UnhandledException;
-            ModelList.ModelDeleted += ModelList_ModelDeleted;
+            if (App.GetService<ModelSidebarViewModel>() is ModelSidebarViewModel viewModel)
+            {
+                _SidebarViewModel = viewModel;
+            }
+            else throw new ArgumentException(nameof(viewModel));
+
+            InitializeComponent();
+            ModelsListView.ItemsSource = _SidebarViewModel.Items;
+
+            _SidebarViewModel.UnhandledException += ModelList_UnhandledException;
+            _SidebarViewModel.ModelDeleted += ModelList_ModelDeleted;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             if (e.Parameter is NavArgs args)
             {
-                ContentFrame = args.ContentFrame;
-                DispatcherQueue = args.DispatcherQueue;
+                _ContentFrame = args.ContentFrame;
                 
-                if(ModelList.LastUpdated == null || ModelList.LastUpdated < DateTime.Now.AddMinutes(-5))
+                if(_SidebarViewModel.LastUpdated == null || _SidebarViewModel.LastUpdated < DateTime.Now.AddMinutes(-5))
                 {
                     Refresh();
                 }
@@ -56,8 +65,8 @@ namespace OllamaClient.Views.Pages
         {
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await ModelList.LoadModels();
-                foreach (ModelViewModel item in ModelList.Items)
+                await _SidebarViewModel.LoadModels();
+                foreach (ModelViewModel item in _SidebarViewModel.Items)
                 {
                     item.LastUpdated = null;
                 }
@@ -70,20 +79,20 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await Services.DialogsService.ShowDialog(dialog);
+                await _DialogsService.ShowDialog(dialog);
             });
         }
 
         private void ModelList_ModelDeleted(object? sender, EventArgs e)
         {
-            ContentFrame?.Navigate(typeof(BlankPage));
+            _ContentFrame?.Navigate(typeof(BlankPage));
         }
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ModelsListView.SelectedItem is ModelViewModel item && DispatcherQueue is not null)
             {
-                ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(DispatcherQueue, item, ModelList));
+                _ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(item, _SidebarViewModel));
             }
         }
 
@@ -91,7 +100,7 @@ namespace OllamaClient.Views.Pages
         {
             if (DispatcherQueue is not null)
             {
-                ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPage.NavArgs(DispatcherQueue, ModelList));
+                _ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPage.NavArgs(DispatcherQueue, _SidebarViewModel));
             }
         }
 
@@ -103,7 +112,7 @@ namespace OllamaClient.Views.Pages
 
             if (result == ContentDialogResult.Primary && (dialog.Content as TextBoxDialog)?.InputText is string modelName)
             {
-                DispatcherQueue?.TryEnqueue(async () => { await ModelList.PullModel(modelName); });
+                DispatcherQueue?.TryEnqueue(async () => { await _SidebarViewModel.PullModel(modelName); });
             }
         }
 

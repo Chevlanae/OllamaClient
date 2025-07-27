@@ -6,7 +6,6 @@
     xmlns:local="using:OllamaClient.Views.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-    xmlns:winuieditor="using:WinUIEditor"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <ScrollViewer HorizontalScrollBarVisibility="Auto">
@@ -36,9 +35,6 @@
                 </Button>
             </Grid>
             <Grid x:Name="CreateModelTextEditorGrid" Grid.Row="1" Margin="20,0,20,0" MinWidth="100" MaxWidth="600" MinHeight="500" MaxHeight="800" Visibility="Collapsed">
-                <winuieditor:CodeEditorControl x:Name="CreateModelCodeEditorControl">
-                    
-                </winuieditor:CodeEditorControl>
             </Grid>
             <Grid x:Name="CreateModelFormGrid" Grid.Row="1" Margin="20,0,20,0" MinWidth="100" MaxWidth="600" MinHeight="500" MaxHeight="800" RowSpacing="20">
                 <Grid.ColumnDefinitions>

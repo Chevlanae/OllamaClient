@@ -16,8 +16,6 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
-        private new DispatcherQueue DispatcherQueue { get; } = DispatcherQueue.GetForCurrentThread();
-
         public MainWindow()
         {
             InitializeComponent();
@@ -34,7 +32,7 @@ namespace OllamaClient
         {
             if (SidebarFrame.CurrentSourcePageType != typeof(ConversationSidebarPage))
             {
-                ConversationSidebarPage.NavArgs args = new(ContentFrame, DispatcherQueue);
+                ConversationSidebarPage.NavArgs args = new(ContentFrame);
 
                 SidebarFrame.Navigate(typeof(ConversationSidebarPage), args);
             }
@@ -46,12 +44,17 @@ namespace OllamaClient
         {
             if (SidebarFrame.CurrentSourcePageType != typeof(ModelSidebarPage))
             {
-                ModelSidebarPage.NavArgs args = new(ContentFrame, DispatcherQueue);
+                ModelSidebarPage.NavArgs args = new(ContentFrame);
 
                 SidebarFrame.Navigate(typeof(ModelSidebarPage), args);
             }
 
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
+        }
+
+        private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -62,7 +62,7 @@ namespace OllamaClient.Views.Pages
                 _ConversationViewModel.EndOfResponse += Conversation_EndOfMessage;
                 _ConversationViewModel.UnhandledException += Conversation_UnhandledException;
 
-                ChatMessagesControl.ItemsSource = _ConversationViewModel.Items;
+                ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
                 ModelsComboBox.ItemsSource = _AvailableModels;
 
                 ScrollLockButton.IsChecked = true;

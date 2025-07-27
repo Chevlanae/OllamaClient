@@ -14,26 +14,36 @@ namespace OllamaClient.Services
     /// </summary>
     internal class SerializeableStorageService
     {
-        public class Settings(Uri directoryUri)
+        public class Settings
         {
-            public Uri DirectoryUri { get; set; } = directoryUri;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+            public string Directory { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         }
 
         private readonly ILogger _Logger;
-        private readonly Settings _Settings;
+        private readonly string _Directory;
         private Dictionary<Type, object> _Files { get; set; }
 
         public SerializeableStorageService(ILogger<SerializeableStorageService> logger, IOptions<Settings> settings)
         {
             _Logger = logger;
-            _Settings = settings.Value;
             _Files = [];
+
+            _Directory = settings.Value.Directory switch
+            {
+                "AppData" => $"{App.LocalAppDataPath}\\Storage",
+                "WorkingDirectory" => $"{Environment.CurrentDirectory}\\Storage",
+                _ => throw new ArgumentException($"Could not parse option {nameof(settings.Value.Directory)}")
+            };
+
+            if(!Directory.Exists(_Directory)) Directory.CreateDirectory(_Directory);
 
             // Get the current assembly. Usually OllamaClient (I hope), pls don't reference my library. It's private! >:( 
             Assembly currentAssembly = Assembly.GetExecutingAssembly();
 
             // Iterate through all files in Paths.State
-            foreach (string file in Directory.GetFiles(_Settings.DirectoryUri.LocalPath))
+            foreach (string file in Directory.GetFiles(_Directory))
             {
                 // Get the file name without the extension, yay long method names!
                 string fileName = Path.GetFileNameWithoutExtension(file);
@@ -45,7 +55,7 @@ namespace OllamaClient.Services
                     Type dataFileType = typeof(DataFile<>).MakeGenericType(fileType);
 
                     // Run the constructor of DataFile<T> and pass DirectoryUri as an argument, then add the constructed instance to the Files dictionary.
-                    if (Activator.CreateInstance(dataFileType, _Settings.DirectoryUri) is object instance)
+                    if (Activator.CreateInstance(dataFileType, new Uri(_Directory)) is object instance)
                     {
                         _Files.Add(fileType, instance);
                     }
@@ -84,7 +94,7 @@ namespace OllamaClient.Services
             }
             else
             {
-                DataFile<T> newFile = new(_Settings.DirectoryUri);
+                DataFile<T> newFile = new(new(_Directory));
                 newFile.Set(obj);
                 _Files.Add(typeof(T), newFile);
             }

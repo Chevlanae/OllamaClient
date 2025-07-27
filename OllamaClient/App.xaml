@@ -10,12 +10,6 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- ViewModels -->
-            <ViewModels:ChatMessage x:Key="ChatMessage" />
-            <ViewModels:Conversation x:Key="Conversation" />
-            <ViewModels:ConversationSidebar x:Key="ConversationSidebar" />
-            <ViewModels:ModelParameter x:Key="ModelParameter" />
-            <ViewModels:ModelSidebar x:Key="ModelSidebar" />
             <!-- Templates -->
             <ControlTemplate x:Key="ChatTextBoxControlTemplate" TargetType="TextBox">
                 <Grid>

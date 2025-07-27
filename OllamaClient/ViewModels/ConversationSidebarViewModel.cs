@@ -2,40 +2,24 @@
 using OllamaClient.Models;
 using OllamaClient.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    [KnownType(typeof(ChatMessageViewModel))]
-    [KnownType(typeof(ConversationViewModel))]
-    [DataContract]
     public class ConversationSidebarViewModel : INotifyPropertyChanged
     {
         private ILogger _Logger;
         private OllamaApiService _Api;
         private SerializeableStorageService _Storage;
 
-        [DataMember]
-        private ObservableCollection<ConversationViewModel> _ConversationCollection { get; set; } = [];
-
+        public ObservableCollection<ConversationViewModel> Conversations { get; set; } = [];
         public ObservableCollection<string> AvailableModels { get; set; } = [];
-
         public DateTime? LastUpdated { get; set; }
-
-        public ObservableCollection<ConversationViewModel> Items
-        {
-            get => _ConversationCollection;
-            set
-            {
-                _ConversationCollection = value;
-                OnPropertyChanged();
-            }
-        }
 
         public event EventHandler? ModelsLoaded;
         public event EventHandler? ModelsLoadFailed;
@@ -54,7 +38,7 @@ namespace OllamaClient.ViewModels
             }
             else throw new ArgumentNullException(nameof(api));
 
-            if(App.GetService<SerializeableStorageService>() is SerializeableStorageService storage)
+            if (App.GetService<SerializeableStorageService>() is SerializeableStorageService storage)
             {
                 _Storage = storage;
             }
@@ -119,28 +103,34 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                Items.Clear();
+                Conversations.Clear();
 
-                if (await Task.Run(_Storage.Get<ConversationSidebarViewModel>) is ConversationSidebarViewModel result)
+                if (await Task.Run(_Storage.Get<ConversationCollection>) is ConversationCollection result && result.Items is not null)
                 {
-                    foreach (ConversationViewModel c in result.Items)
+                    foreach (Conversation c in result.Items)
                     {
-                        Items.Add(c);
+                        if(App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
+                        {
+                            viewModel.Subject = c.Subject;
+                            viewModel.SelectedModel = c.SelectedModel;
+                            viewModel.SetConversation(c);
+                            Conversations.Add(viewModel);
+                        }
                     }
 
                     LastUpdated = DateTime.Now;
-                    _Logger.LogInformation("Loaded {ItemsCount} conversations", Items.Count);
+                    _Logger.LogInformation("Loaded {ItemsCount} conversations", Conversations.Count);
                     OnConversationsLoaded(EventArgs.Empty);
                 }
                 else
                 {
-                    _Logger.LogError("Failed to load data from {ViewModelName}", nameof(ConversationSidebarViewModel));
+                    _Logger.LogError("Failed to load data from {ModelName}", nameof(ConversationCollection));
                     OnConversationsLoadFailed(EventArgs.Empty);
                 }
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to load data from {ViewModelName}", nameof(ConversationSidebarViewModel), e);
+                _Logger.LogError("Failed to load data from {ModelName}", nameof(ConversationCollection), e);
                 OnUnhandledException(new(e, false));
                 OnConversationsLoadFailed(EventArgs.Empty);
             }
@@ -150,12 +140,18 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                await Task.Run(() => { _Storage.Set(this); });
-                _Logger.LogInformation("Saved {ItemsCount} conversations", Items.Count);
+                ConversationCollection collection = new();
+                foreach(ConversationViewModel viewModel in Conversations)
+                {
+                    collection.Items.Add(viewModel.GetConversation());
+                }
+
+                await Task.Run(() => { _Storage.Set(collection); });
+                _Logger.LogInformation("Saved {ItemsCount} conversations", collection.Items.Count);
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to save {ViewModelName}", nameof(ConversationSidebarViewModel), e);
+                _Logger.LogError("Failed to save {ModelName}", nameof(ConversationCollection), e);
                 OnUnhandledException(new(e, false));
             }
         }

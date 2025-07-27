@@ -19,9 +19,9 @@ namespace OllamaClient.Models
         private readonly DataContractSerializer _Serializer = new(typeof(T));
         private readonly Type[] _AllowedTypes =
         {
-            typeof(ChatMessageViewModel),
-            typeof(ConversationViewModel),
-            typeof(ConversationSidebarViewModel),
+            typeof(ChatMessage),
+            typeof(Conversation),
+            typeof(ConversationCollection),
         };
 
         /// <summary>

@@ -1,6 +1,7 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
@@ -15,19 +16,24 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class ModelItemPage : Page
     {
-        public class NavArgs(DispatcherQueue dispatcherQueue, ModelViewModel modelItem, ModelSidebarViewModel collection)
+        public class NavArgs(ModelViewModel modelItem, ModelSidebarViewModel collection)
         {
-            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
             public ModelViewModel SelectedItem { get; set; } = modelItem;
             public ModelSidebarViewModel Collection { get; set; } = collection;
         }
 
-        private new DispatcherQueue? DispatcherQueue { get; set; }
+        private DialogsService _DialogsService { get; set; }
         private ModelViewModel? Item { get; set; }
         private ModelSidebarViewModel? ParentCollection { get; set; }
 
         public ModelItemPage()
         {
+            if(App.GetService<DialogsService>() is DialogsService dialogsService)
+            {
+                _DialogsService = dialogsService;
+            } 
+            else throw new ArgumentException(nameof(dialogsService));
+
             InitializeComponent();
         }
 
@@ -35,7 +41,6 @@ namespace OllamaClient.Views.Pages
         {
             if (e.Parameter is NavArgs args)
             {
-                DispatcherQueue = args.DispatcherQueue;
                 Item = args.SelectedItem;
                 ParentCollection = args.Collection;
 
@@ -80,40 +85,46 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () => { await Services.DialogsService.ShowDialog(dialog); });
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
         }
 
-        private async void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        private void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            DeleteModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
+            DeleteModelContentDialog dialog = new(XamlRoot, Item?.Source?.Model ?? "");
 
-            ContentDialogResult? result = await Services.DialogsService.ShowDialog(dialog);
-
-            if (result == ContentDialogResult.Primary && ParentCollection is not null && Item is not null)
+            dialog.Closed += (s, args) =>
             {
-                DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item._Model); });
-            }
+                if (args.Result == ContentDialogResult.Primary && ParentCollection is not null && Item?.Source is not null)
+                {
+                    DispatcherQueue.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item.Source.Model); });
+                }
+            };
+
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
         }
 
-        private async void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        private void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            CopyModelContentDialog dialog = new(XamlRoot, Item?._Model ?? "");
+            CopyModelContentDialog dialog = new(XamlRoot, Item?.Source?.Model ?? "");
 
-            ContentDialogResult? result = await Services.DialogsService.ShowDialog(dialog);
-
-            if
-            (
-                result == ContentDialogResult.Primary
+            dialog.Closed += (s, args) =>
+            {
+                if
+                (
+                args.Result == ContentDialogResult.Primary
                 &&
                 (dialog.Content as TextBoxDialog)?.InputText is string newModelName
                 &&
                 ParentCollection is not null
                 &&
-                Item is not null
-            )
-            {
-                DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.CopyModel(Item.Name, newModelName); });
-            }
+                Item?.Source is not null
+                )
+                {
+                    DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.CopyModel(Item.Source.Name, newModelName); });
+                }
+            };
+
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
         }
     }
 }

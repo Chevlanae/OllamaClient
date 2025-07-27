@@ -2,31 +2,29 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 
 namespace OllamaClient.ViewModels
 {
-    [DataContract]
-    public partial class ChatMessageViewModel : INotifyPropertyChanged
+    public partial class ChatMessageViewModel(ChatMessage message, bool progressRingEnabled) : INotifyPropertyChanged
     {
-        private bool _ProgressRingEnabled { get; set; } = false;
+        private ChatMessage? _ChatMessage { get; set; } = message;
+        private bool _ProgressRingEnabled { get; set; } = progressRingEnabled;
 
-        private Role _Role { get; set; }
-
-        [DataMember]
-        private DateTime? _Timestamp { get; set; }
-        [DataMember]
-        private string _Content { get; set; } = "";
-
-        [DataMember]
-        public string Role
+        public string? Role
         {
-            get => Enum.GetName(_Role) ?? "user";
+            get
+            {
+                if (_ChatMessage is not null)
+                {
+                    return Enum.GetName(_ChatMessage.Role) ?? "user";
+                }
+                else return default;
+            }
             set
             {
-                if (Enum.TryParse(value, out Role role))
+                if (_ChatMessage is not null && Enum.TryParse(value, out Role role))
                 {
-                    _Role = role;
+                    _ChatMessage.Role = role;
                 }
             }
         }
@@ -43,56 +41,63 @@ namespace OllamaClient.ViewModels
 
         public string? Timestamp
         {
-            get => _Timestamp?.ToLocalTime().ToShortDateString() + " " + _Timestamp?.ToLocalTime().ToShortTimeString();
+            get
+            {
+                if (_ChatMessage is not null && _ChatMessage.Timestamp is not null)
+                {
+                    return _ChatMessage.Timestamp?.ToLocalTime().ToShortDateString() + " " + _ChatMessage.Timestamp?.ToLocalTime().ToShortTimeString();
+                }
+                else return default;
+            }
         }
 
-        public string Content
+        public string? Content
         {
-            get => _Content;
+            get => _ChatMessage?.Content;
             set
             {
-                _Content = value;
-                OnPropertyChanged();
+                if(_ChatMessage is not null)
+                {
+                    _ChatMessage.Content = value ?? "";
+                    OnPropertyChanged();
+                }
             }
         }
 
         public string HorizontalAlignment
         {
-            get => _Role == Models.Role.assistant ? "Left" : "Right";
+            get => _ChatMessage?.Role == Models.Role.assistant ? "Left" : "Right";
         }
 
         public string BackgroundColor
         {
-            get => _Role == Models.Role.assistant ? "Transparent" : "DimGray";
+            get => _ChatMessage?.Role == Models.Role.assistant ? "Transparent" : "DimGray";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
-        public ChatMessageViewModel(Role role, string content, DateTime? timestamp = null)
-        {
-            _Role = role;
-            _Content = content;
-            _Timestamp = timestamp;
-        }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new(name));
         }
 
-        public void SetTimestamp(DateTime dateTime)
+        public void SetChatMessage(ChatMessage chatMessage)
         {
-            _Timestamp = dateTime;
-            OnPropertyChanged(nameof(Timestamp));
+            _ChatMessage = chatMessage;
         }
 
-        public Message ToMessage()
+        public ChatMessage? GetChatMessage()
         {
-            return new Message()
+            return _ChatMessage;
+        }
+
+        public void SetTimestamp(DateTime dateTime)
+        {
+            if(_ChatMessage is not null)
             {
-                role = Role,
-                content = Content
-            };
+                _ChatMessage.Timestamp = dateTime;
+                OnPropertyChanged(nameof(Timestamp));
+            }
         }
     }
 }
