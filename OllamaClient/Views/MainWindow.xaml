@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="OllamaClient.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="OllamaClient">
+    <SplitView x:Name="TopLevelSplitView"
+               DisplayMode="CompactInline"
+               CompactPaneLength="50"
+               OpenPaneLength="300"
+               MinHeight="200" 
+               MinWidth="300">
+        <SplitView.Pane>
+            <Grid>
+                <Grid.Resources>
+                    <Style x:Key="NavBarButtonStyle" TargetType="Button">
+                        <Setter Property="Height" Value="50" />
+                        <Setter Property="Width" Value="50" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="Padding" Value="0,10,0,10" />
+                    </Style>
+                </Grid.Resources>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <RelativePanel Grid.Column="0">
+                    <Button x:Name="ToggleSidebarButton" RelativePanel.AlignTopWithPanel="True" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click">
+                        <FontIcon Glyph="&#xE700;" />
+                    </Button>
+                    <Button x:Name="ConversationsButton" RelativePanel.Below="ToggleSidebarButton" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click">
+                        <FontIcon Glyph="&#xE8F2;" />
+                    </Button>
+                    <Button x:Name="ModelsButton" RelativePanel.Below="ConversationsButton" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click">
+                        <FontIcon Glyph="&#xE8F1;" />
+                    </Button>
+                    <Button x:Name="LogsButton" RelativePanel.AlignBottomWithPanel="True" Style="{StaticResource NavBarButtonStyle}" Click="LogsButton_Click">
+                        <FontIcon Glyph="&#xEA37;" />
+                    </Button>
+                    <Popup 
+                        x:Name="LogsPopup" 
+                        PlacementTarget="{Binding ElementName=LogsButton}" 
+                        DesiredPlacement="RightEdgeAlignedBottom" 
+                        HorizontalOffset="10" 
+                        VerticalOffset="-10" 
+                        IsLightDismissEnabled="True">
+                        <Border 
+                            Padding="20" 
+                            CornerRadius="10" 
+                            BorderThickness="1" 
+                            BorderBrush="{ThemeResource ControlElevationBorderBrush}" 
+                            Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}" 
+                            MaxHeight="600" 
+                            MaxWidth="800">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" FontSize="20" Margin="0,0,0,10">
+                                    <Bold>
+                                        <Underline>
+                                            Logs
+                                        </Underline>
+                                    </Bold>
+                                </TextBlock>
+                                <ScrollViewer x:Name="ConsoleScrollViewer" Grid.Row="1">
+                                    <TextBlock x:Name="LogsTextBlock" SizeChanged="LogsTextBlock_SizeChanged" />
+                                </ScrollViewer>
+                            </Grid>
+                            
+                        </Border>
+                    </Popup>
+                </RelativePanel>
+                <Frame Grid.Column="1" x:Name="SidebarFrame" />
+            </Grid>
+        </SplitView.Pane>
+        <SplitView.Content>
+            <Frame x:Name="ContentFrame" />
+        </SplitView.Content>
+    </SplitView>
+</Window>

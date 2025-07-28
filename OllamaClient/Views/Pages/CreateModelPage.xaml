@@ -27,12 +27,6 @@
                         </Underline>
                     </Bold>
                 </TextBlock>
-                <Button x:Name="SwapFormButton" Grid.Column="2" Margin="50,10,10,10" Click="SwapFormButton_Click">
-                    <FontIcon Glyph="&#xE8AB;" />
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="Swap between text editor view and form view" />
-                    </ToolTipService.ToolTip>
-                </Button>
             </Grid>
             <Grid x:Name="CreateModelTextEditorGrid" Grid.Row="1" Margin="20,0,20,0" MinWidth="100" MaxWidth="600" MinHeight="500" MaxHeight="800" Visibility="Collapsed">
             </Grid>
@@ -62,8 +56,8 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Template: " />
-                <RichEditBox x:Name="NewModelTemplateTextBox" Grid.Row="2" Grid.Column="1" PlaceholderText="(optional) prompt template"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="System: " />
+                <RichEditBox Grid.Row="2" Grid.Column="1" x:Name="NewModelSystemTextBox" PlaceholderText="(optional) system message"/>
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Parameters: " />
                 <ScrollViewer x:Name="NewModelParametersScrollViewer" Grid.Row="3" Grid.Column="1">
                     <Grid>
@@ -86,8 +80,8 @@
                         </Button>
                     </Grid>
                 </ScrollViewer>
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="System: " />
-                <RichEditBox Grid.Row="4" Grid.Column="1" x:Name="NewModelSystemTextBox" PlaceholderText="(optional) system message"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Template: " />
+                <RichEditBox x:Name="NewModelTemplateTextBox" Grid.Row="4" Grid.Column="1" PlaceholderText="(optional) prompt template"/>
                 <Grid Grid.Row="5" Grid.Column="1" Margin="10" HorizontalAlignment="Right">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />

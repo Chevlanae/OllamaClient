@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace OllamaClient.ViewModels
 {
@@ -18,7 +19,6 @@ namespace OllamaClient.ViewModels
 
         public ObservableCollection<ModelViewModel> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
-        public ObservableCollection<string> StatusStrings = [];
 
         public event EventHandler? ModelsLoaded;
         public event EventHandler? ModelCreated;
@@ -167,7 +167,10 @@ namespace OllamaClient.ViewModels
                 }
             }
 
-            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
+            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => 
+            {
+                _Logger.LogInformation("Creating '{Name}' - {Status}", name, s.status);
+            });
 
             try
             {
@@ -178,7 +181,6 @@ namespace OllamaClient.ViewModels
                     await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
-                _Logger.LogInformation("Model '{Name}' created successfully", name);
                 OnModelCreated(EventArgs.Empty);
             }
             catch (Exception e)
@@ -251,7 +253,17 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => { StatusStrings.Add(s.status); });
+                IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
+                {
+                    if(s.total is null) 
+                    {
+                        _Logger.LogInformation("Pulling '{ModelName}' - {Status}", modelName, s.status);
+                    }
+                    else
+                    {
+                        _Logger.LogInformation("Pulling '{ModelName}' - {Status} - {Completed}/{Total} bytes downloaded ", modelName, s.status, s.completed ?? 0, s.total);
+                    }
+                });
 
                 await Task.Run(async () =>
                 {
@@ -260,7 +272,6 @@ namespace OllamaClient.ViewModels
                     await stream.Read(progress, _CancellationTokenSource.Token);
                 });
 
-                _Logger.LogInformation("Model '{ModelName}' pulled successfully", modelName);
                 OnModelPulled(EventArgs.Empty);
             }
             catch (Exception e)

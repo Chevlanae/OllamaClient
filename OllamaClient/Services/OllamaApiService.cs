@@ -174,6 +174,8 @@ namespace OllamaClient.Services
 
         public async Task<DelimitedJsonStream<StatusResponse>> PullModelStream(PullModelRequest request)
         {
+            request.stream = true;
+
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Pull)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.PullModelRequest)

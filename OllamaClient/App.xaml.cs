@@ -6,6 +6,7 @@ using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using Serilog;
 using System;
+using System.IO;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -18,6 +19,7 @@ namespace OllamaClient
     public partial class App : Application
     {
         public static string LocalAppDataPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\OllamaClient";
+        public static StringWriter LoggedText = new StringWriter();
 
         private static readonly IHost _host = Host.CreateDefaultBuilder()
             .UseEnvironment("Development")
@@ -32,7 +34,8 @@ namespace OllamaClient
                 services.AddSerilog((context, config) =>
                 {
                     config.WriteTo.Debug();
-                    config.WriteTo.File($"{LocalAppDataPath}\\log.txt");
+                    config.WriteTo.TextWriter(LoggedText, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information, outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}");
+                    config.WriteTo.File($"{LocalAppDataPath}\\Logs\\log.txt", rollingInterval: RollingInterval.Day);
                 });
 
                 //Settings

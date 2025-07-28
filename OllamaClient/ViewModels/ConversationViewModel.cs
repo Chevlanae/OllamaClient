@@ -160,7 +160,6 @@ namespace OllamaClient.ViewModels
                     }
                 });
 
-                
                 Subject = subject.ToString();
                 _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' successful", _SelectedModel);
             }

@@ -44,8 +44,9 @@ namespace OllamaClient.Views.Pages
 
             ConversationsListView.ItemsSource = _ConversationsSidebarViewModel.Conversations;
 
-            _ConversationsSidebarViewModel.Conversations.CollectionChanged += ConversationItems_CollectionChanged;
+            _ConversationsSidebarViewModel.Conversations.CollectionChanged += Conversations_CollectionChanged;
             _ConversationsSidebarViewModel.ConversationsLoaded += Conversations_ConversationsLoaded;
+            _ConversationsSidebarViewModel.ModelsLoaded += Conversations_ModelsLoaded;
             _ConversationsSidebarViewModel.UnhandledException += Conversations_UnhandledException;
         }
 
@@ -88,6 +89,14 @@ namespace OllamaClient.Views.Pages
             DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.Save(); });
         }
 
+        private void Conversations_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (_ConversationsSidebarViewModel.Conversations.Count == 0)
+            {
+                ContentFrame?.Navigate(typeof(BlankPage));
+            }
+        }
+
         private void Conversations_ConversationsLoaded(object? sender, EventArgs e)
         {
             if (_ConversationsSidebarViewModel.Conversations.Count == 0) ContentFrame?.Navigate(typeof(BlankPage));
@@ -101,11 +110,13 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private void ConversationItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void Conversations_ModelsLoaded(object? sender, EventArgs e)
         {
-            if (_ConversationsSidebarViewModel.Conversations.Count == 0)
+            if (ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
-                ContentFrame?.Navigate(typeof(BlankPage));
+                ConversationPage.NavArgs args = new(_ConversationsSidebarViewModel.AvailableModels, conversation);
+
+                ContentFrame?.Navigate(typeof(ConversationPage), args);
             }
         }
 

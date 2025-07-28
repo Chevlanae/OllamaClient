@@ -1,8 +1,12 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using OllamaClient.Services;
 using OllamaClient.Views.Pages;
 using Serilog;
+using System;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -16,6 +20,7 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
+
         public MainWindow()
         {
             InitializeComponent();
@@ -52,9 +57,38 @@ namespace OllamaClient
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
 
-        private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)
+        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
         {
             ToggleSidebar();
+        }
+
+        private void LogsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ConsoleScrollViewer.ScrollToVerticalOffset(ConsoleScrollViewer.ScrollableHeight);
+
+            if (LogsPopup.IsOpen) LogsPopup.IsOpen = false;
+            else
+            {
+                LogsPopup.IsOpen = true;
+
+                DispatcherQueue.TryEnqueue(async () =>
+                {
+                    while (LogsPopup.IsOpen)
+                    {
+                        LogsTextBlock.Text = App.LoggedText.ToString();
+
+                        await Task.Delay(10);
+                    }
+                });
+            }
+        }
+
+        private void LogsTextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if(ConsoleScrollViewer.VerticalOffset > ConsoleScrollViewer.ScrollableHeight - 100)
+            {
+                ConsoleScrollViewer.ScrollToVerticalOffset(ConsoleScrollViewer.ScrollableHeight);
+            }
         }
     }
 }

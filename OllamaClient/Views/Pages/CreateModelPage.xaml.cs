@@ -102,19 +102,5 @@ namespace OllamaClient.Views.Pages
 
             NewModelParametersScrollViewer.ScrollToVerticalOffset(NewModelParametersScrollViewer.ScrollableHeight);
         }
-
-        private void SwapFormButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (CreateModelFormGrid.Visibility == Visibility.Visible)
-            {
-                CreateModelFormGrid.Visibility = Visibility.Collapsed;
-                CreateModelTextEditorGrid.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                CreateModelFormGrid.Visibility = Visibility.Visible;
-                CreateModelTextEditorGrid.Visibility = Visibility.Collapsed;
-            }
-        }
     }
 }
