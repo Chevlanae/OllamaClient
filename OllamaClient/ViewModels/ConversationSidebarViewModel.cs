@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.UI.Dispatching;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
-    public class ConversationSidebarViewModel : INotifyPropertyChanged
+    public class ConversationSidebarViewModel
     {
         private ILogger _Logger;
         private OllamaApiService _Api;
@@ -75,6 +76,15 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(this, new(name));
         }
 
+        private async void Conversation_StartOfRequest(object? sender, EventArgs e)
+        {
+            await Save();
+        }
+        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
+        {
+            await Save();
+        }
+
         public async Task LoadAvailableModels()
         {
             try
@@ -111,7 +121,7 @@ namespace OllamaClient.ViewModels
                     {
                         if(App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
                         {
-                            viewModel.Subject = c.Subject;
+                            if(c.Subject is not null) viewModel.Subject = c.Subject;
                             viewModel.SelectedModel = c.SelectedModel;
                             viewModel.SetConversation(c);
                             Conversations.Add(viewModel);

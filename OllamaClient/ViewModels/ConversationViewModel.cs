@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,9 +24,7 @@ namespace OllamaClient.ViewModels
         private readonly Settings _Settings;
         private readonly OllamaApiService _Api;
         private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
-
         private ObservableCollection<ChatMessageViewModel> _ChatMessages { get; set; } = [];
-
         private string? _Subject { get; set; }
         private string? _SelectedModel { get; set; }
 
@@ -41,9 +38,9 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public string? Subject
+        public string Subject
         {
-            get => _Subject;
+            get => _Subject ?? "New Conversation";
             set
             {
                 _Subject = value;
@@ -71,7 +68,7 @@ namespace OllamaClient.ViewModels
             _Logger = logger;
             _Settings = options.Value;
 
-            if(App.GetService<OllamaApiService>() is OllamaApiService api)
+            if (App.GetService<OllamaApiService>() is OllamaApiService api)
             {
                 _Api = api;
             }
@@ -80,6 +77,7 @@ namespace OllamaClient.ViewModels
 
         protected void OnStartOfRequest(EventArgs e)
         {
+            
             StartOfRequest?.Invoke(this, e);
         }
 
@@ -102,7 +100,9 @@ namespace OllamaClient.ViewModels
         {
             _ChatMessages.Clear();
 
-            foreach(ChatMessage chatMessage in conversation.ChatMessageCollection)
+            _Subject = conversation.Subject;
+            _SelectedModel = conversation.SelectedModel;
+            foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
             {
                 _ChatMessages.Add(new(chatMessage, false));
             }
@@ -113,9 +113,9 @@ namespace OllamaClient.ViewModels
             Conversation conversation = new();
             conversation.Subject = _Subject;
             conversation.SelectedModel = _SelectedModel;
-            foreach(var viewModel in _ChatMessages)
+            foreach (var viewModel in _ChatMessages)
             {
-                if(viewModel.GetChatMessage() is ChatMessage chatMessage)
+                if (viewModel.GetChatMessage() is ChatMessage chatMessage)
                 {
                     conversation.ChatMessageCollection.Add(chatMessage);
                 }
@@ -126,7 +126,7 @@ namespace OllamaClient.ViewModels
 
         public void Cancel()
         {
-            if(_CancellationTokenSource is not null)
+            if (_CancellationTokenSource is not null)
             {
                 _CancellationTokenSource.Cancel();
             }
@@ -135,9 +135,6 @@ namespace OllamaClient.ViewModels
 
         public async Task GenerateSubject(string prompt)
         {
-            if (_SelectedModel == null) return;
-            if (Subject is null) Subject = "";
-
             CompletionRequest request = _Settings.SubjectRequest;
 
             if (request.prompt.Contains("$Prompt"))
@@ -163,6 +160,7 @@ namespace OllamaClient.ViewModels
                     }
                 });
 
+                
                 Subject = subject.ToString();
                 _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' successful", _SelectedModel);
             }
@@ -199,7 +197,7 @@ namespace OllamaClient.ViewModels
             ChatRequest request = new()
             {
                 model = _SelectedModel,
-                messages = _ChatMessages.Select(m => m.GetChatMessage().ToMessage()).ToArray(),
+                messages = _ChatMessages.Select(m => m.GetChatMessage()?.ToMessage() ?? new()).ToArray(),
                 stream = true
             };
 

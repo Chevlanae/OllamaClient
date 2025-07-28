@@ -21,25 +21,20 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        public class NavArgs(ObservableCollection<string> availableModels)
+        public class NavArgs(ObservableCollection<string> availableModels, ConversationViewModel viewModel)
         {
             public ObservableCollection<string> AvailableModels { get; set; } = availableModels;
+            public ConversationViewModel ViewModel { get; set; } = viewModel;
         }
 
         private DialogsService _DialogsService;
-        private ConversationViewModel _ConversationViewModel { get; set; }
+        private ConversationViewModel? _ConversationViewModel { get; set; }
         private List<string>? _AvailableModels { get; set; }
         private bool _EnableAutoScroll { get; set; }
         private bool _SendingMessage { get; set; }
 
         public ConversationPage()
         {
-            if (App.GetService<ConversationViewModel>() is ConversationViewModel conversationViewModel)
-            {
-                _ConversationViewModel = conversationViewModel;
-            }
-            else throw new ArgumentException(nameof(conversationViewModel));
-
             if (App.GetService<DialogsService>() is DialogsService dialogs)
             {
                 _DialogsService = dialogs;
@@ -57,6 +52,7 @@ namespace OllamaClient.Views.Pages
             if (e.Parameter is NavArgs args)
             {
                 _AvailableModels = args.AvailableModels.ToList();
+                _ConversationViewModel = args.ViewModel;
 
                 _ConversationViewModel.StartOfRequest += Conversation_StartOfMessage;
                 _ConversationViewModel.EndOfResponse += Conversation_EndOfMessage;
@@ -114,7 +110,7 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue?.TryEnqueue(async () =>
+            DispatcherQueue.TryEnqueue(async () =>
             {
                 await _DialogsService.ShowDialog(dialog);
 
@@ -131,12 +127,12 @@ namespace OllamaClient.Views.Pages
             {
                 string text = ChatInputTextBox.Text;
 
-                if(_ConversationViewModel.Subject == null)
+                if(_ConversationViewModel.Subject == "New Conversation")
                 {
-                    DispatcherQueue?.TryEnqueue(async () => { await _ConversationViewModel.GenerateSubject(text); });
+                    DispatcherQueue.TryEnqueue(async () => { await _ConversationViewModel.GenerateSubject(text); });
                 }
 
-                DispatcherQueue?.TryEnqueue(async () => { await _ConversationViewModel.SendUserMessage(text); });
+                DispatcherQueue.TryEnqueue(async () => { await _ConversationViewModel.SendUserMessage(text); });
 
                 ChatInputTextBox.Text = "";
             }

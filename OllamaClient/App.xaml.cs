@@ -40,7 +40,7 @@ namespace OllamaClient
                 services.Configure<SerializeableStorageService.Settings>(context.Configuration.GetSection("SerializableStorageService.Settings"));
                 services.Configure<ConversationViewModel.Settings>(context.Configuration.GetSection("ConversationViewModel.Settings"));
 
-                //Singleton Services
+                //Services
                 services.AddSingleton<DialogsService>();
                 services.AddSingleton<OllamaApiService>();
                 services.AddSingleton<SerializeableStorageService>();

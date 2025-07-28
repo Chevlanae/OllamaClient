@@ -54,7 +54,7 @@ namespace OllamaClient
 
         private void ToggleSidbarButton_Click(object sender, RoutedEventArgs e)
         {
-
+            ToggleSidebar();
         }
     }
 }
