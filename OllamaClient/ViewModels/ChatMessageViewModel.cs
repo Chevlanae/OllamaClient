@@ -5,24 +5,20 @@ using System.Runtime.CompilerServices;
 
 namespace OllamaClient.ViewModels
 {
-    public partial class ChatMessageViewModel(ChatMessage message, bool progressRingEnabled) : INotifyPropertyChanged
+    public partial class ChatMessageViewModel(Role role, string content, DateTime? timeStamp = null, bool progressRingEnabled = false) : INotifyPropertyChanged
     {
-        private ChatMessage? _ChatMessage { get; set; } = message;
+        private ChatMessage _ChatMessage = new(role, content, timeStamp);
         private bool _ProgressRingEnabled { get; set; } = progressRingEnabled;
 
-        public string? Role
+        public string Role
         {
             get
             {
-                if (_ChatMessage is not null)
-                {
-                    return Enum.GetName(_ChatMessage.Role) ?? "user";
-                }
-                else return default;
+                return Enum.GetName(_ChatMessage.Role) ?? "user";
             }
             set
             {
-                if (_ChatMessage is not null && Enum.TryParse(value, out Role role))
+                if (Enum.TryParse(value, out Role role))
                 {
                     _ChatMessage.Role = role;
                 }
@@ -43,7 +39,7 @@ namespace OllamaClient.ViewModels
         {
             get
             {
-                if (_ChatMessage is not null && _ChatMessage.Timestamp is not null)
+                if (_ChatMessage.Timestamp is not null)
                 {
                     return _ChatMessage.Timestamp?.ToLocalTime().ToShortDateString() + " " + _ChatMessage.Timestamp?.ToLocalTime().ToShortTimeString();
                 }
@@ -51,27 +47,24 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public string? Content
+        public string Content
         {
-            get => _ChatMessage?.Content;
+            get => _ChatMessage.Content;
             set
             {
-                if(_ChatMessage is not null)
-                {
-                    _ChatMessage.Content = value ?? "";
-                    OnPropertyChanged();
-                }
+                _ChatMessage.Content = value;
+                OnPropertyChanged();
             }
         }
 
         public string HorizontalAlignment
         {
-            get => _ChatMessage?.Role == Models.Role.assistant ? "Left" : "Right";
+            get => _ChatMessage.Role == Models.Role.assistant ? "Left" : "Right";
         }
 
         public string BackgroundColor
         {
-            get => _ChatMessage?.Role == Models.Role.assistant ? "Transparent" : "DimGray";
+            get => _ChatMessage.Role == Models.Role.assistant ? "Transparent" : "DimGray";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -81,12 +74,7 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(this, new(name));
         }
 
-        public void SetChatMessage(ChatMessage chatMessage)
-        {
-            _ChatMessage = chatMessage;
-        }
-
-        public ChatMessage? GetChatMessage()
+        public ChatMessage ToChatMessage()
         {
             return _ChatMessage;
         }

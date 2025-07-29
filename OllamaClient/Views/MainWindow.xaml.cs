@@ -2,11 +2,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using OllamaClient.Services;
 using OllamaClient.Views.Pages;
 using Serilog;
 using System;
 using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -64,7 +67,7 @@ namespace OllamaClient
 
         private void LogsButton_Click(object sender, RoutedEventArgs e)
         {
-            ConsoleScrollViewer.ScrollToVerticalOffset(ConsoleScrollViewer.ScrollableHeight);
+            LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
 
             if (LogsPopup.IsOpen) LogsPopup.IsOpen = false;
             else
@@ -85,10 +88,16 @@ namespace OllamaClient
 
         private void LogsTextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if(ConsoleScrollViewer.VerticalOffset > ConsoleScrollViewer.ScrollableHeight - 100)
+            if(LogsScrollViewer.VerticalOffset > LogsScrollViewer.ScrollableHeight - 100)
             {
-                ConsoleScrollViewer.ScrollToVerticalOffset(ConsoleScrollViewer.ScrollableHeight);
+                LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
             }
+        }
+
+        private async void LogsFolderHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
+        {
+            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(App.LogsMsixPath);
+            await Launcher.LaunchFolderAsync(folder);
         }
     }
 }

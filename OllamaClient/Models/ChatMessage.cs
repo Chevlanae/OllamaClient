@@ -17,7 +17,6 @@ namespace OllamaClient.Models
         [DataMember]
         public DateTime? Timestamp { get; set; } = timestamp;
 
-
         public Message ToMessage()
         {
             return new Message()

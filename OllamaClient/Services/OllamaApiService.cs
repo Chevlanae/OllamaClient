@@ -77,11 +77,14 @@ namespace OllamaClient.Services
 
             if (httpResp.IsSuccessStatusCode)
             {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON stream", request.RequestUri?.OriginalString, httpResp.StatusCode);
                 return new(await httpResp.Content.ReadAsStreamAsync(), '\n', jsonTypeInfo);
             }
             else
             {
-                throw new HttpRequestException($"Error: {httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", request.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
             }
 
         }
@@ -89,6 +92,8 @@ namespace OllamaClient.Services
         public async Task<DelimitedJsonStream<ChatResponse>> ChatStream(ChatRequest request)
         {
             request.stream = true;
+
+            _Logger.LogDebug("POST {Url}", _Endpoints.Chat);
 
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Chat)
             {
@@ -102,6 +107,8 @@ namespace OllamaClient.Services
         {
             request.stream = true;
 
+            _Logger.LogDebug("POST {Url}", _Endpoints.GenerateCompletion);
+
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.GenerateCompletion)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CompletionRequest)
@@ -114,6 +121,8 @@ namespace OllamaClient.Services
         {
             request.stream = true;
 
+            _Logger.LogDebug("POST {Url}", _Endpoints.Create);
+
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Create)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CreateModelRequest)
@@ -123,20 +132,25 @@ namespace OllamaClient.Services
 
         public async Task<ListModelsResponse> ListModels()
         {
+            _Logger.LogDebug("GET {Url}", _Endpoints.List);
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.List);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON object", req.RequestUri?.OriginalString, httpResp.StatusCode);
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.ListModelsResponse);
             }
             else
             {
-                throw new HttpRequestException($"Error: {httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
             }
         }
 
         public async Task<ShowModelResponse> ShowModel(ShowModelRequest request)
         {
+            _Logger.LogDebug("POST {Url}", _Endpoints.Show);
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Show)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.ShowModelRequest)
@@ -144,37 +158,65 @@ namespace OllamaClient.Services
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON object", req.RequestUri?.OriginalString, httpResp.StatusCode);
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.ShowModelResponse);
             }
             else
             {
-                throw new HttpRequestException($"Error: {httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
             }
         }
 
         public async Task<bool> CopyModel(CopyModelRequest request)
         {
+            _Logger.LogDebug("POST {Url}", _Endpoints.Copy);
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Copy)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.CopyModelRequest)
             };
             using HttpResponseMessage resp = await _HttpClient.SendAsync(req);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, resp.StatusCode);
+            }
+            else
+            {
+                Exception err = new HttpRequestException($"{resp.StatusCode} - {await resp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, resp.StatusCode);
+            }
+
             return resp.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteModel(DeleteModelRequest request)
         {
+            _Logger.LogDebug("DELETE {Url}", _Endpoints.Delete);
             using HttpRequestMessage req = new(HttpMethod.Delete, _Endpoints.Delete)
             {
                 Content = JsonContent.Create(request, SourceGenerationContext.Default.DeleteModelRequest)
             };
             using HttpResponseMessage resp = await _HttpClient.SendAsync(req);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, resp.StatusCode);
+            }
+            else
+            {
+                Exception err = new HttpRequestException($"{resp.StatusCode} - {await resp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, resp.StatusCode);
+            }
             return resp.IsSuccessStatusCode;
         }
 
         public async Task<DelimitedJsonStream<StatusResponse>> PullModelStream(PullModelRequest request)
         {
             request.stream = true;
+
+            _Logger.LogDebug("POST {Url}", _Endpoints.Pull);
 
             using HttpRequestMessage req = new(HttpMethod.Post, _Endpoints.Pull)
             {
@@ -185,29 +227,37 @@ namespace OllamaClient.Services
 
         public async Task<RunningModelsResponse> ListRunningModels()
         {
+            _Logger.LogDebug("GET {Url}", _Endpoints.Ps);
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Ps);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON object", req.RequestUri?.OriginalString, httpResp.StatusCode);
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.RunningModelsResponse);
             }
             else
             {
-                throw new HttpRequestException($"Error: {httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
             }
         }
 
         public async Task<VersionResponse> GetVersion()
         {
+            _Logger.LogDebug("GET {Url}", _Endpoints.Version);
             using HttpRequestMessage req = new(HttpMethod.Get, _Endpoints.Version);
             using HttpResponseMessage httpResp = await _HttpClient.SendAsync(req);
             if (httpResp.IsSuccessStatusCode)
             {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON object", req.RequestUri?.OriginalString, httpResp.StatusCode);
                 return JsonSerializer.Deserialize(await httpResp.Content.ReadAsStringAsync(), SourceGenerationContext.Default.VersionResponse);
             }
             else
             {
-                throw new HttpRequestException($"Error: {httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
             }
         }
     }

@@ -14,7 +14,6 @@ namespace OllamaClient.Models
     /// <typeparam name="T">Desired type of data file</typeparam>
     public class DataFile<T>
     {
-        private Uri _FileUri { get; set; }
         private object _FileLock = new();
         private readonly DataContractSerializer _Serializer = new(typeof(T));
         private readonly Type[] _AllowedTypes =
@@ -23,6 +22,8 @@ namespace OllamaClient.Models
             typeof(Conversation),
             typeof(ConversationCollection),
         };
+
+        public Uri FileUri { get; set; }
 
         /// <summary>
         /// Constructor for DataFile, takes a directory URI as the location for the parent directory, and a type argument for the object to be serialized
@@ -47,7 +48,7 @@ namespace OllamaClient.Models
             }
             else
             {
-                _FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
+                FileUri = new(Path.Combine(dirUri.LocalPath, typeof(T).FullName + ".xml"));
             }
         }
 
@@ -62,7 +63,7 @@ namespace OllamaClient.Models
         {
             lock (_FileLock)
             {
-                using FileStream file = File.OpenRead(_FileUri.LocalPath);
+                using FileStream file = File.OpenRead(FileUri.LocalPath);
                 using XmlReader reader = XmlReader.Create(file);
                 return (T?)_Serializer.ReadObject(reader);
             }
@@ -78,7 +79,7 @@ namespace OllamaClient.Models
         {
             lock (_FileLock)
             {
-                using FileStream file = File.Create(_FileUri.LocalPath);
+                using FileStream file = File.Create(FileUri.LocalPath);
                 using XmlWriter writer = XmlWriter.Create(file);
                 _Serializer.WriteObject(writer, obj);
             }
@@ -86,7 +87,7 @@ namespace OllamaClient.Models
 
         public bool Exists()
         {
-            return File.Exists(_FileUri.LocalPath);
+            return File.Exists(FileUri.LocalPath);
         }
     }
 }

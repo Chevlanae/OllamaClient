@@ -24,16 +24,16 @@ namespace OllamaClient.ViewModels
         private readonly Settings _Settings;
         private readonly OllamaApiService _Api;
         private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
-        private ObservableCollection<ChatMessageViewModel> _ChatMessages { get; set; } = [];
+        private ObservableCollection<ChatMessageViewModel> _ChatMessageViewModels { get; set; } = [];
         private string? _Subject { get; set; }
         private string? _SelectedModel { get; set; }
 
         public ObservableCollection<ChatMessageViewModel> ChatMessages
         {
-            get => _ChatMessages;
+            get => _ChatMessageViewModels;
             set
             {
-                _ChatMessages = value;
+                _ChatMessageViewModels = value;
                 OnPropertyChanged();
             }
         }
@@ -96,26 +96,26 @@ namespace OllamaClient.ViewModels
             PropertyChanged?.Invoke(this, new(name));
         }
 
-        public void SetConversation(Conversation conversation)
+        public void CopyFromConversation(Conversation conversation)
         {
-            _ChatMessages.Clear();
+            _ChatMessageViewModels.Clear();
 
             _Subject = conversation.Subject;
             _SelectedModel = conversation.SelectedModel;
             foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
             {
-                _ChatMessages.Add(new(chatMessage, false));
+                _ChatMessageViewModels.Add(new(chatMessage.Role, chatMessage.Content, chatMessage.Timestamp));
             }
         }
 
-        public Conversation GetConversation()
+        public Conversation ToConversation()
         {
             Conversation conversation = new();
             conversation.Subject = _Subject;
             conversation.SelectedModel = _SelectedModel;
-            foreach (var viewModel in _ChatMessages)
+            foreach (var viewModel in _ChatMessageViewModels)
             {
-                if (viewModel.GetChatMessage() is ChatMessage chatMessage)
+                if (viewModel.ToChatMessage() is ChatMessage chatMessage)
                 {
                     conversation.ChatMessageCollection.Add(chatMessage);
                 }
@@ -169,7 +169,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Subject generation for conversation with '{SelectedModel}' failed", _SelectedModel, e);
+                _Logger.LogError(e, "Subject generation for conversation with '{SelectedModel}' failed", _SelectedModel);
                 OnUnhandledException(new(e, false));
             }
         }
@@ -181,22 +181,21 @@ namespace OllamaClient.ViewModels
             //return early if no model selected
             if (_SelectedModel == null) return;
 
-
             //add user message
-            ChatMessageViewModel userChatMessage = new(new(Role.user, prompt, DateTime.Now), false);
-            _ChatMessages.Add(userChatMessage);
+            ChatMessageViewModel userChatMessage = new(Role.user, prompt);
+            _ChatMessageViewModels.Add(userChatMessage);
 
 
             //add assistant message
-            ChatMessageViewModel assistantChatMessage = new(new(Role.assistant, ""), true);
-            _ChatMessages.Add(assistantChatMessage);
+            ChatMessageViewModel assistantChatMessage = new(Role.assistant, "", progressRingEnabled: true);
+            _ChatMessageViewModels.Add(assistantChatMessage);
 
 
             //build HTTP request data
             ChatRequest request = new()
             {
                 model = _SelectedModel,
-                messages = _ChatMessages.Select(m => m.GetChatMessage()?.ToMessage() ?? new()).ToArray(),
+                messages = _ChatMessageViewModels.Select(m => m.ToChatMessage()?.ToMessage() ?? new()).ToArray(),
                 stream = true
             };
 
@@ -224,7 +223,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Chat completion for conversation with '{ConversationSelectedModel}' failed", _SelectedModel, e);
+                _Logger.LogError(e, "Chat completion for conversation with '{ConversationSelectedModel}' failed", _SelectedModel);
                 OnUnhandledException(new(e, false));
             }
             finally

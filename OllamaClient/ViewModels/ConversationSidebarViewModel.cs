@@ -18,7 +18,7 @@ namespace OllamaClient.ViewModels
         private OllamaApiService _Api;
         private SerializeableStorageService _Storage;
 
-        public ObservableCollection<ConversationViewModel> Conversations { get; set; } = [];
+        public ObservableCollection<ConversationViewModel> ConversationViewModels { get; set; } = [];
         public ObservableCollection<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
@@ -103,7 +103,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError($"Failed to load model list", e);
+                _Logger.LogError(e, "Failed to load model list");
                 OnUnhandledException(new(e, false));
                 OnModelsLoadFailed(EventArgs.Empty);
             }
@@ -113,23 +113,21 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                Conversations.Clear();
+                ConversationViewModels.Clear();
 
-                if (await Task.Run(_Storage.Get<ConversationCollection>) is ConversationCollection result && result.Items is not null)
+                if (await Task.Run(_Storage.Get<ConversationCollection>) is ConversationCollection result)
                 {
                     foreach (Conversation c in result.Items)
                     {
                         if(App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
                         {
-                            if(c.Subject is not null) viewModel.Subject = c.Subject;
-                            viewModel.SelectedModel = c.SelectedModel;
-                            viewModel.SetConversation(c);
-                            Conversations.Add(viewModel);
+                            viewModel.CopyFromConversation(c);
+                            ConversationViewModels.Add(viewModel);
                         }
                     }
 
                     LastUpdated = DateTime.Now;
-                    _Logger.LogInformation("Loaded {ItemsCount} conversations", Conversations.Count);
+                    _Logger.LogInformation("Loaded {ItemsCount} conversations", ConversationViewModels.Count);
                     OnConversationsLoaded(EventArgs.Empty);
                 }
                 else
@@ -140,7 +138,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to load data from {ModelName}", nameof(ConversationCollection), e);
+                _Logger.LogError(e, "Failed to load data from {ModelName}", nameof(ConversationCollection));
                 OnUnhandledException(new(e, false));
                 OnConversationsLoadFailed(EventArgs.Empty);
             }
@@ -151,9 +149,9 @@ namespace OllamaClient.ViewModels
             try
             {
                 ConversationCollection collection = new();
-                foreach(ConversationViewModel viewModel in Conversations)
+                foreach(ConversationViewModel viewModel in ConversationViewModels)
                 {
-                    collection.Items.Add(viewModel.GetConversation());
+                    collection.Items.Add(viewModel.ToConversation());
                 }
 
                 await Task.Run(() => { _Storage.Set(collection); });
@@ -161,7 +159,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to save {ModelName}", nameof(ConversationCollection), e);
+                _Logger.LogError(e, "Failed to save {ModelName}", nameof(ConversationCollection));
                 OnUnhandledException(new(e, false));
             }
         }

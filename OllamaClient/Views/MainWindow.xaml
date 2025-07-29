@@ -45,32 +45,42 @@
                         DesiredPlacement="RightEdgeAlignedBottom" 
                         HorizontalOffset="10" 
                         VerticalOffset="-10" 
-                        IsLightDismissEnabled="True">
+                        IsLightDismissEnabled="False">
                         <Border 
                             Padding="20" 
                             CornerRadius="10" 
                             BorderThickness="1" 
                             BorderBrush="{ThemeResource ControlElevationBorderBrush}" 
-                            Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}" 
-                            MaxHeight="600" 
+                            Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
+                            MinHeight="200"
+                            MaxHeight="600"
+                            MinWidth="200"
                             MaxWidth="800">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" FontSize="20" Margin="0,0,0,10">
-                                    <Bold>
-                                        <Underline>
-                                            Logs
-                                        </Underline>
-                                    </Bold>
-                                </TextBlock>
-                                <ScrollViewer x:Name="ConsoleScrollViewer" Grid.Row="1">
+                                <RelativePanel Grid.Row="0">
+                                    <TextBlock x:Name="LogsHeaderTextBlock" RelativePanel.AlignLeftWithPanel="True" FontSize="20" Margin="5">
+                                        <Bold>
+                                            <Underline>
+                                                Logs
+                                            </Underline>
+                                        </Bold>
+                                    </TextBlock>
+                                    <TextBlock RelativePanel.RightOf="LogsHeaderTextBlock" Margin="5,12,5,5">
+                                        <Hyperlink x:Name="LogsFolderHyperlink" Click="LogsFolderHyperlink_Click">
+                                            <Run>
+                                                Open Folder
+                                            </Run>
+                                        </Hyperlink>
+                                    </TextBlock>
+                                </RelativePanel>
+                                <ScrollViewer x:Name="LogsScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto">
                                     <TextBlock x:Name="LogsTextBlock" SizeChanged="LogsTextBlock_SizeChanged" />
                                 </ScrollViewer>
                             </Grid>
-                            
                         </Border>
                     </Popup>
                 </RelativePanel>

@@ -16,15 +16,15 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class ModelItemPage : Page
     {
-        public class NavArgs(ModelViewModel modelItem, ModelSidebarViewModel collection)
+        public class NavArgs(ModelViewModel modelItem, ModelSidebarViewModel viewModel)
         {
             public ModelViewModel SelectedItem { get; set; } = modelItem;
-            public ModelSidebarViewModel Collection { get; set; } = collection;
+            public ModelSidebarViewModel ModelSidebarViewModel { get; set; } = viewModel;
         }
 
         private DialogsService _DialogsService { get; set; }
         private ModelViewModel? Item { get; set; }
-        private ModelSidebarViewModel? ParentCollection { get; set; }
+        private ModelSidebarViewModel? ModelSidebarViewModel { get; set; }
 
         public ModelItemPage()
         {
@@ -42,7 +42,7 @@ namespace OllamaClient.Views.Pages
             if (e.Parameter is NavArgs args)
             {
                 Item = args.SelectedItem;
-                ParentCollection = args.Collection;
+                ModelSidebarViewModel = args.ModelSidebarViewModel;
 
                 Item.UnhandledException += Item_UnhandledException;
 
@@ -94,9 +94,9 @@ namespace OllamaClient.Views.Pages
 
             dialog.Closed += (s, args) =>
             {
-                if (args.Result == ContentDialogResult.Primary && ParentCollection is not null && Item?.Source is not null)
+                if (args.Result == ContentDialogResult.Primary && ModelSidebarViewModel is not null && Item?.Source is not null)
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await ParentCollection.DeleteModel(Item.Source.Model); });
+                    DispatcherQueue.TryEnqueue(async () => { await ModelSidebarViewModel.DeleteModel(Item.Source.Model); });
                 }
             };
 
@@ -115,12 +115,12 @@ namespace OllamaClient.Views.Pages
                 &&
                 (dialog.Content as TextBoxDialog)?.InputText is string newModelName
                 &&
-                ParentCollection is not null
+                ModelSidebarViewModel is not null
                 &&
                 Item?.Source is not null
                 )
                 {
-                    DispatcherQueue?.TryEnqueue(async () => { await ParentCollection.CopyModel(Item.Source.Name, newModelName); });
+                    DispatcherQueue?.TryEnqueue(async () => { await ModelSidebarViewModel.CopyModel(Item.Source.Name, newModelName); });
                 }
             };
 

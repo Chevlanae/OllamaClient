@@ -123,7 +123,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to load model info for '{SourceModel}'", Source?.Model, e);
+                _Logger.LogError(e, "Failed to load model info for '{SourceModel}'", Source?.Model);
                 OnUnhandledException(new(e, false));
                 OnDetailsFailed(EventArgs.Empty);
             }

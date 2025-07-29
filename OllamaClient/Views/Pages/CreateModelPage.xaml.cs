@@ -18,15 +18,15 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class CreateModelPage : Page
     {
-        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebarViewModel modelCollection)
+        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebarViewModel viewModel)
         {
             public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
-            public ModelSidebarViewModel ModelList { get; set; } = modelCollection;
+            public ModelSidebarViewModel ModelSideBarViewModel { get; set; } = viewModel;
         }
 
         private new DispatcherQueue? DispatcherQueue { get; set; }
         private ObservableCollection<ModelParameterViewModel> NewModelParameters { get; set; } = [];
-        private ModelSidebarViewModel? ParentCollection { get; set; }
+        private ModelSidebarViewModel? ModelSideBarViewModel { get; set; }
 
         public CreateModelPage()
         {
@@ -41,19 +41,19 @@ namespace OllamaClient.Views.Pages
         {
             if (e.Parameter is NavArgs args)
             {
-                ParentCollection = args.ModelList;
+                ModelSideBarViewModel = args.ModelSideBarViewModel;
                 DispatcherQueue = args.DispatcherQueue;
-                FromComboBox.ItemsSource = ParentCollection.Items;
+                FromComboBox.ItemsSource = ModelSideBarViewModel.Items;
 
-                ParentCollection.ModelCreated += ModelList_ModelCreated;
+                ModelSideBarViewModel.ModelCreated += ModelList_ModelCreated;
             }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (ParentCollection is not null)
+            if (ModelSideBarViewModel is not null)
             {
-                ParentCollection.ModelCreated -= ModelList_ModelCreated;
+                ModelSideBarViewModel.ModelCreated -= ModelList_ModelCreated;
             }
         }
 
@@ -73,7 +73,7 @@ namespace OllamaClient.Views.Pages
 
         private void CreateModelSendButton_Click(object sender, RoutedEventArgs e)
         {
-            if (NewModelNameTextBox.Text is not "" && ParentCollection is not null)
+            if (NewModelNameTextBox.Text != "" && ModelSideBarViewModel is not null)
             {
                 string name = NewModelNameTextBox.Text;
                 string? from = (FromComboBox.SelectedItem as ModelViewModel)?.Source?.Name;
@@ -91,7 +91,7 @@ namespace OllamaClient.Views.Pages
 
                 DispatcherQueue?.TryEnqueue(async () =>
                 {
-                    await ParentCollection.CreateModel(name, from, system, template, null, NewModelParameters);
+                    await ModelSideBarViewModel.CreateModel(name, from, system, template, null, NewModelParameters);
                 });
             }
         }

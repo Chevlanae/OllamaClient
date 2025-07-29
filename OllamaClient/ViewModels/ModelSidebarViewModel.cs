@@ -185,7 +185,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to create model '{Name}'", name, e);
+                _Logger.LogError(e, "Failed to create model '{Name}'", name);
                 OnUnhandledException(new(e, false));
                 OnModelCreateFailed(EventArgs.Empty);
             }
@@ -212,7 +212,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to delete model '{ModelName}'", modelName, e);
+                _Logger.LogError(e, "Failed to delete model '{ModelName}'", modelName);
                 OnUnhandledException(new(e, false));
                 OnModelDeleteFailed(EventArgs.Empty);
             }
@@ -239,7 +239,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName, e);
+                _Logger.LogError(e, "Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
                 OnUnhandledException(new(e, false));
                 OnModelCopyFailed(EventArgs.Empty);
             }
@@ -276,7 +276,7 @@ namespace OllamaClient.ViewModels
             }
             catch (Exception e)
             {
-                _Logger.LogError("Failed to pull model '{ModelName}'", modelName, e);
+                _Logger.LogError(e, "Failed to pull model '{ModelName}'", modelName);
                 OnUnhandledException(new(e, false));
                 OnModelPullFailed(EventArgs.Empty);
             }

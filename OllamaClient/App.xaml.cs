@@ -5,8 +5,10 @@ using Microsoft.UI.Xaml;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.IO;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -19,10 +21,14 @@ namespace OllamaClient
     public partial class App : Application
     {
         public static string LocalAppDataPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\OllamaClient";
+        public static string MsixLocalAppDataPath = $"{ApplicationData.Current.LocalCacheFolder.Path}\\Local\\OllamaClient";
+        public static string LogsPath = $"{LocalAppDataPath}\\Logs";
+        public static string LogsMsixPath = $"{MsixLocalAppDataPath}\\Logs";
         public static StringWriter LoggedText = new StringWriter();
+        public static string? EnvironmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
         private static readonly IHost _host = Host.CreateDefaultBuilder()
-            .UseEnvironment("Development")
+            .UseEnvironment(EnvironmentName ?? "Production")
             .ConfigureAppConfiguration((context, config) =>
             {
                 config
@@ -33,8 +39,12 @@ namespace OllamaClient
             {
                 services.AddSerilog((context, config) =>
                 {
-                    config.WriteTo.Debug();
-                    config.WriteTo.TextWriter(LoggedText, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information, outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}");
+                    config.MinimumLevel.Debug();
+                    config.WriteTo.Debug(restrictedToMinimumLevel: LogEventLevel.Debug);
+                    config.WriteTo.TextWriter(
+                        LoggedText, 
+                        restrictedToMinimumLevel: LogEventLevel.Information, 
+                        outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}");
                     config.WriteTo.File($"{LocalAppDataPath}\\Logs\\log.txt", rollingInterval: RollingInterval.Day);
                 });
 

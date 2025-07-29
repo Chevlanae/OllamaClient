@@ -54,9 +54,9 @@ namespace OllamaClient.Views.Pages
                 _AvailableModels = args.AvailableModels.ToList();
                 _ConversationViewModel = args.ViewModel;
 
-                _ConversationViewModel.StartOfRequest += Conversation_StartOfMessage;
-                _ConversationViewModel.EndOfResponse += Conversation_EndOfMessage;
-                _ConversationViewModel.UnhandledException += Conversation_UnhandledException;
+                _ConversationViewModel.StartOfRequest += ConversationViewModel_StartOfRequest;
+                _ConversationViewModel.EndOfResponse += ConversationViewModel_EndOfResponse;
+                _ConversationViewModel.UnhandledException += ConversationViewModel_UnhandledException;
 
                 ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
                 ModelsComboBox.ItemsSource = _AvailableModels;
@@ -81,9 +81,9 @@ namespace OllamaClient.Views.Pages
         {
             if (_ConversationViewModel is not null)
             {
-                _ConversationViewModel.StartOfRequest -= Conversation_StartOfMessage;
-                _ConversationViewModel.EndOfResponse -= Conversation_EndOfMessage;
-                _ConversationViewModel.UnhandledException -= Conversation_UnhandledException;
+                _ConversationViewModel.StartOfRequest -= ConversationViewModel_StartOfRequest;
+                _ConversationViewModel.EndOfResponse -= ConversationViewModel_EndOfResponse;
+                _ConversationViewModel.UnhandledException -= ConversationViewModel_UnhandledException;
             }
             base.OnNavigatedFrom(e);
         }
@@ -93,20 +93,20 @@ namespace OllamaClient.Views.Pages
             ChatMessagesControl_AutoScrollToBottom(sender, new());
         }
 
-        private void Conversation_StartOfMessage(object? sender, EventArgs e)
+        private void ConversationViewModel_StartOfRequest(object? sender, EventArgs e)
         {
             _SendingMessage = true;
             ChatInputTextBox.IsEnabled = false;
         }
 
-        private void Conversation_EndOfMessage(object? sender, EventArgs e)
+        private void ConversationViewModel_EndOfResponse(object? sender, EventArgs e)
         {
             _SendingMessage = false;
             ChatInputTextBox.IsEnabled = true;
             SendChatButton.Icon = new SymbolIcon(Symbol.Send);
         }
 
-        private void Conversation_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        private void ConversationViewModel_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 

@@ -73,6 +73,7 @@ namespace OllamaClient.Services
             // Check if the type exists in the dictionary and if it's value is of type DataFile<T>, then return it. Returns the default value if not.
             if (_Files.ContainsKey(typeof(T)) && _Files[typeof(T)] is DataFile<T> dataFile)
             {
+                _Logger.LogDebug("Read {DataFile} at {Uri}", typeof(DataFile<T>).ToString(), dataFile.FileUri.ToString());
                 return dataFile.Get();
             }
             else return default;
@@ -90,11 +91,13 @@ namespace OllamaClient.Services
             // If not, create a new DataFile<T> instance and add it to the dictionary.
             if (_Files.ContainsKey(typeof(T)) && _Files[typeof(T)] is DataFile<T> dataFile)
             {
+                _Logger.LogDebug("Wrote {DataFile} to {Uri}", typeof(DataFile<T>).ToString(), dataFile.FileUri.ToString());
                 dataFile.Set(obj);
             }
             else
             {
                 DataFile<T> newFile = new(new(_Directory));
+                _Logger.LogDebug("Wrote {DataFile} to {Uri}", typeof(DataFile<T>).ToString(), newFile.FileUri.ToString());
                 newFile.Set(obj);
                 _Files.Add(typeof(T), newFile);
             }
