@@ -1,11 +1,7 @@
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
-using OllamaClient.Services;
 using OllamaClient.Views.Pages;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -23,7 +19,6 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
-
         public MainWindow()
         {
             InitializeComponent();
@@ -67,8 +62,6 @@ namespace OllamaClient
 
         private void LogsButton_Click(object sender, RoutedEventArgs e)
         {
-            LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
-
             if (LogsPopup.IsOpen) LogsPopup.IsOpen = false;
             else
             {
@@ -88,7 +81,7 @@ namespace OllamaClient
 
         private void LogsTextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if(LogsScrollViewer.VerticalOffset > LogsScrollViewer.ScrollableHeight - 100)
+            if (LogsScrollViewer.VerticalOffset > LogsScrollViewer.ScrollableHeight - 100)
             {
                 LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
             }
@@ -97,7 +90,13 @@ namespace OllamaClient
         private async void LogsFolderHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
         {
             StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(App.LogsMsixPath);
+
             await Launcher.LaunchFolderAsync(folder);
+        }
+
+        private void LogsPopup_Opened(object sender, object e)
+        {
+            LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
         }
     }
 }

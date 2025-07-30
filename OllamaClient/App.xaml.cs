@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;

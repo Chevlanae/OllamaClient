@@ -1,14 +1,21 @@
-﻿using OllamaClient.Models;
+﻿using Microsoft.UI.Xaml.Media;
+using OllamaClient.Models;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace OllamaClient.ViewModels
 {
-    public partial class ChatMessageViewModel(Role role, string content, DateTime? timeStamp = null, bool progressRingEnabled = false) : INotifyPropertyChanged
+    public partial class ChatMessageViewModel : INotifyPropertyChanged
     {
-        private ChatMessage _ChatMessage = new(role, content, timeStamp);
-        private bool _ProgressRingEnabled { get; set; } = progressRingEnabled;
+        private ChatMessage _ChatMessage;
+        private bool _ProgressRingEnabled { get; set; }
+
+        public ChatMessageViewModel(Role role, string content, DateTime? timeStamp = null, bool progressRingEnabled = false)
+        {
+            _ChatMessage = new(role, content, timeStamp);
+            _ProgressRingEnabled = progressRingEnabled;
+        }
 
         public string Role
         {
@@ -62,11 +69,6 @@ namespace OllamaClient.ViewModels
             get => _ChatMessage.Role == Models.Role.assistant ? "Left" : "Right";
         }
 
-        public string BackgroundColor
-        {
-            get => _ChatMessage.Role == Models.Role.assistant ? "Transparent" : "DimGray";
-        }
-
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -81,7 +83,7 @@ namespace OllamaClient.ViewModels
 
         public void SetTimestamp(DateTime dateTime)
         {
-            if(_ChatMessage is not null)
+            if (_ChatMessage is not null)
             {
                 _ChatMessage.Timestamp = dateTime;
                 OnPropertyChanged(nameof(Timestamp));

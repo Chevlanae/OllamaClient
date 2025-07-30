@@ -1,4 +1,5 @@
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -61,6 +62,8 @@ namespace OllamaClient.Views.Pages
                 ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
                 ModelsComboBox.ItemsSource = _AvailableModels;
 
+                SubjectTextBlock.DataContext = _ConversationViewModel;
+
                 ScrollLockButton.IsChecked = true;
                 _EnableAutoScroll = true;
 
@@ -85,6 +88,7 @@ namespace OllamaClient.Views.Pages
                 _ConversationViewModel.EndOfResponse -= ConversationViewModel_EndOfResponse;
                 _ConversationViewModel.UnhandledException -= ConversationViewModel_UnhandledException;
             }
+
             base.OnNavigatedFrom(e);
         }
 

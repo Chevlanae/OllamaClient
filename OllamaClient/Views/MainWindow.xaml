@@ -19,6 +19,14 @@
                         <Setter Property="Width" Value="50" />
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="0,10,0,10" />
+                    </Style>
+                    <Style x:Key="NavBarButtonSelectedStyle" TargetType="Button">
+                        <Setter Property="Height" Value="50" />
+                        <Setter Property="Width" Value="50" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
                         <Setter Property="Padding" Value="0,10,0,10" />
                     </Style>
                 </Grid.Resources>
@@ -26,7 +34,7 @@
                     <ColumnDefinition Width="50" />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <RelativePanel Grid.Column="0">
+                <RelativePanel Grid.Column="0" Background="{ThemeResource SolidBackgroundFillColorBaseAlt}">
                     <Button x:Name="ToggleSidebarButton" RelativePanel.AlignTopWithPanel="True" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click">
                         <FontIcon Glyph="&#xE700;" />
                     </Button>
@@ -45,7 +53,8 @@
                         DesiredPlacement="RightEdgeAlignedBottom" 
                         HorizontalOffset="10" 
                         VerticalOffset="-10" 
-                        IsLightDismissEnabled="False">
+                        IsLightDismissEnabled="False"
+                        Opened="LogsPopup_Opened">
                         <Border 
                             Padding="20" 
                             CornerRadius="10" 

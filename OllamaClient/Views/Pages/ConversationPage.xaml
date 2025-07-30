@@ -4,8 +4,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-    <Grid>
+    Background="{ThemeResource SolidBackgroundFillColorTertiary}">
+    <Grid MinWidth="200">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -15,12 +15,20 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ComboBox x:Name="ModelsComboBox" ToolTipService.ToolTip="Selected model" SelectionChanged="ModelsComboBox_SelectionChanged" />
+            <Grid Grid.Row="0" Margin="10,0,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="100"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="ModelsComboBox" Grid.Column="0" Margin="0,0,20,0" ToolTipService.ToolTip="Selected model" SelectionChanged="ModelsComboBox_SelectionChanged" />
+                <TextBlock x:Name="SubjectTextBlock" Grid.Column="1" FontSize="20" Text="{Binding Subject}" />
+            </Grid>
             <ScrollView Grid.Row="1" x:Name="ChatMessagesScrollView" >
                 <ItemsControl x:Name="ChatMessagesControl">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="10,5,10,5" Loaded="ChatMessagesGrid_Loaded">
+                            <Grid  Loaded="ChatMessagesGrid_Loaded">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition Height="Auto" />
@@ -36,8 +44,8 @@
                                 </StackPanel>
                                 <TextBox Grid.Row="1"
                                     Margin="10" 
-                                    Background="{Binding BackgroundColor}" 
-                                    CornerRadius="10" 
+                                    Background="{ThemeResource LayerFillColorAltBrush}" 
+                                    CornerRadius="10"
                                     Padding="15" 
                                     HorizontalAlignment="{Binding HorizontalAlignment}"
                                     x:Name="ChatBubbleTextBox"
@@ -46,7 +54,8 @@
                                     IsReadOnly="True" 
                                     TextWrapping="Wrap" 
                                     TextAlignment="Left"
-                                    BorderThickness="0" 
+                                    BorderThickness="1" 
+                                    BorderBrush="{ThemeResource ControlAltFillColorQuarternaryBrush}"
                                     FontSize="12"
                                     Template="{StaticResource ChatTextBoxControlTemplate}"
                                     TextChanged="ChatBubbleTextBox_TextChanged"/>
@@ -57,7 +66,7 @@
             </ScrollView>
         </Grid>
         <Grid Height="200" Grid.Row="1" >
-            <Grid Margin="20,20,20,20" Background="DimGray" MaxWidth="500" MinWidth="100" CornerRadius="20">
+            <Grid Margin="20,20,20,20" Background="{ThemeResource LayerFillColorAltBrush}" BorderThickness="2" BorderBrush="{ThemeResource ControlAltFillColorQuarternaryBrush}" MaxWidth="500" MinWidth="100" CornerRadius="20">
                 <Grid.RowDefinitions>
                     <RowDefinition />
                     <RowDefinition Height="50"/>
@@ -103,7 +112,7 @@
                         ToolTipService.ToolTip="Send message/Cancel message"
                         Width="50" 
                         Height="50" 
-                        Foreground="Aqua" 
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}" 
                         Click="SendChatButton_Click"  
                         PointerEntered="SendChatButton_PointerEntered"
                         PointerExited="SendChatButton_PointerExited">
