@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.UI.Dispatching;
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -14,20 +13,13 @@ namespace OllamaClient.ViewModels
 {
     public class ConversationSidebarViewModel
     {
-        private ILogger _Logger;
-        private OllamaApiService _Api;
-        private SerializeableStorageService _Storage;
-
         public ObservableCollection<ConversationViewModel> ConversationViewModels { get; set; } = [];
         public ObservableCollection<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
-        public event EventHandler? ModelsLoaded;
-        public event EventHandler? ModelsLoadFailed;
-        public event EventHandler? ConversationsLoaded;
-        public event EventHandler? ConversationsLoadFailed;
-        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
-        public event PropertyChangedEventHandler? PropertyChanged;
+        private ILogger _Logger;
+        private OllamaApiService _Api;
+        private SerializeableStorageService _Storage;
 
         public ConversationSidebarViewModel(ILogger<ConversationSidebarViewModel> logger)
         {
@@ -46,44 +38,21 @@ namespace OllamaClient.ViewModels
             else throw new ArgumentNullException(nameof(storage));
         }
 
-        protected void OnModelsLoaded(EventArgs e)
-        {
-            ModelsLoaded?.Invoke(this, e);
-        }
+        public event EventHandler? ModelsLoaded;
+        public event EventHandler? ModelsLoadFailed;
+        public event EventHandler? ConversationsLoaded;
+        public event EventHandler? ConversationsLoadFailed;
+        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void OnModelsLoadFailed(EventArgs e)
-        {
-            ModelsLoadFailed?.Invoke(this, e);
-        }
-
-        protected void OnConversationsLoaded(EventArgs e)
-        {
-            ConversationsLoaded?.Invoke(this, e);
-        }
-
-        protected void OnConversationsLoadFailed(EventArgs e)
-        {
-            ConversationsLoadFailed?.Invoke(this, e);
-        }
-
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
-        {
-            UnhandledException?.Invoke(this, e);
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new(name));
-        }
-
-        private async void Conversation_StartOfRequest(object? sender, EventArgs e)
-        {
-            await Save();
-        }
-        private async void Conversation_EndOfResponse(object? sender, EventArgs e)
-        {
-            await Save();
-        }
+        protected void OnModelsLoaded(EventArgs e) => ModelsLoaded?.Invoke(this, e);
+        protected void OnModelsLoadFailed(EventArgs e) => ModelsLoadFailed?.Invoke(this, e);
+        protected void OnConversationsLoaded(EventArgs e) => ConversationsLoaded?.Invoke(this, e);
+        protected void OnConversationsLoadFailed(EventArgs e) => ConversationsLoadFailed?.Invoke(this, e);
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
+        private async void Conversation_StartOfRequest(object? sender, EventArgs e) => await Save();
+        private async void Conversation_EndOfResponse(object? sender, EventArgs e) => await Save();
 
         public async Task LoadAvailableModels()
         {
@@ -119,7 +88,7 @@ namespace OllamaClient.ViewModels
                 {
                     foreach (Conversation c in result.Items)
                     {
-                        if(App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
+                        if (App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
                         {
                             viewModel.CopyFromConversation(c);
                             ConversationViewModels.Add(viewModel);
@@ -148,13 +117,13 @@ namespace OllamaClient.ViewModels
         {
             try
             {
-                ConversationCollection collection = new();
-                foreach(ConversationViewModel viewModel in ConversationViewModels)
+                ConversationCollection collection = new()
                 {
-                    collection.Items.Add(viewModel.ToConversation());
-                }
+                    Items = ConversationViewModels.Select(vm => vm.ToConversation()).ToList()
+                };
 
                 await Task.Run(() => { _Storage.Set(collection); });
+
                 _Logger.LogInformation("Saved {ItemsCount} conversations", collection.Items.Count);
             }
             catch (Exception e)

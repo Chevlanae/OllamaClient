@@ -85,7 +85,7 @@ namespace OllamaClient.Views.Pages
         {
             ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
 
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
         }
 
         private void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -100,7 +100,7 @@ namespace OllamaClient.Views.Pages
                 }
             };
 
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
         }
 
         private void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -124,7 +124,7 @@ namespace OllamaClient.Views.Pages
                 }
             };
 
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.ShowDialog(dialog); });
+            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
         }
     }
 }

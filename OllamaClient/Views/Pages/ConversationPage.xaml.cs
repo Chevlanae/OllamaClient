@@ -30,7 +30,7 @@ namespace OllamaClient.Views.Pages
 
         private DialogsService _DialogsService;
         private ConversationViewModel? _ConversationViewModel { get; set; }
-        private List<string>? _AvailableModels { get; set; }
+        private ObservableCollection<string>? _AvailableModels { get; set; }
         private bool _EnableAutoScroll { get; set; }
         private bool _SendingMessage { get; set; }
 
@@ -52,7 +52,7 @@ namespace OllamaClient.Views.Pages
         {
             if (e.Parameter is NavArgs args)
             {
-                _AvailableModels = args.AvailableModels.ToList();
+                _AvailableModels = args.AvailableModels;
                 _ConversationViewModel = args.ViewModel;
 
                 _ConversationViewModel.StartOfRequest += ConversationViewModel_StartOfRequest;
@@ -116,7 +116,7 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue.TryEnqueue(async () =>
             {
-                await _DialogsService.ShowDialog(dialog);
+                await _DialogsService.QueueDialog(dialog);
 
             });
         }

@@ -89,7 +89,7 @@ namespace OllamaClient
 
         private async void LogsFolderHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
         {
-            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(App.LogsMsixPath);
+            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(App.LogsDirectoryMsixPath);
 
             await Launcher.LaunchFolderAsync(folder);
         }

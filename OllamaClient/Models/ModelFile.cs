@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OllamaClient.Models.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -171,15 +172,29 @@ namespace OllamaClient.Models
         {
             StringBuilder sb = new();
             sb.AppendLine($"FROM {From}");
-            if (Template is not null) sb.AppendLine($"TEMPLATE {Template}");
-            if (Adapter is not null) sb.AppendLine($"ADAPTER {Adapter}");
-            if (System is not null) sb.AppendLine($"SYSTEM {System}");
+            sb.Append($"{Environment.NewLine}");
+            if (Template is not null)
+            {
+                sb.AppendLine($"TEMPLATE {Template}"); 
+                sb.Append($"{Environment.NewLine}");
+            }
+            if (Adapter is not null)
+            {
+                sb.AppendLine($"ADAPTER {Adapter}");
+                sb.Append($"{Environment.NewLine}");
+            }
+            if (System is not null)
+            {
+                sb.AppendLine($"SYSTEM {System}");
+                sb.Append($"{Environment.NewLine}");
+            }
             if (Parameters is not null)
             {
                 foreach (IModelParameter parameter in Parameters)
                 {
                     sb.AppendLine($"PARAMETER {parameter.Key.ToString()} {parameter.Value}");
                 }
+                sb.Append($"{Environment.NewLine}");
             }
             if (Messages is not null)
             {
@@ -187,8 +202,13 @@ namespace OllamaClient.Models
                 {
                     sb.AppendLine($"MESSAGE {message.role} {message.content}");
                 }
+                sb.Append($"{Environment.NewLine}");
             }
-            if (License is not null) sb.AppendLine($"LICENSE {License}");
+            if (License is not null)
+            {
+                sb.AppendLine($"LICENSE {License}");
+                sb.Append($"{Environment.NewLine}");
+            }
             return sb.ToString();
         }
     }

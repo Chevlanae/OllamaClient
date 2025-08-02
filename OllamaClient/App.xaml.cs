@@ -23,12 +23,12 @@ namespace OllamaClient
     {
         public static string LocalAppDataPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\\OllamaClient";
         public static string MsixLocalAppDataPath = $"{ApplicationData.Current.LocalCacheFolder.Path}\\Local\\OllamaClient";
-        public static string LogsPath = $"{LocalAppDataPath}\\Logs";
-        public static string LogsMsixPath = $"{MsixLocalAppDataPath}\\Logs";
+        public static string LogsDirectoryPath = $"{LocalAppDataPath}\\Logs";
+        public static string LogsDirectoryMsixPath = $"{MsixLocalAppDataPath}\\Logs";
         public static StringWriter LoggedText = new StringWriter();
         public static string? EnvironmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
-        private static readonly IHost _host = Host.CreateDefaultBuilder()
+        private static readonly IHost _Host = Host.CreateDefaultBuilder()
             .UseEnvironment(EnvironmentName ?? "Production")
             .ConfigureAppConfiguration((context, config) =>
             {
@@ -38,6 +38,7 @@ namespace OllamaClient
             })
             .ConfigureServices((context, services) =>
             {
+                //Logging
                 services.AddSerilog((context, config) =>
                 {
                     config.MinimumLevel.Debug();
@@ -67,7 +68,7 @@ namespace OllamaClient
             })
             .Build();
 
-        private Window? m_window;
+        private Window? MainWindow;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -80,7 +81,7 @@ namespace OllamaClient
 
         public static T? GetService<T>() where T : class
         {
-            return _host.Services.GetService(typeof(T)) as T;
+            return _Host.Services.GetService(typeof(T)) as T;
         }
 
         /// <summary>
@@ -89,9 +90,9 @@ namespace OllamaClient
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            _host.Start();
-            m_window = new MainWindow();
-            m_window.Activate();
+            _Host.Start();
+            MainWindow = new MainWindow();
+            MainWindow.Activate();
         }
     }
 }

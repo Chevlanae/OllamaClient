@@ -18,44 +18,45 @@ namespace OllamaClient.Services
             _Logger = logger;
         }
 
-        public async Task ShowDialog(ContentDialog dialog)
+        private async void QueuedDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+        {
+            int index = QueuedDialogs.IndexOf(sender);
+
+            if (index == -1)
+            {
+                _Logger.LogError("Queued dialog {Title} not found in QueuedDialogs list", sender.Title);
+            }
+            else if (QueuedDialogs.ElementAtOrDefault(index + 1) is ContentDialog dialog)
+            {
+                await ShowDialog(dialog);
+            }
+
+            sender.Closed -= QueuedDialog_Closed;
+            QueuedDialogs.Remove(sender);
+            _Logger.LogDebug("Dialog {Title} removed from QueuedDialogs list", sender.Title);
+        }
+
+        public async Task QueueDialog(ContentDialog dialog)
         {
             if (IsDialogOpen)
             {
-                dialog.Closed += Dialog_Closed;
+                dialog.Closed += QueuedDialog_Closed;
                 QueuedDialogs.Add(dialog);
                 _Logger.LogDebug("Queued content dialog {Title}", dialog.Title);
             }
             else
             {
-                _Logger.LogDebug("Showing content dialog {Title}", dialog.Title);
-                IsDialogOpen = true;
-                await dialog.ShowAsync();
-                IsDialogOpen = false;
-                _Logger.LogDebug("Dialog {Title} closed", dialog.Title);
+                await ShowDialog(dialog);
             }
         }
 
-        private async void Dialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+        private async Task ShowDialog(ContentDialog dialog)
         {
-            int index = QueuedDialogs.IndexOf(sender);
-
-            if(index == -1)
-            {
-                _Logger.LogDebug("Queued dialog {Title} not found in QueuedDialogs list", sender.Title);
-            }
-            else if(QueuedDialogs.ElementAtOrDefault(index + 1) is ContentDialog dialog)
-            {
-                _Logger.LogDebug("Showing content dialog {Title}", dialog.Title);
-                IsDialogOpen = true;
-                await dialog.ShowAsync();
-                IsDialogOpen = false;
-                _Logger.LogDebug("Dialog {Title} closed", dialog.Title);
-            }
-
-            sender.Closed -= Dialog_Closed;
-            QueuedDialogs.Remove(sender);
-            _Logger.LogDebug("Dialog {Title} removed from QueuedDialogs list", sender.Title);
+            _Logger.LogDebug("Showing content dialog {Title}", dialog.Title);
+            IsDialogOpen = true;
+            await dialog.ShowAsync();
+            IsDialogOpen = false;
+            _Logger.LogDebug("Dialog {Title} closed", dialog.Title);
         }
     }
 }

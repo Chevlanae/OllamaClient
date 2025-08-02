@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Documents;
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Text;
@@ -41,7 +42,7 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        private readonly ILogger _Logger;   
+        private readonly ILogger _Logger;
         private OllamaApiService _Api;
 
         public SourceInfo? Source { get; set; }
@@ -56,25 +57,6 @@ namespace OllamaClient.ViewModels
         public Paragraph LicenseParagraph { get; set; } = new();
         public Paragraph ModelFileParagraph { get; set; } = new();
 
-        public event EventHandler? DetailsLoaded;
-        public event EventHandler? DetailsLoadFailed;
-        public event UnhandledExceptionEventHandler? UnhandledException;
-
-        protected void OnDetailsLoaded(EventArgs e)
-        {
-            DetailsLoaded?.Invoke(this, e);
-        }
-
-        protected void OnDetailsFailed(EventArgs e)
-        {
-            DetailsLoadFailed?.Invoke(this, e);
-        }
-
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
-        {
-            UnhandledException?.Invoke(this, e);
-        }
-
         public ModelViewModel(ILogger<ModelViewModel> logger)
         {
             _Logger = logger;
@@ -85,23 +67,13 @@ namespace OllamaClient.ViewModels
             else throw new ArgumentNullException(nameof(api));
         }
 
-        private string ToSummaryString()
-        {
-            StringBuilder sb = new();
+        public event EventHandler? DetailsLoaded;
+        public event EventHandler? DetailsLoadFailed;
+        public event UnhandledExceptionEventHandler? UnhandledException;
 
-            sb.AppendLine($"Model: {Source?.Model}");
-            sb.AppendLine($"Modified At: {Source?.ModifiedAt}");
-            sb.AppendLine($"Size: {Source?.Size / 1024 / 1024} MB");
-            sb.AppendLine($"Digest: {Source?.Digest}");
-            if (!string.IsNullOrEmpty(Source?.ParentModel)) sb.AppendLine($"Parent Model: {Source?.ParentModel}");
-            sb.AppendLine($"Format: {Source?.Format}");
-            sb.AppendLine($"Family: {Source?.Family}");
-            if (Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
-            sb.AppendLine($"Parameter Size: {Source?.ParameterSize}");
-            sb.AppendLine($"Quantization Level: {Source?.QuantizationLevel}");
-
-            return sb.ToString();
-        }
+        protected void OnDetailsLoaded(EventArgs e) => DetailsLoaded?.Invoke(this, e);
+        protected void OnDetailsFailed(EventArgs e) => DetailsLoadFailed?.Invoke(this, e);
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
 
         public async Task GetDetails()
         {
@@ -154,6 +126,24 @@ namespace OllamaClient.ViewModels
                 ModelFileParagraph.Inlines.Clear();
                 ModelFileParagraph.Inlines.Add(new Run() { Text = ModelFile.ToString() });
             }
+        }
+
+        private string ToSummaryString()
+        {
+            StringBuilder sb = new();
+
+            sb.AppendLine($"Model: {Source?.Model}");
+            sb.AppendLine($"Modified At: {Source?.ModifiedAt}");
+            sb.AppendLine($"Size: {Source?.Size / 1024 / 1024} MB");
+            sb.AppendLine($"Digest: {Source?.Digest}");
+            if (!string.IsNullOrEmpty(Source?.ParentModel)) sb.AppendLine($"Parent Model: {Source?.ParentModel}");
+            sb.AppendLine($"Format: {Source?.Format}");
+            sb.AppendLine($"Family: {Source?.Family}");
+            if (Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
+            sb.AppendLine($"Parameter Size: {Source?.ParameterSize}");
+            sb.AppendLine($"Quantization Level: {Source?.QuantizationLevel}");
+
+            return sb.ToString();
         }
     }
 }

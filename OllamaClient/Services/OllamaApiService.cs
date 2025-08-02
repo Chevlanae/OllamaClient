@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -69,24 +70,6 @@ namespace OllamaClient.Services
             {
                 Timeout = _Settings.RequestTimeout
             };
-        }
-
-        private async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
-        {
-            HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-
-            if (httpResp.IsSuccessStatusCode)
-            {
-                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON stream", request.RequestUri?.OriginalString, httpResp.StatusCode);
-                return new(await httpResp.Content.ReadAsStreamAsync(), '\n', jsonTypeInfo);
-            }
-            else
-            {
-                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
-                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", request.RequestUri?.OriginalString, httpResp.StatusCode);
-                throw err;
-            }
-
         }
 
         public async Task<DelimitedJsonStream<ChatResponse>> ChatStream(ChatRequest request)
@@ -259,6 +242,24 @@ namespace OllamaClient.Services
                 _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", req.RequestUri?.OriginalString, httpResp.StatusCode);
                 throw err;
             }
+        }
+
+        private async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
+        {
+            HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            if (httpResp.IsSuccessStatusCode)
+            {
+                _Logger.LogDebug("RESPONSE {Url} - {StatusCode} - Returned JSON stream", request.RequestUri?.OriginalString, httpResp.StatusCode);
+                return new(await httpResp.Content.ReadAsStreamAsync(), '\n', jsonTypeInfo);
+            }
+            else
+            {
+                Exception err = new HttpRequestException($"{httpResp.StatusCode} - {await httpResp.Content.ReadAsStringAsync()}");
+                _Logger.LogDebug(err, "RESPONSE {Url} - {StatusCode}", request.RequestUri?.OriginalString, httpResp.StatusCode);
+                throw err;
+            }
+
         }
     }
 }

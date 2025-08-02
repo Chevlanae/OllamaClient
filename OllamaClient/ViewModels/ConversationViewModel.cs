@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.ObjectModel;
@@ -27,6 +29,28 @@ namespace OllamaClient.ViewModels
         private ObservableCollection<ChatMessageViewModel> _ChatMessageViewModels { get; set; } = [];
         private string? _Subject { get; set; }
         private string? _SelectedModel { get; set; }
+
+        public ConversationViewModel(ILogger<ConversationViewModel> logger, IOptions<Settings> options)
+        {
+            _Logger = logger;
+            _Settings = options.Value;
+
+            if (App.GetService<OllamaApiService>() is OllamaApiService api)
+            {
+                _Api = api;
+            }
+            else throw new ArgumentNullException(nameof(api));
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public event EventHandler? StartOfRequest;
+        public event EventHandler? EndOfResponse;
+        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+
+        protected void OnStartOfRequest(EventArgs e) => StartOfRequest?.Invoke(this, e);
+        protected void OnEndOfResponse(EventArgs e) => EndOfResponse?.Invoke(this, e);
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
 
         public ObservableCollection<ChatMessageViewModel> ChatMessages
         {
@@ -58,71 +82,25 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-        public event EventHandler? StartOfRequest;
-        public event EventHandler? EndOfResponse;
-        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
-
-        public ConversationViewModel(ILogger<ConversationViewModel> logger, IOptions<Settings> options)
-        {
-            _Logger = logger;
-            _Settings = options.Value;
-
-            if (App.GetService<OllamaApiService>() is OllamaApiService api)
-            {
-                _Api = api;
-            }
-            else throw new ArgumentNullException(nameof(api));
-        }
-
-        protected void OnStartOfRequest(EventArgs e)
-        {
-            
-            StartOfRequest?.Invoke(this, e);
-        }
-
-        protected void OnEndOfResponse(EventArgs e)
-        {
-            EndOfResponse?.Invoke(this, e);
-        }
-
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
-        {
-            UnhandledException?.Invoke(this, e);
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new(name));
-        }
-
         public void CopyFromConversation(Conversation conversation)
         {
             _ChatMessageViewModels.Clear();
 
             _Subject = conversation.Subject;
             _SelectedModel = conversation.SelectedModel;
+
             foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
             {
                 _ChatMessageViewModels.Add(new(chatMessage.Role, chatMessage.Content, chatMessage.Timestamp));
             }
         }
 
-        public Conversation ToConversation()
+        public Conversation ToConversation() => new()
         {
-            Conversation conversation = new();
-            conversation.Subject = _Subject;
-            conversation.SelectedModel = _SelectedModel;
-            foreach (var viewModel in _ChatMessageViewModels)
-            {
-                if (viewModel.ToChatMessage() is ChatMessage chatMessage)
-                {
-                    conversation.ChatMessageCollection.Add(chatMessage);
-                }
-            }
-
-            return conversation;
-        }
+            Subject = _Subject,
+            SelectedModel = _SelectedModel,
+            ChatMessageCollection = _ChatMessageViewModels.Select(vm => vm.ToChatMessage()).ToList()
+        };
 
         public void Cancel()
         {
@@ -176,10 +154,10 @@ namespace OllamaClient.ViewModels
 
         public async Task SendUserMessage(string prompt)
         {
-            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
-
             //return early if no model selected
             if (_SelectedModel == null) return;
+
+            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
 
             //add user message
             ChatMessageViewModel userChatMessage = new(Role.user, prompt);
@@ -195,13 +173,11 @@ namespace OllamaClient.ViewModels
             ChatRequest request = new()
             {
                 model = _SelectedModel,
-                messages = _ChatMessageViewModels.Select(m => m.ToChatMessage()?.ToMessage() ?? new()).ToArray(),
-                stream = true
+                messages = _ChatMessageViewModels.Select(m => m.ToMessage()).ToArray(),
             };
 
             OnStartOfRequest(EventArgs.Empty);
 
-            //Make HTTP POST request to ollama with built request, cancel if necessary
             try
             {
                 StringBuilder content = new();
@@ -210,7 +186,6 @@ namespace OllamaClient.ViewModels
 
                 await Task.Run(async () =>
                 {
-                    //Send HTTP request and read JSON stream, passing parsed objects to responseChatItem via an IProgress<ChatResponse> interface
                     using DelimitedJsonStream<ChatResponse> stream = await _Api.ChatStream(request);
                     await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
                 });

@@ -40,6 +40,7 @@ namespace OllamaClient.Views.Pages
             else throw new ArgumentException(nameof(viewModel));
 
             InitializeComponent();
+
             ModelsListView.ItemsSource = _SidebarViewModel.Items;
 
             _SidebarViewModel.UnhandledException += ModelList_UnhandledException;
@@ -79,7 +80,7 @@ namespace OllamaClient.Views.Pages
 
             DispatcherQueue?.TryEnqueue(async () =>
             {
-                await _DialogsService.ShowDialog(dialog);
+                await _DialogsService.QueueDialog(dialog);
             });
         }
 

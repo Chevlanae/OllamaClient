@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
+﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace OllamaClient.Models
@@ -9,7 +8,7 @@ namespace OllamaClient.Models
     public class Conversation
     {
         [DataMember]
-        public ObservableCollection<ChatMessage> ChatMessageCollection { get; set; } = [];
+        public List<ChatMessage> ChatMessageCollection { get; set; } = [];
         [DataMember]
         public string? Subject { get; set; }
         [DataMember]

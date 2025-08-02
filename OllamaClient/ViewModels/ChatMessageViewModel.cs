@@ -1,5 +1,6 @@
-﻿using Microsoft.UI.Xaml.Media;
+﻿
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -17,12 +18,13 @@ namespace OllamaClient.ViewModels
             _ProgressRingEnabled = progressRingEnabled;
         }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
+
         public string Role
         {
-            get
-            {
-                return Enum.GetName(_ChatMessage.Role) ?? "user";
-            }
+            get => Enum.GetName(_ChatMessage.Role) ?? "user";
             set
             {
                 if (Enum.TryParse(value, out Role role))
@@ -47,9 +49,7 @@ namespace OllamaClient.ViewModels
             get
             {
                 if (_ChatMessage.Timestamp is not null)
-                {
                     return _ChatMessage.Timestamp?.ToLocalTime().ToShortDateString() + " " + _ChatMessage.Timestamp?.ToLocalTime().ToShortTimeString();
-                }
                 else return default;
             }
         }
@@ -66,20 +66,12 @@ namespace OllamaClient.ViewModels
 
         public string HorizontalAlignment
         {
-            get => _ChatMessage.Role == Models.Role.assistant ? "Left" : "Right";
+            get => _ChatMessage.Role == Models.Json.Role.assistant ? "Left" : "Right";
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public ChatMessage ToChatMessage() => _ChatMessage;
 
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new(name));
-        }
-
-        public ChatMessage ToChatMessage()
-        {
-            return _ChatMessage;
-        }
+        public Message ToMessage() => _ChatMessage.ToMessage();
 
         public void SetTimestamp(DateTime dateTime)
         {

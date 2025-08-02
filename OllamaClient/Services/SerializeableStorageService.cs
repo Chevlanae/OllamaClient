@@ -17,13 +17,19 @@ namespace OllamaClient.Services
         public class Settings
         {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-            public string Directory { get; set; }
+            public DirectoryOption Directory { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         }
 
         private readonly ILogger _Logger;
         private readonly string _Directory;
         private Dictionary<Type, object> _Files { get; set; }
+
+        public enum DirectoryOption
+        {
+            AppData,
+            WorkingDirectory
+        }
 
         public SerializeableStorageService(ILogger<SerializeableStorageService> logger, IOptions<Settings> settings)
         {
@@ -32,8 +38,8 @@ namespace OllamaClient.Services
 
             _Directory = settings.Value.Directory switch
             {
-                "AppData" => $"{App.LocalAppDataPath}\\Storage",
-                "WorkingDirectory" => $"{Environment.CurrentDirectory}\\Storage",
+                DirectoryOption.AppData => $"{App.LocalAppDataPath}\\Storage",
+                DirectoryOption.WorkingDirectory => $"{Environment.CurrentDirectory}\\Storage",
                 _ => throw new ArgumentException($"Could not parse option {nameof(settings.Value.Directory)}")
             };
 

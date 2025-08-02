@@ -1,4 +1,4 @@
-﻿using OllamaClient.Models;
+﻿using OllamaClient.Models.Json;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -11,6 +11,8 @@ namespace OllamaClient.ViewModels
         private string _Value { get; set; } = "";
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new(propertyName));
 
         public ModelParameterKey[] KeyOptions => Enum.GetValues<ModelParameterKey>();
 
@@ -31,11 +33,6 @@ namespace OllamaClient.ViewModels
                 _Value = value;
                 OnPropertyChanged();
             }
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new(propertyName));
         }
     }
 }

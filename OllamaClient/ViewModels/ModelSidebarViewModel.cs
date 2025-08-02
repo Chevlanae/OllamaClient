@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OllamaClient.Models;
+using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,16 @@ namespace OllamaClient.ViewModels
         public ObservableCollection<ModelViewModel> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
+        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger)
+        {
+            _Logger = logger;
+            if (App.GetService<OllamaApiService>() is OllamaApiService api)
+            {
+                _Api = api;
+            }
+            else throw new ArgumentNullException(nameof(api));
+        }
+
         public event EventHandler? ModelsLoaded;
         public event EventHandler? ModelCreated;
         public event EventHandler? ModelDeleted;
@@ -32,70 +43,17 @@ namespace OllamaClient.ViewModels
         public event EventHandler? ModelPullFailed;
         public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
 
-        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger)
-        {
-            _Logger = logger;
-            if (App.GetService<OllamaApiService>() is OllamaApiService api)
-            {
-                _Api = api;
-            }
-            else throw new ArgumentNullException(nameof(api));
-        }
-
-        protected void OnModelsLoaded(EventArgs e)
-        {
-            ModelsLoaded?.Invoke(this, e);
-        }
-
-        protected void OnModelCreated(EventArgs e)
-        {
-            ModelCreated?.Invoke(this, e);
-        }
-
-        protected void OnModelDeleted(EventArgs e)
-        {
-            ModelDeleted?.Invoke(this, e);
-        }
-
-        protected void OnModelCopied(EventArgs e)
-        {
-            ModelCopied?.Invoke(this, e);
-        }
-
-        protected void OnModelPulled(EventArgs e)
-        {
-            ModelPulled?.Invoke(this, e);
-        }
-
-        protected void OnModelsLoadFailed(EventArgs e)
-        {
-            ModelsLoadFailed?.Invoke(this, e);
-        }
-
-        protected void OnModelCreateFailed(EventArgs e)
-        {
-            ModelCreateFailed?.Invoke(this, e);
-        }
-
-        protected void OnModelDeleteFailed(EventArgs e)
-        {
-            ModelDeleteFailed?.Invoke(this, e);
-        }
-
-        protected void OnModelCopyFailed(EventArgs e)
-        {
-            ModelCopyFailed?.Invoke(this, e);
-        }
-
-        protected void OnModelPullFailed(EventArgs e)
-        {
-            ModelPullFailed?.Invoke(this, e);
-        }
-
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e)
-        {
-            UnhandledException?.Invoke(this, e);
-        }
+        protected void OnModelsLoaded(EventArgs e) => ModelsLoaded?.Invoke(this, e);
+        protected void OnModelCreated(EventArgs e) => ModelCreated?.Invoke(this, e);
+        protected void OnModelDeleted(EventArgs e) => ModelCreated?.Invoke(this, e);
+        protected void OnModelCopied(EventArgs e) => ModelCopied?.Invoke(this, e);
+        protected void OnModelPulled(EventArgs e) => ModelPulled?.Invoke(this, e);
+        protected void OnModelsLoadFailed(EventArgs e) => ModelsLoadFailed?.Invoke(this, e);
+        protected void OnModelCreateFailed(EventArgs e) => ModelCreateFailed?.Invoke(this, e);
+        protected void OnModelDeleteFailed(EventArgs e) => ModelDeleteFailed?.Invoke(this, e);
+        protected void OnModelCopyFailed(EventArgs e) => ModelCopyFailed?.Invoke(this, e);
+        protected void OnModelPullFailed(EventArgs e) => ModelPullFailed?.Invoke(this, e);
+        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
 
         public void Cancel()
         {
@@ -132,7 +90,13 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public async Task CreateModel(string name, string? from, string? system, string? template, string? license, IEnumerable<ModelParameterViewModel>? parameters)
+        public async Task CreateModel(
+            string name, 
+            string? from = null, 
+            string? system = null, 
+            string? template = null, 
+            string? license = null, 
+            IEnumerable<ModelParameterViewModel>? parameters = null)
         {
             if (from == string.Empty || system == string.Empty || template == string.Empty)
             {
