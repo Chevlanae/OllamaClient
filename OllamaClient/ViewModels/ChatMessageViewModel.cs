@@ -1,6 +1,6 @@
 ﻿
+using OllamaClient.Json;
 using OllamaClient.Models;
-using OllamaClient.Models.Json;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -66,7 +66,7 @@ namespace OllamaClient.ViewModels
 
         public string HorizontalAlignment
         {
-            get => _ChatMessage.Role == Models.Json.Role.assistant ? "Left" : "Right";
+            get => _ChatMessage.Role == Json.Role.assistant ? "Left" : "Right";
         }
 
         public ChatMessage ToChatMessage() => _ChatMessage;

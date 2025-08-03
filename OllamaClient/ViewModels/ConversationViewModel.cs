@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
+using OllamaClient.Json;
 using OllamaClient.Models;
-using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.ObjectModel;

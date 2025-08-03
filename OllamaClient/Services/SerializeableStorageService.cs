@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OllamaClient.Models;
 using System;
@@ -43,7 +42,7 @@ namespace OllamaClient.Services
                 _ => throw new ArgumentException($"Could not parse option {nameof(settings.Value.Directory)}")
             };
 
-            if(!Directory.Exists(_Directory)) Directory.CreateDirectory(_Directory);
+            if (!Directory.Exists(_Directory)) Directory.CreateDirectory(_Directory);
 
             // Get the current assembly. Usually OllamaClient (I hope), pls don't reference my library. It's private! >:( 
             Assembly currentAssembly = Assembly.GetExecutingAssembly();

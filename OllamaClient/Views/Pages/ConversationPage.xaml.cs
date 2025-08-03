@@ -1,5 +1,4 @@
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -7,10 +6,7 @@ using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -68,7 +64,7 @@ namespace OllamaClient.Views.Pages
                 _EnableAutoScroll = true;
 
                 int index = _AvailableModels.IndexOf(_ConversationViewModel.SelectedModel ?? "");
-                if(index == -1)
+                if (index == -1)
                 {
                     ModelsComboBox.SelectedIndex = 0;
                 }
@@ -131,7 +127,7 @@ namespace OllamaClient.Views.Pages
             {
                 string text = ChatInputTextBox.Text;
 
-                if(_ConversationViewModel.Subject == "New Conversation")
+                if (_ConversationViewModel.Subject == "New Conversation")
                 {
                     DispatcherQueue.TryEnqueue(async () => { await _ConversationViewModel.GenerateSubject(text); });
                 }
@@ -152,7 +148,7 @@ namespace OllamaClient.Views.Pages
 
         private void ModelsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(ModelsComboBox.SelectedItem is string selectedModel && _ConversationViewModel != null)
+            if (ModelsComboBox.SelectedItem is string selectedModel && _ConversationViewModel != null)
             {
                 _ConversationViewModel.SelectedModel = selectedModel;
             }
@@ -175,7 +171,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            if(_SendingMessage)
+            if (_SendingMessage)
             {
                 SendChatButton.Opacity = 0;
                 SendChatButton.Icon = new SymbolIcon(Symbol.Send);

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using OllamaClient.Json;
 using OllamaClient.Models;
-using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace OllamaClient.ViewModels
 {
@@ -91,11 +90,11 @@ namespace OllamaClient.ViewModels
         }
 
         public async Task CreateModel(
-            string name, 
-            string? from = null, 
-            string? system = null, 
-            string? template = null, 
-            string? license = null, 
+            string name,
+            string? from = null,
+            string? system = null,
+            string? template = null,
+            string? license = null,
             IEnumerable<ModelParameterViewModel>? parameters = null)
         {
             if (from == string.Empty || system == string.Empty || template == string.Empty)
@@ -131,7 +130,7 @@ namespace OllamaClient.ViewModels
                 }
             }
 
-            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) => 
+            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
             {
                 _Logger.LogInformation("Creating '{Name}' - {Status}", name, s.status);
             });
@@ -219,7 +218,7 @@ namespace OllamaClient.ViewModels
             {
                 IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
                 {
-                    if(s.total is null) 
+                    if (s.total is null)
                     {
                         _Logger.LogInformation("Pulling '{ModelName}' - {Status}", modelName, s.status);
                     }

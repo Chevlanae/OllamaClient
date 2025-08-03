@@ -1,4 +1,4 @@
-﻿namespace OllamaClient.Models.Json
+﻿namespace OllamaClient.Json
 {
     public record struct ModelParameters
     {

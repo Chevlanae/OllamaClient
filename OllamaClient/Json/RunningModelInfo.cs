@@ -1,14 +1,15 @@
 ﻿using System;
 
-namespace OllamaClient.Models.Json
+namespace OllamaClient.Json
 {
-    public record struct ModelInfo
+    public record struct RunningModelInfo
     {
         public string name { get; set; }
         public string model { get; set; }
-        public DateTime modified_at { get; set; }
         public long size { get; set; }
         public string digest { get; set; }
         public ModelDetails details { get; set; }
+        public DateTime expires_at { get; set; }
+        public long size_vram { get; set; }
     }
 }

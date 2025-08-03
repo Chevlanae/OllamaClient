@@ -28,10 +28,10 @@ namespace OllamaClient.Views.Pages
 
         public ModelItemPage()
         {
-            if(App.GetService<DialogsService>() is DialogsService dialogsService)
+            if (App.GetService<DialogsService>() is DialogsService dialogsService)
             {
                 _DialogsService = dialogsService;
-            } 
+            }
             else throw new ArgumentException(nameof(dialogsService));
 
             InitializeComponent();

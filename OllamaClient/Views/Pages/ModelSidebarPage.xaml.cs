@@ -52,8 +52,8 @@ namespace OllamaClient.Views.Pages
             if (e.Parameter is NavArgs args)
             {
                 _ContentFrame = args.ContentFrame;
-                
-                if(_SidebarViewModel.LastUpdated == null || _SidebarViewModel.LastUpdated < DateTime.Now.AddMinutes(-5))
+
+                if (_SidebarViewModel.LastUpdated == null || _SidebarViewModel.LastUpdated < DateTime.Now.AddMinutes(-5))
                 {
                     Refresh();
                 }

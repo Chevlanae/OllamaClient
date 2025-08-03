@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using OllamaClient.Json;
+using System.Text.Json.Serialization;
 
 namespace OllamaClient.Models.Json
 {

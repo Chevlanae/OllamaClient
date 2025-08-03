@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OllamaClient.Models.Json
+namespace OllamaClient.Json
 {
     public record struct Message : IMessage
     {

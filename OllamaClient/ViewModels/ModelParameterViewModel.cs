@@ -1,4 +1,4 @@
-﻿using OllamaClient.Models.Json;
+﻿using OllamaClient.Json;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

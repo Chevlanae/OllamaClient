@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
@@ -44,8 +43,8 @@ namespace OllamaClient
                     config.MinimumLevel.Debug();
                     config.WriteTo.Debug(restrictedToMinimumLevel: LogEventLevel.Debug);
                     config.WriteTo.TextWriter(
-                        LoggedText, 
-                        restrictedToMinimumLevel: LogEventLevel.Information, 
+                        LoggedText,
+                        restrictedToMinimumLevel: LogEventLevel.Information,
                         outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}");
                     config.WriteTo.File($"{LocalAppDataPath}\\Logs\\log.txt", rollingInterval: RollingInterval.Day);
                 });

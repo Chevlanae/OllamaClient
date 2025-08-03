@@ -1,4 +1,4 @@
-﻿using OllamaClient.Models.Json;
+﻿using OllamaClient.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -175,7 +175,7 @@ namespace OllamaClient.Models
             sb.Append($"{Environment.NewLine}");
             if (Template is not null)
             {
-                sb.AppendLine($"TEMPLATE {Template}"); 
+                sb.AppendLine($"TEMPLATE {Template}");
                 sb.Append($"{Environment.NewLine}");
             }
             if (Adapter is not null)

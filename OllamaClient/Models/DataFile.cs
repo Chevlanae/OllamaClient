@@ -1,5 +1,4 @@
-﻿using OllamaClient.ViewModels;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -14,7 +13,7 @@ namespace OllamaClient.Models
     /// <typeparam name="T">Desired type of data file</typeparam>
     public class DataFile<T>
     {
-        private object _FileLock = new();
+        private readonly object _FileLock = new();
         private readonly DataContractSerializer _Serializer = new(typeof(T));
         private readonly Type[] _AllowedTypes =
         {

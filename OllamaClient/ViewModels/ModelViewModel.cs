@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Documents;
+using OllamaClient.Json;
 using OllamaClient.Models;
-using OllamaClient.Models.Json;
 using OllamaClient.Services;
 using System;
 using System.Text;
