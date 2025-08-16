@@ -116,6 +116,11 @@ namespace OllamaClient.ViewModels
             }
         }
 
+        public Conversation Conversation
+        {
+            get => _Conversation;
+        }
+
         private void _Conversation_StartOfChatRequest(object? sender, EventArgs e)
         {
             IsSendingMessage = true;
@@ -161,21 +166,23 @@ namespace OllamaClient.ViewModels
             Tuple<ChatMessage, ChatMessage> messages = _Conversation.BuildUserChatMessage(prompt);
 
             ChatMessageViewModel userChatMessage = new(messages.Item1);
-            ChatMessageViewModel assistantChatMessage = new(messages.Item2, true);
-
             _ChatMessageViewModelCollection.Add(userChatMessage);
+            ChatMessageViewModel assistantChatMessage = new(messages.Item2, true);
             _ChatMessageViewModelCollection.Add(assistantChatMessage);
-
-            _ChatProgress = new Progress<ChatResponse>(r => assistantChatMessage.Content += r.message?.content ?? "");
 
             _DispatcherQueue.TryEnqueue(async () =>
             {
-                await _Conversation.SendChatRequest(_ChatProgress);
-                assistantChatMessage.Timestamp = DateTime.Now;
-                assistantChatMessage.ProgressRingEnabled = false;
-                OnMessageRecieved(EventArgs.Empty);
+                await RecieveChatMessage(assistantChatMessage);
             });
-            
+        }
+
+        public async Task RecieveChatMessage(ChatMessageViewModel assistantChatMessage)
+        {
+            _ChatProgress = new Progress<ChatResponse>(r => assistantChatMessage.Content += r.message?.content ?? "");
+            await _Conversation.SendChatRequest(_ChatProgress);
+            assistantChatMessage.Timestamp = DateTime.Now;
+            assistantChatMessage.ProgressRingEnabled = false;
+            OnMessageRecieved(EventArgs.Empty);
         }
     }
 }

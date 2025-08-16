@@ -49,10 +49,10 @@ namespace OllamaClient.Models
             try
             {
                 Items = new List<IConversation>();
-                foreach (IConversation conversation in contract.Items)
+                foreach (ConversationContract conversation in contract.Items)
                 {
                     IConversation newConversation = App.GetRequiredService<IConversation>();
-                    newConversation.CopyContract((ConversationContract)conversation);
+                    newConversation.CopyContract(conversation);
                     Items.Add(newConversation);
                 }
                 AvailableModels = contract.AvailableModels;
