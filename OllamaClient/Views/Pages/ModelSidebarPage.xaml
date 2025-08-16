@@ -48,7 +48,7 @@
             </ListView.Header>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Source.Name}" Grid.Column="0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Name}" Grid.Column="0" VerticalAlignment="Center"/>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

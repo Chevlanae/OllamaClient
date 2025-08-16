@@ -23,7 +23,7 @@ namespace OllamaClient.Views.Pages
         }
 
         private IDialogsService _DialogsService { get; set; }
-        private ModelViewModel? Item { get; set; }
+        private ModelViewModel? ModelViewModel { get; set; }
         private ModelSidebarViewModel? ModelSidebarViewModel { get; set; }
 
         public ModelItemPage()
@@ -37,90 +37,36 @@ namespace OllamaClient.Views.Pages
         {
             if (e.Parameter is NavArgs args)
             {
-                Item = args.SelectedItem;
+                ModelViewModel = args.SelectedItem;
                 ModelSidebarViewModel = args.ModelSidebarViewModel;
 
-                Item.UnhandledException += Item_UnhandledException;
+                ItemGrid.DataContext = ModelViewModel;
 
-                ItemGrid.DataContext = Item;
-
-                DetailsTextBox.Blocks.Add(Item.DetailsParagraph);
-                ModelInfoTextBox.Blocks.Add(Item.ModelInfoParagraph);
-                LicenseTextBox.Blocks.Add(Item.LicenseParagraph);
-                ModelFileTextBox.Blocks.Add(Item.ModelFileParagraph);
-
-                if (Item.LastUpdated == null || Item.LastUpdated < DateTime.Now.AddMinutes(-5))
-                {
-                    DispatcherQueue.TryEnqueue(async () =>
-                    {
-                        await Item.GetDetails();
-                        Item.GenerateParagraphText();
-                    });
-                }
-                else
-                {
-                    DispatcherQueue.TryEnqueue(() => Item.GenerateParagraphText());
-                }
+                DetailsTextBox.Blocks.Add(ModelViewModel.DetailsParagraph);
+                ModelInfoTextBox.Blocks.Add(ModelViewModel.ModelInfoParagraph);
+                LicenseTextBox.Blocks.Add(ModelViewModel.LicenseParagraph);
+                ModelFileTextBox.Blocks.Add(ModelViewModel.ModelFileParagraph);
             }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (Item is not null)
-            {
-                Item.UnhandledException -= Item_UnhandledException;
+            DetailsTextBox.Blocks.Clear();
+            ModelInfoTextBox.Blocks.Clear();
+            LicenseTextBox.Blocks.Clear();
+            ModelFileTextBox.Blocks.Clear();
 
-                DetailsTextBox.Blocks.Clear();
-                ModelInfoTextBox.Blocks.Clear();
-                LicenseTextBox.Blocks.Clear();
-                ModelFileTextBox.Blocks.Clear();
-            }
-        }
-
-        private void Item_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
-
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+            base.OnNavigatedFrom(e);
         }
 
         private void DeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            DeleteModelContentDialog dialog = new(XamlRoot, Item?.Source?.Model ?? "");
-
-            dialog.Closed += (s, args) =>
-            {
-                if (args.Result == ContentDialogResult.Primary && ModelSidebarViewModel is not null && Item?.Source is not null)
-                {
-                    DispatcherQueue.TryEnqueue(async () => { await ModelSidebarViewModel.DeleteModel(Item.Source.Model); });
-                }
-            };
-
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+            ModelViewModel?.ShowDeleteDialog();
         }
 
         private void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            CopyModelContentDialog dialog = new(XamlRoot, Item?.Source?.Model ?? "");
-
-            dialog.Closed += (s, args) =>
-            {
-                if
-                (
-                args.Result == ContentDialogResult.Primary
-                &&
-                (dialog.Content as TextBoxDialog)?.InputText is string newModelName
-                &&
-                ModelSidebarViewModel is not null
-                &&
-                Item?.Source is not null
-                )
-                {
-                    DispatcherQueue?.TryEnqueue(async () => { await ModelSidebarViewModel.CopyModel(Item.Source.Name, newModelName); });
-                }
-            };
-
-            DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+            ModelViewModel?.ShowCopyDialog();
         }
     }
 }

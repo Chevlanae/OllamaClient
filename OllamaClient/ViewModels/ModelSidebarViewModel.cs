@@ -1,246 +1,100 @@
-﻿using Microsoft.Extensions.Logging;
-using OllamaClient.Json;
+﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using OllamaClient.Models;
 using OllamaClient.Services;
+using OllamaClient.Views.Dialogs;
+using OllamaClient.Views.Pages;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
     public class ModelSidebarViewModel
     {
-        private readonly ILogger _Logger;
-        private readonly IOllamaApiService _Api;
-        private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
+        private ModelCollection _ModelCollection { get; set; }
+        private ListView _ModelsListView { get; set; }
+        private Frame _ContentFrame { get; set; }
+        private XamlRoot _XamlRoot { get; set; }
+        private DispatcherQueue _DispatcherQueue { get; set; }
+        private IDialogsService _DialogsService { get; set; }
 
-        public ObservableCollection<ModelViewModel> Items { get; set; } = [];
-        public DateTime? LastUpdated { get; set; }
+        public ObservableCollection<ModelViewModel> ModelViewModelCollection { get; set; } = [];
 
-        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger, IOllamaApiService api)
+        public ModelSidebarViewModel(ModelCollection modelCollection, ListView modelsListView, Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
         {
-            _Logger = logger;
-            _Api = api;
+            _ModelCollection = modelCollection;
+            _ModelsListView = modelsListView;
+            _ContentFrame = contentFrame;
+            _XamlRoot = xamlRoot;
+            _DispatcherQueue = dispatcherQueue;
+            _DialogsService = dialogsService;
+
+            _ModelCollection.UnhandledException += ModelCollection_UnhandledException;
+            _ModelCollection.ModelDeleted += ModelCollection_ModelDeleted;
+            _ModelCollection.ModelsLoaded += ModelCollection_ModelsLoaded;
+
+            _ModelsListView.SelectedIndex = -1;
         }
 
-        public event EventHandler? ModelsLoaded;
-        public event EventHandler? ModelCreated;
-        public event EventHandler? ModelDeleted;
-        public event EventHandler? ModelCopied;
-        public event EventHandler? ModelPulled;
-        public event EventHandler? ModelsLoadFailed;
-        public event EventHandler? ModelCreateFailed;
-        public event EventHandler? ModelDeleteFailed;
-        public event EventHandler? ModelCopyFailed;
-        public event EventHandler? ModelPullFailed;
-        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
-
-        protected void OnModelsLoaded(EventArgs e) => ModelsLoaded?.Invoke(this, e);
-        protected void OnModelCreated(EventArgs e) => ModelCreated?.Invoke(this, e);
-        protected void OnModelDeleted(EventArgs e) => ModelCreated?.Invoke(this, e);
-        protected void OnModelCopied(EventArgs e) => ModelCopied?.Invoke(this, e);
-        protected void OnModelPulled(EventArgs e) => ModelPulled?.Invoke(this, e);
-        protected void OnModelsLoadFailed(EventArgs e) => ModelsLoadFailed?.Invoke(this, e);
-        protected void OnModelCreateFailed(EventArgs e) => ModelCreateFailed?.Invoke(this, e);
-        protected void OnModelDeleteFailed(EventArgs e) => ModelDeleteFailed?.Invoke(this, e);
-        protected void OnModelCopyFailed(EventArgs e) => ModelCopyFailed?.Invoke(this, e);
-        protected void OnModelPullFailed(EventArgs e) => ModelPullFailed?.Invoke(this, e);
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
-
-        public void Cancel()
+        private void ModelCollection_ModelsLoaded(object? sender, EventArgs e)
         {
-            _CancellationTokenSource.Cancel();
-            _CancellationTokenSource = new();
-        }
-
-        public async Task LoadModels()
-        {
-            try
+            ModelViewModelCollection.Clear();
+            foreach (Model item in _ModelCollection.Items)
             {
-                Items.Clear();
-
-                ListModelsResponse response = await Task.Run(_Api.ListModels);
-
-                foreach (ModelInfo obj in response.models)
-                {
-                    ModelViewModel model = App.GetRequiredService<ModelViewModel>();
-                    model.Source = new(obj);
-                    Items.Add(model);
-                }
-
-                LastUpdated = DateTime.Now;
-                _Logger.LogInformation("Loaded {ItemsCount} models", Items.Count);
-                OnModelsLoaded(EventArgs.Empty);
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError($"Failed to load model list", e);
-                OnUnhandledException(new(e, false));
-                OnModelsLoadFailed(EventArgs.Empty);
+                ModelViewModelCollection.Add(new(item, _ModelCollection, _XamlRoot, _DispatcherQueue, _DialogsService));
             }
         }
 
-        public async Task CreateModel(
-            string name,
-            string? from = null,
-            string? system = null,
-            string? template = null,
-            string? license = null,
-            IEnumerable<ModelParameterViewModel>? parameters = null)
+        private void ModelCollection_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
         {
-            if (from == string.Empty || system == string.Empty || template == string.Empty)
+            ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);
+
+            _DispatcherQueue.TryEnqueue(async () =>
             {
-                OnModelCreateFailed(EventArgs.Empty);
-                return;
-            }
-
-            CreateModelRequest request = new()
-            {
-                model = name,
-                from = from,
-                system = system,
-                template = template?.Trim(),
-                license = license
-            };
-
-            IEnumerable<IModelParameter>? resolvedParameters = parameters?.Where
-            (
-                p =>
-                p.Value is not null
-                &&
-                p.Value != string.Empty
-            );
-
-            if (resolvedParameters is not null && resolvedParameters.Count() > 0)
-            {
-                request.parameters = [];
-
-                foreach (ModelParameterViewModel item in resolvedParameters)
-                {
-                    request.parameters[item.Key] = item.Value;
-                }
-            }
-
-            IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
-            {
-                _Logger.LogInformation("Creating '{Name}' - {Status}", name, s.status);
+                await _DialogsService.QueueDialog(dialog);
             });
-
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    using DelimitedJsonStream<StatusResponse>? stream = await _Api.CreateModelStream(request);
-
-                    await stream.Read(progress, _CancellationTokenSource.Token);
-                });
-
-                OnModelCreated(EventArgs.Empty);
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Failed to create model '{Name}'", name);
-                OnUnhandledException(new(e, false));
-                OnModelCreateFailed(EventArgs.Empty);
-            }
-            finally
-            {
-                await LoadModels();
-            }
         }
 
-        public async Task DeleteModel(string modelName)
+        private void ModelCollection_ModelDeleted(object? sender, EventArgs e)
         {
-            try
-            {
-                if (await Task.Run(async () => { return await _Api.DeleteModel(new() { model = modelName }); }))
-                {
-                    _Logger.LogInformation("Model '{ModelName}' deleted successfully", modelName);
-                    OnModelDeleted(EventArgs.Empty);
-                }
-                else
-                {
-                    _Logger.LogInformation("Failed to delete model '{ModelName}'", modelName);
-                    OnModelDeleteFailed(EventArgs.Empty);
-                }
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Failed to delete model '{ModelName}'", modelName);
-                OnUnhandledException(new(e, false));
-                OnModelDeleteFailed(EventArgs.Empty);
-            }
-            finally
-            {
-                await LoadModels();
-            }
+            _ContentFrame.Navigate(typeof(BlankPage));
         }
 
-        public async Task CopyModel(string modelName, string newModelName)
+        private void PullModelDialog_Closed(object sender, ContentDialogClosedEventArgs e)
         {
-            try
+            if (sender is PullModelContentDialog dialog)
             {
-                if (await Task.Run(async () => { return await _Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
+                if (e.Result == ContentDialogResult.Primary)
                 {
-                    _Logger.LogInformation("Model '{ModelName}' copied to '{NewModelName}' successfully", modelName, newModelName);
-                    OnModelCopied(EventArgs.Empty);
-                }
-                else
-                {
-                    _Logger.LogInformation("Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
-                    OnModelCopyFailed(EventArgs.Empty);
-                }
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
-                OnUnhandledException(new(e, false));
-                OnModelCopyFailed(EventArgs.Empty);
-            }
-            finally
-            {
-                await LoadModels();
-            }
-        }
+                    string? modelName = (dialog.Content as TextBoxDialog)?.InputText;
 
-        public async Task PullModel(string modelName)
-        {
-            try
-            {
-                IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
-                {
-                    if (s.total is null)
+                    if (modelName is not null)
                     {
-                        _Logger.LogInformation("Pulling '{ModelName}' - {Status}", modelName, s.status);
+                        _DispatcherQueue.TryEnqueue(async () => await _ModelCollection.PullModel(modelName));
                     }
-                    else
-                    {
-                        _Logger.LogInformation("Pulling '{ModelName}' - {Status} - {Completed}/{Total} bytes downloaded ", modelName, s.status, s.completed ?? 0, s.total);
-                    }
-                });
+                }
 
-                await Task.Run(async () =>
-                {
-                    DelimitedJsonStream<StatusResponse> stream = await _Api.PullModelStream(new() { model = modelName });
-
-                    await stream.Read(progress, _CancellationTokenSource.Token);
-                });
-
-                OnModelPulled(EventArgs.Empty);
+                dialog.Closed -= PullModelDialog_Closed;
             }
-            catch (Exception e)
+
+        }
+
+        public void Refresh()
+        {
+            _DispatcherQueue?.TryEnqueue(async () => 
             {
-                _Logger.LogError(e, "Failed to pull model '{ModelName}'", modelName);
-                OnUnhandledException(new(e, false));
-                OnModelPullFailed(EventArgs.Empty);
-            }
-            finally
-            {
-                await LoadModels();
-            }
+                await _ModelCollection.LoadModels();
+            });
+        }
+
+        public void ShowPullModelDialog()
+        {
+            PullModelContentDialog dialog = new(_XamlRoot);
+
+            dialog.Closed += PullModelDialog_Closed;
+
+            _DialogsService.QueueDialog(dialog);
         }
     }
 }

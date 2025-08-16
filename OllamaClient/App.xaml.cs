@@ -65,8 +65,8 @@ namespace OllamaClient
                 services.AddSingleton<IConversationCollection, ConversationCollection>();
 
                 //Viewmodels
-                services.AddTransient<ModelViewModel>();
-                services.AddSingleton<ModelSidebarViewModel>();
+                services.AddTransient<Model>();
+                services.AddSingleton<ModelCollection>();
             })
             .Build();
 

@@ -24,8 +24,8 @@ namespace OllamaClient.ViewModels
         private DispatcherQueue _DispatcherQueue { get; set; }
         private IDialogsService _DialogsService { get; set; }
         private ListView _ConversationsListView { get; set; }
+        private ConversationCollection _ConversationCollection { get; set; }
 
-        public ConversationCollection ConversationCollection { get; set; }
         public ObservableCollection<ConversationViewModel> ConversationViewModelCollection { get; set; } = [];
         public List<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
@@ -38,15 +38,15 @@ namespace OllamaClient.ViewModels
             _DialogsService = dialogsService;
             _ConversationsListView = conversationsListView;
 
-            ConversationCollection = (ConversationCollection)App.GetRequiredService<IConversationCollection>();
-            ConversationCollection.ConversationsLoaded += ConversationCollection_ConversationsLoaded;
+            _ConversationCollection = (ConversationCollection)App.GetRequiredService<IConversationCollection>();
+            _ConversationCollection.ConversationsLoaded += ConversationCollection_ConversationsLoaded;
             ConversationViewModelCollection.CollectionChanged += ConversationViewModelCollection_CollectionChanged;
-            ConversationCollection.ModelsLoaded += ConversationCollection_ModelsLoaded;
-            ConversationCollection.UnhandledException += ConversationCollection_UnhandledException;
+            _ConversationCollection.ModelsLoaded += ConversationCollection_ModelsLoaded;
+            _ConversationCollection.UnhandledException += ConversationCollection_UnhandledException;
 
             if (ConversationViewModelCollection.Count == 0)
             {
-                _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.LoadConversations(); });
+                _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadConversations(); });
             }
 
         }
@@ -54,7 +54,7 @@ namespace OllamaClient.ViewModels
         private void ConversationCollection_ConversationsLoaded(object? sender, EventArgs e)
         {
             ConversationViewModelCollection.Clear();
-            foreach (Conversation conversation in ConversationCollection.Items)
+            foreach (Conversation conversation in _ConversationCollection.Items)
             {
                 ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue, _DialogsService);
                 viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
@@ -66,7 +66,7 @@ namespace OllamaClient.ViewModels
 
         private void ConversationViewModel_MessageRecieved(object? sender, EventArgs e)
         {
-            _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.Save(); });
+            _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.Save(); });
         }
 
         private void ConversationViewModelCollection_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -81,7 +81,7 @@ namespace OllamaClient.ViewModels
         {
             if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
-                ConversationPage.NavArgs args = new(ConversationCollection.AvailableModels, conversation);
+                ConversationPage.NavArgs args = new(_ConversationCollection.AvailableModels, conversation);
 
                 _ContentFrame.Navigate(typeof(ConversationPage), args);
             }
@@ -98,7 +98,7 @@ namespace OllamaClient.ViewModels
         {
             if (AvailableModels.Count == 0)
             {
-                _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.LoadAvailableModels(); });
+                _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadAvailableModels(); });
             }
             else if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
@@ -112,9 +112,10 @@ namespace OllamaClient.ViewModels
         {
             c.Cancel();
             c.MessageRecieved -= ConversationViewModel_MessageRecieved;
-            ConversationCollection.Items.Remove(c.Conversation);
+            _ConversationsListView.SelectedIndex = ConversationViewModelCollection.IndexOf(c) - 1;
+            _ConversationCollection.Items.Remove(c.Conversation);
             ConversationViewModelCollection.Remove(c);
-            _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.Save(); });
+            _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.Save(); });
         }
 
         public void NewConversation()
@@ -122,15 +123,16 @@ namespace OllamaClient.ViewModels
             IConversation conversation = App.GetRequiredService<IConversation>();
             ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue, _DialogsService);
             viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
-            ConversationCollection.Items.Add(conversation);
+            _ConversationCollection.Items.Add(conversation);
             ConversationViewModelCollection.Add(viewModel);
-            _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.Save(); });
+            _ConversationsListView.SelectedItem = viewModel;
+            _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.Save(); });
         }
 
         public void RefreshConversations()
         {
-            _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.LoadAvailableModels(); });
-            _DispatcherQueue.TryEnqueue(async () => { await ConversationCollection.LoadConversations(); });
+            _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadAvailableModels(); });
+            _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadConversations(); });
         }
     }
 }

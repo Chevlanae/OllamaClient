@@ -76,7 +76,7 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public string? Subject
+        public string Subject
         {
             get => _Conversation.Subject ?? "New Conversation";
             set

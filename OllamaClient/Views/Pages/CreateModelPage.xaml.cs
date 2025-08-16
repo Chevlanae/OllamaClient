@@ -18,9 +18,8 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class CreateModelPage : Page
     {
-        public class NavArgs(DispatcherQueue dispatcherQueue, ModelSidebarViewModel viewModel)
+        public class NavArgs(ModelSidebarViewModel viewModel)
         {
-            public DispatcherQueue DispatcherQueue { get; set; } = dispatcherQueue;
             public ModelSidebarViewModel ModelSideBarViewModel { get; set; } = viewModel;
         }
 
@@ -43,7 +42,7 @@ namespace OllamaClient.Views.Pages
             {
                 ModelSideBarViewModel = args.ModelSideBarViewModel;
                 DispatcherQueue = args.DispatcherQueue;
-                FromComboBox.ItemsSource = ModelSideBarViewModel.Items;
+                FromComboBox.ItemsSource = ModelSideBarViewModel.ModelViewModelCollection;
 
                 ModelSideBarViewModel.ModelCreated += ModelList_ModelCreated;
             }

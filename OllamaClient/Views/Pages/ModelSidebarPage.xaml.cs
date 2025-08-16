@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
@@ -22,67 +23,48 @@ namespace OllamaClient.Views.Pages
         }
 
         private Frame? _ContentFrame { get; set; }
+        private ModelSidebarViewModel? _SidebarViewModel { get; set; }
         private IDialogsService _DialogsService { get; set; }
-        private ModelSidebarViewModel _SidebarViewModel { get; set; }
+        private ModelCollection _ModelCollection { get; set; }
 
         public ModelSidebarPage()
         {
             _DialogsService = App.GetRequiredService<IDialogsService>();
-            _SidebarViewModel = App.GetRequiredService<ModelSidebarViewModel>();
+            _ModelCollection = App.GetRequiredService<ModelCollection>();
 
             InitializeComponent();
 
-            ModelsListView.ItemsSource = _SidebarViewModel.Items;
-
-            _SidebarViewModel.UnhandledException += ModelList_UnhandledException;
-            _SidebarViewModel.ModelDeleted += ModelList_ModelDeleted;
+            Loaded += ModelSidebarPage_Loaded;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is NavArgs args)
+            if(e.Parameter is NavArgs args)
             {
                 _ContentFrame = args.ContentFrame;
-
-                if (_SidebarViewModel.LastUpdated == null || _SidebarViewModel.LastUpdated < DateTime.Now.AddMinutes(-5))
-                {
-                    Refresh();
-                }
             }
 
+            if(_SidebarViewModel is null)
+            {
+                SetViewModel();
+            }
+
+            _SidebarViewModel?.Refresh();
+
             ModelsListView.SelectedIndex = -1;
+
+            base.OnNavigatedTo(e);
         }
 
-        private void Refresh()
-        {
-            DispatcherQueue?.TryEnqueue(async () =>
-            {
-                await _SidebarViewModel.LoadModels();
-                foreach (ModelViewModel item in _SidebarViewModel.Items)
-                {
-                    item.LastUpdated = null;
-                }
-            });
-        }
 
-        private void ModelList_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        private void ModelSidebarPage_Loaded(object sender, RoutedEventArgs e)
         {
-            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
-
-            DispatcherQueue?.TryEnqueue(async () =>
-            {
-                await _DialogsService.QueueDialog(dialog);
-            });
-        }
-
-        private void ModelList_ModelDeleted(object? sender, EventArgs e)
-        {
-            _ContentFrame?.Navigate(typeof(BlankPage));
+            SetViewModel();
         }
 
         private void ModelsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ModelsListView.SelectedItem is ModelViewModel item && DispatcherQueue is not null)
+            if (ModelsListView.SelectedItem is ModelViewModel item && _SidebarViewModel is not null)
             {
                 _ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(item, _SidebarViewModel));
             }
@@ -90,27 +72,28 @@ namespace OllamaClient.Views.Pages
 
         private void CreateModelButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DispatcherQueue is not null)
-            {
-                _ContentFrame?.Navigate(typeof(CreateModelPage), new CreateModelPage.NavArgs(DispatcherQueue, _SidebarViewModel));
-            }
+            
         }
 
-        private async void PullModelButton_Click(object sender, RoutedEventArgs e)
+        private void PullModelButton_Click(object sender, RoutedEventArgs e)
         {
-            PullModelContentDialog dialog = new(XamlRoot);
-
-            ContentDialogResult result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary && (dialog.Content as TextBoxDialog)?.InputText is string modelName)
-            {
-                DispatcherQueue?.TryEnqueue(async () => { await _SidebarViewModel.PullModel(modelName); });
-            }
+            _SidebarViewModel?.ShowPullModelDialog();
         }
 
         private void RefreshModelsButton_Click(object sender, RoutedEventArgs e)
         {
-            Refresh();
+            _SidebarViewModel?.Refresh();
+        }
+
+        private void SetViewModel()
+        {
+            if (_SidebarViewModel is null && _ContentFrame is not null && XamlRoot is not null)
+            {
+                _SidebarViewModel = new(_ModelCollection, ModelsListView, _ContentFrame, XamlRoot, DispatcherQueue, _DialogsService);
+                ModelsListView.ItemsSource = _SidebarViewModel.ModelViewModelCollection;
+
+                _SidebarViewModel.Refresh();
+            }
         }
     }
 }

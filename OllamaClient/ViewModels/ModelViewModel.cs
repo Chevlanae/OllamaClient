@@ -1,145 +1,141 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.Json;
 using OllamaClient.Models;
 using OllamaClient.Services;
+using OllamaClient.Views.Dialogs;
 using System;
+using System.ComponentModel;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
     public class ModelViewModel
     {
-        public class SourceInfo
-        {
-            public string Name { get; set; }
-            public string Model { get; set; }
-            public DateTime ModifiedAt { get; set; }
-            public long Size { get; set; }
-            public string Digest { get; set; }
-            public string? ParentModel { get; set; }
-            public string Format { get; set; }
-            public string Family { get; set; }
-            public string[]? Families { get; set; }
-            public string ParameterSize { get; set; }
-            public string QuantizationLevel { get; set; }
+        private Model _Model { get; set; }
+        private ModelCollection _ModelCollection { get; set; }
+        private XamlRoot _XamlRoot { get; set; }
+        private DispatcherQueue _DispatcherQueue { get; set; }
+        private IDialogsService _DialogsService { get; set; }
 
-            public SourceInfo(ModelInfo source)
-            {
-                Name = source.name;
-                Model = source.model;
-                ModifiedAt = source.modified_at;
-                Size = source.size;
-                Digest = source.digest;
-                ParentModel = source.details.parent_model;
-                Format = source.details.format;
-                Family = source.details.family;
-                Families = source.details.families;
-                ParameterSize = source.details.parameter_size;
-                QuantizationLevel = source.details.quantization_level;
-            }
-        }
-
-        private readonly ILogger _Logger;
-        private IOllamaApiService _Api;
-
-        public SourceInfo? Source { get; set; }
-        public string? License { get; set; }
-        public ModelFile? ModelFile { get; set; }
-        public string? ModelInfo { get; set; }
-        public string[]? Capabilities { get; set; }
-        public TensorInfo[]? Tensors { get; set; }
-        public DateTime? LastUpdated { get; set; }
         public Paragraph DetailsParagraph { get; set; } = new();
         public Paragraph ModelInfoParagraph { get; set; } = new();
         public Paragraph LicenseParagraph { get; set; } = new();
         public Paragraph ModelFileParagraph { get; set; } = new();
 
-        public ModelViewModel(ILogger<ModelViewModel> logger, IOllamaApiService api)
+        public ModelViewModel(Model model, ModelCollection modelCollection, XamlRoot root, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
         {
-            _Logger = logger;
-            _Api = api;
+            _Model = model;
+            _ModelCollection = modelCollection;
+            _XamlRoot = root;
+            _DispatcherQueue = dispatcherQueue;
+            _DialogsService = dialogsService;
+
+            _Model.UnhandledException += Model_UnhandledException;
+
+            if (_Model.LastUpdated == null || _Model.LastUpdated < DateTime.Now.AddMinutes(-5))
+            {
+                _DispatcherQueue.TryEnqueue(async () =>
+                {
+                    await _Model.GetDetails();
+                    GenerateParagraphText();
+                });
+            }
+            else
+            {
+                _DispatcherQueue.TryEnqueue(() => GenerateParagraphText());
+            }
         }
 
-        public event EventHandler? DetailsLoaded;
-        public event EventHandler? DetailsLoadFailed;
-        public event UnhandledExceptionEventHandler? UnhandledException;
-
-        protected void OnDetailsLoaded(EventArgs e) => DetailsLoaded?.Invoke(this, e);
-        protected void OnDetailsFailed(EventArgs e) => DetailsLoadFailed?.Invoke(this, e);
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
-
-        public async Task GetDetails()
+        public string? Name
         {
-            if (Source is null) return;
+            get => _Model.Source?.Name;
+        }
 
-            try
-            {
-                ShowModelResponse response = await Task.Run(async () => await _Api.ShowModel(new() { model = Source.Model }));
+        private void Model_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
+        {
+            ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);
 
-                License = response.license;
-                ModelFile = new(response.modelfile);
-                ModelInfo = JsonSerializer.Serialize(response.model_info, new JsonSerializerOptions { WriteIndented = true, IndentSize = 4 });
-                Source.ParentModel = response.details?.parent_model ?? Source?.ParentModel;
-                Capabilities = response.capabilities;
-                Tensors = response.tensors;
-                LastUpdated = DateTime.Now;
-                _Logger.LogInformation("Loaded model info for '{SourceModel}'", Source?.Model);
-                OnDetailsLoaded(EventArgs.Empty);
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Failed to load model info for '{SourceModel}'", Source?.Model);
-                OnUnhandledException(new(e, false));
-                OnDetailsFailed(EventArgs.Empty);
-            }
+            _DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+        }
+
+        private string GenerateSumaryString()
+        {
+            StringBuilder sb = new();
+
+            sb.AppendLine($"Model: {_Model.Source?.Model}");
+            sb.AppendLine($"Modified At: {_Model.Source?.ModifiedAt}");
+            sb.AppendLine($"Size: {_Model.Source?.Size / 1024 / 1024} MB");
+            sb.AppendLine($"Digest: {_Model.Source?.Digest}");
+            if (!string.IsNullOrEmpty(_Model.Source?.ParentModel)) sb.AppendLine($"Parent Model: {_Model.Source?.ParentModel}");
+            sb.AppendLine($"Format: {_Model.Source?.Format}");
+            sb.AppendLine($"Family: {_Model.Source?.Family}");
+            if (_Model.Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", _Model.Capabilities)}");
+            sb.AppendLine($"Parameter Size: {_Model.Source?.ParameterSize}");
+            sb.AppendLine($"Quantization Level: {_Model.Source?.QuantizationLevel}");
+
+            return sb.ToString();
         }
 
         public void GenerateParagraphText()
         {
             DetailsParagraph.Inlines.Clear();
-            DetailsParagraph.Inlines.Add(new Run() { Text = ToSummaryString() });
+            DetailsParagraph.Inlines.Add(new Run() { Text = GenerateSumaryString() });
 
-            if (ModelInfo is not null)
+            if (_Model.ModelInfo is not null)
             {
                 ModelInfoParagraph.Inlines.Clear();
-                ModelInfoParagraph.Inlines.Add(new Run() { Text = ModelInfo });
+                ModelInfoParagraph.Inlines.Add(new Run() { Text = _Model.ModelInfo });
             }
 
             LicenseParagraph.Inlines.Clear();
-            if (License is not null)
+            if (_Model.License is not null)
             {
-                LicenseParagraph.Inlines.Add(new Run() { Text = License });
+                LicenseParagraph.Inlines.Add(new Run() { Text = _Model.License });
             }
             else
             {
                 LicenseParagraph.Inlines.Add(new Run() { Text = "No license information available." });
             }
-            if (ModelFile is not null)
+            if (_Model.ModelFile is not null)
             {
                 ModelFileParagraph.Inlines.Clear();
-                ModelFileParagraph.Inlines.Add(new Run() { Text = ModelFile.ToString() });
+                ModelFileParagraph.Inlines.Add(new Run() { Text = _Model.ModelFile.ToString() });
             }
         }
 
-        private string ToSummaryString()
+        public void ShowDeleteDialog()
         {
-            StringBuilder sb = new();
+            DeleteModelContentDialog dialog = new(_XamlRoot, _Model.Source?.Model ?? "");
 
-            sb.AppendLine($"Model: {Source?.Model}");
-            sb.AppendLine($"Modified At: {Source?.ModifiedAt}");
-            sb.AppendLine($"Size: {Source?.Size / 1024 / 1024} MB");
-            sb.AppendLine($"Digest: {Source?.Digest}");
-            if (!string.IsNullOrEmpty(Source?.ParentModel)) sb.AppendLine($"Parent Model: {Source?.ParentModel}");
-            sb.AppendLine($"Format: {Source?.Format}");
-            sb.AppendLine($"Family: {Source?.Family}");
-            if (Capabilities is not null) sb.AppendLine($"Capabilities: {string.Join(", ", Capabilities)}");
-            sb.AppendLine($"Parameter Size: {Source?.ParameterSize}");
-            sb.AppendLine($"Quantization Level: {Source?.QuantizationLevel}");
+            dialog.Closed += (s, args) =>
+            {
+                if (args.Result == ContentDialogResult.Primary &&  _Model?.Source is not null)
+                {
+                    _DispatcherQueue.TryEnqueue(async () => { await _ModelCollection.DeleteModel(_Model.Source.Model); });
+                }
+            };
 
-            return sb.ToString();
+            _DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+        }
+
+        public void ShowCopyDialog()
+        {
+            CopyModelContentDialog dialog = new(_XamlRoot, _Model.Source?.Model ?? "");
+
+            dialog.Closed += (s, args) =>
+            {
+                if
+                (args.Result == ContentDialogResult.Primary && (dialog.Content as TextBoxDialog)?.InputText is string newModelName)
+                {
+                    _DispatcherQueue?.TryEnqueue(async () => { await _ModelCollection.CopyModel(_Model.Source?.Name ?? "", newModelName); });
+                }
+            };
+
+            _DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
         }
     }
 }
