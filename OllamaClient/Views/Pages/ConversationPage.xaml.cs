@@ -2,10 +2,12 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -18,30 +20,24 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        public class NavArgs(ObservableCollection<string> availableModels, ConversationViewModel viewModel)
+        public class NavArgs(List<string> availableModels, ConversationViewModel conversation)
         {
-            public ObservableCollection<string> AvailableModels { get; set; } = availableModels;
-            public ConversationViewModel ViewModel { get; set; } = viewModel;
+            public List<string> AvailableModels { get; set; } = availableModels;
+            public ConversationViewModel ConversationViewModel { get; set; } = conversation;
         }
 
-        private DialogsService _DialogsService;
+        private IDialogsService _DialogsService;
         private ConversationViewModel? _ConversationViewModel { get; set; }
-        private ObservableCollection<string>? _AvailableModels { get; set; }
+        private List<string>? _AvailableModels { get; set; }
         private bool _EnableAutoScroll { get; set; }
-        private bool _SendingMessage { get; set; }
 
         public ConversationPage()
         {
-            if (App.GetService<DialogsService>() is DialogsService dialogs)
-            {
-                _DialogsService = dialogs;
-            }
-            else throw new ArgumentException(nameof(dialogs));
+            _DialogsService = App.GetRequiredService<IDialogsService>();
 
             InitializeComponent();
 
             _EnableAutoScroll = false;
-            _SendingMessage = false;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -49,11 +45,7 @@ namespace OllamaClient.Views.Pages
             if (e.Parameter is NavArgs args)
             {
                 _AvailableModels = args.AvailableModels;
-                _ConversationViewModel = args.ViewModel;
-
-                _ConversationViewModel.StartOfRequest += ConversationViewModel_StartOfRequest;
-                _ConversationViewModel.EndOfResponse += ConversationViewModel_EndOfResponse;
-                _ConversationViewModel.UnhandledException += ConversationViewModel_UnhandledException;
+                _ConversationViewModel = args.ConversationViewModel;
 
                 ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
                 ModelsComboBox.ItemsSource = _AvailableModels;
@@ -76,50 +68,14 @@ namespace OllamaClient.Views.Pages
             base.OnNavigatedTo(e);
         }
 
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            if (_ConversationViewModel is not null)
-            {
-                _ConversationViewModel.StartOfRequest -= ConversationViewModel_StartOfRequest;
-                _ConversationViewModel.EndOfResponse -= ConversationViewModel_EndOfResponse;
-                _ConversationViewModel.UnhandledException -= ConversationViewModel_UnhandledException;
-            }
-
-            base.OnNavigatedFrom(e);
-        }
-
         private void ChatBubbleTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ChatMessagesControl_AutoScrollToBottom(sender, new());
         }
 
-        private void ConversationViewModel_StartOfRequest(object? sender, EventArgs e)
-        {
-            _SendingMessage = true;
-            ChatInputTextBox.IsEnabled = false;
-        }
-
-        private void ConversationViewModel_EndOfResponse(object? sender, EventArgs e)
-        {
-            _SendingMessage = false;
-            ChatInputTextBox.IsEnabled = true;
-            SendChatButton.Icon = new SymbolIcon(Symbol.Send);
-        }
-
-        private void ConversationViewModel_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
-        {
-            ErrorPopupContentDialog dialog = new(XamlRoot, (Exception)e.ExceptionObject);
-
-            DispatcherQueue.TryEnqueue(async () =>
-            {
-                await _DialogsService.QueueDialog(dialog);
-
-            });
-        }
-
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (_SendingMessage)
+            if (_ConversationViewModel?.IsSendingMessage == true)
             {
                 _ConversationViewModel?.Cancel();
             }
@@ -129,10 +85,10 @@ namespace OllamaClient.Views.Pages
 
                 if (_ConversationViewModel.Subject == "New Conversation")
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await _ConversationViewModel.GenerateSubject(text); });
+                    _ConversationViewModel.GenerateSubject(text);
                 }
 
-                DispatcherQueue.TryEnqueue(async () => { await _ConversationViewModel.SendUserMessage(text); });
+                _ConversationViewModel.SendUserChatMessage(text);
 
                 ChatInputTextBox.Text = "";
             }
@@ -161,7 +117,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            if (_SendingMessage)
+            if (_ConversationViewModel?.IsSendingMessage == true)
             {
                 SendChatButton.Opacity = 0;
                 SendChatButton.Icon = new SymbolIcon(Symbol.Cancel);
@@ -171,7 +127,7 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            if (_SendingMessage)
+            if (_ConversationViewModel?.IsSendingMessage == true)
             {
                 SendChatButton.Opacity = 0;
                 SendChatButton.Icon = new SymbolIcon(Symbol.Send);

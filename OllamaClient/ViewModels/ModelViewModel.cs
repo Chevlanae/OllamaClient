@@ -43,7 +43,7 @@ namespace OllamaClient.ViewModels
         }
 
         private readonly ILogger _Logger;
-        private OllamaApiService _Api;
+        private IOllamaApiService _Api;
 
         public SourceInfo? Source { get; set; }
         public string? License { get; set; }
@@ -57,14 +57,10 @@ namespace OllamaClient.ViewModels
         public Paragraph LicenseParagraph { get; set; } = new();
         public Paragraph ModelFileParagraph { get; set; } = new();
 
-        public ModelViewModel(ILogger<ModelViewModel> logger)
+        public ModelViewModel(ILogger<ModelViewModel> logger, IOllamaApiService api)
         {
             _Logger = logger;
-            if (App.GetService<OllamaApiService>() is OllamaApiService api)
-            {
-                _Api = api;
-            }
-            else throw new ArgumentNullException(nameof(api));
+            _Api = api;
         }
 
         public event EventHandler? DetailsLoaded;

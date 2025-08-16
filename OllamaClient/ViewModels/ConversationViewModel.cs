@@ -1,9 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using OllamaClient.Json;
 using OllamaClient.Models;
 using OllamaClient.Services;
+using OllamaClient.Views.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -21,191 +26,156 @@ namespace OllamaClient.ViewModels
             public CompletionRequest SubjectRequest { get; set; }
         }
 
-        private readonly ILogger _Logger;
-        private readonly Settings _Settings;
-        private readonly OllamaApiService _Api;
-        private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
-        private ObservableCollection<ChatMessageViewModel> _ChatMessageViewModels { get; set; } = [];
-        private string? _Subject { get; set; }
-        private string? _SelectedModel { get; set; }
+        private ObservableCollection<ChatMessageViewModel> _ChatMessageViewModelCollection { get; set; } = [];
+        private Conversation _Conversation { get; set; }
+        private XamlRoot _XamlRoot;
+        private DispatcherQueue _DispatcherQueue;
+        private IDialogsService _DialogsService;
+        private IProgress<CompletionResponse> _SubjectProgress { get; set; }
+        private IProgress<ChatResponse>? _ChatProgress { get; set; }
 
-        public ConversationViewModel(ILogger<ConversationViewModel> logger, IOptions<Settings> options)
+        private bool _IsSendingMessage { get; set; } = false;
+        private bool _IsInputEnabled { get; set; } = true;
+
+        public SymbolIcon SendChatButtonIcon { get; set; } = new(Symbol.Send);
+
+        public ConversationViewModel(Conversation conversation, XamlRoot root, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
         {
-            _Logger = logger;
-            _Settings = options.Value;
+            _Conversation = conversation;
+            _XamlRoot = root;
+            _DispatcherQueue = dispatcherQueue;
+            _DialogsService = dialogsService;
 
-            if (App.GetService<OllamaApiService>() is OllamaApiService api)
+
+            foreach(ChatMessage chatMessage in conversation.ChatMessageCollection)
             {
-                _Api = api;
+                _ChatMessageViewModelCollection.Add(new(chatMessage));
             }
-            else throw new ArgumentNullException(nameof(api));
+
+            _SubjectProgress = new Progress<CompletionResponse>(r => Subject += r.response ?? "");
+
+            _Conversation.StartOfChatRequest += _Conversation_StartOfChatRequest;
+            _Conversation.EndOfChatRequest += _Conversation_EndOfChatRequest;
+            _Conversation.UnhandledException += _Conversation_UnhandledException;
+
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event EventHandler? StartOfRequest;
-        public event EventHandler? EndOfResponse;
-        public event EventHandler<UnhandledExceptionEventArgs>? UnhandledException;
+        public event EventHandler? MessageRecieved;
 
-        protected void OnStartOfRequest(EventArgs e) => StartOfRequest?.Invoke(this, e);
-        protected void OnEndOfResponse(EventArgs e) => EndOfResponse?.Invoke(this, e);
-        protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
+        protected void OnMessageRecieved(EventArgs e) => MessageRecieved?.Invoke(this, e);
 
         public ObservableCollection<ChatMessageViewModel> ChatMessages
         {
-            get => _ChatMessageViewModels;
+            get => _ChatMessageViewModelCollection;
             set
             {
-                _ChatMessageViewModels = value;
+                _ChatMessageViewModelCollection = value;
                 OnPropertyChanged();
             }
         }
 
-        public string Subject
+        public string? Subject
         {
-            get => _Subject ?? "New Conversation";
+            get => _Conversation.Subject ?? "New Conversation";
             set
             {
-                _Subject = value;
+                _Conversation.Subject = value;
                 OnPropertyChanged();
             }
         }
 
         public string? SelectedModel
         {
-            get => _SelectedModel;
+            get => _Conversation.SelectedModel;
             set
             {
-                _SelectedModel = value;
+                _Conversation.SelectedModel = value;
                 OnPropertyChanged();
             }
         }
 
-        public void CopyFromConversation(Conversation conversation)
+        public bool IsSendingMessage
         {
-            _ChatMessageViewModels.Clear();
-
-            _Subject = conversation.Subject;
-            _SelectedModel = conversation.SelectedModel;
-
-            foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
+            get => _IsSendingMessage;
+            set
             {
-                _ChatMessageViewModels.Add(new(chatMessage.Role, chatMessage.Content, chatMessage.Timestamp));
+                _IsSendingMessage = value;
+                OnPropertyChanged();
             }
         }
 
-        public Conversation ToConversation() => new()
+        public bool IsInputEnabled
         {
-            Subject = _Subject,
-            SelectedModel = _SelectedModel,
-            ChatMessageCollection = _ChatMessageViewModels.Select(vm => vm.ToChatMessage()).ToList()
-        };
+            get => _IsInputEnabled;
+            set
+            {
+                _IsInputEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void _Conversation_StartOfChatRequest(object? sender, EventArgs e)
+        {
+            IsSendingMessage = true;
+            IsInputEnabled = false;
+        }
+
+        private void _Conversation_EndOfChatRequest(object? sender, Conversation.EventArgs.EndOfChatRequest e)
+        {
+            IsSendingMessage = false;
+            IsInputEnabled = true;
+            SendChatButtonIcon = new SymbolIcon(Symbol.Send);
+        }
+
+        private void _Conversation_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)
+        {
+            ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);
+
+            _DispatcherQueue.TryEnqueue(async () =>
+            {
+                await _DialogsService.QueueDialog(dialog);
+
+            });
+        }
 
         public void Cancel()
         {
-            if (_CancellationTokenSource is not null)
-            {
-                _CancellationTokenSource.Cancel();
-            }
-            _CancellationTokenSource = new();
+            _Conversation.Cancel();
         }
 
-        public async Task GenerateSubject(string prompt)
+        public void GenerateSubject(string prompt)
         {
-            CompletionRequest request = _Settings.SubjectRequest;
+            Subject = "";
 
-            if (request.prompt.Contains("$Prompt"))
+            _DispatcherQueue.TryEnqueue(async () =>
             {
-                request.prompt = request.prompt.Replace("$Prompt", prompt);
-            }
-
-            OnStartOfRequest(EventArgs.Empty);
-
-            try
-            {
-                StringBuilder subject = new();
-
-                Progress<CompletionResponse> progress = new(r => subject.Append(r.response));
-
-                await Task.Run(async () =>
-                {
-                    DelimitedJsonStream<CompletionResponse> stream = await _Api.CompletionStream(request);
-
-                    using (stream)
-                    {
-                        await stream.Read(progress, _CancellationTokenSource.Token);
-                    }
-                });
-
-                Subject = subject.ToString();
-                _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' successful", _SelectedModel);
-            }
-            catch (TaskCanceledException)
-            {
-                _Logger.LogInformation("Subject generation for conversation with '{SelectedModel}' cancelled", _SelectedModel);
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Subject generation for conversation with '{SelectedModel}' failed", _SelectedModel);
-                OnUnhandledException(new(e, false));
-            }
+                await _Conversation.GenerateSubject(prompt, _SubjectProgress);
+            });
+            
         }
 
-        public async Task SendUserMessage(string prompt)
+        public void SendUserChatMessage(string prompt)
         {
-            //return early if no model selected
-            if (_SelectedModel == null) return;
+            Tuple<ChatMessage, ChatMessage> messages = _Conversation.BuildUserChatMessage(prompt);
 
-            if (_CancellationTokenSource == null) _CancellationTokenSource = new();
+            ChatMessageViewModel userChatMessage = new(messages.Item1);
+            ChatMessageViewModel assistantChatMessage = new(messages.Item2, true);
 
-            //add user message
-            ChatMessageViewModel userChatMessage = new(Role.user, prompt);
-            _ChatMessageViewModels.Add(userChatMessage);
+            _ChatMessageViewModelCollection.Add(userChatMessage);
+            _ChatMessageViewModelCollection.Add(assistantChatMessage);
 
+            _ChatProgress = new Progress<ChatResponse>(r => assistantChatMessage.Content += r.message?.content ?? "");
 
-            //add assistant message
-            ChatMessageViewModel assistantChatMessage = new(Role.assistant, "", progressRingEnabled: true);
-            _ChatMessageViewModels.Add(assistantChatMessage);
-
-
-            //build HTTP request data
-            ChatRequest request = new()
+            _DispatcherQueue.TryEnqueue(async () =>
             {
-                model = _SelectedModel,
-                messages = _ChatMessageViewModels.Select(m => m.ToMessage()).ToArray(),
-            };
-
-            OnStartOfRequest(EventArgs.Empty);
-
-            try
-            {
-                StringBuilder content = new();
-
-                Progress<ChatResponse> progress = new(s => assistantChatMessage.Content = content.Append(s.message?.content ?? "").ToString());
-
-                await Task.Run(async () =>
-                {
-                    using DelimitedJsonStream<ChatResponse> stream = await _Api.ChatStream(request);
-                    await stream.Read(progress, _CancellationTokenSource.Token).ConfigureAwait(false);
-                });
-
-                _Logger.LogInformation("Chat completion for conversation with '{ConversationSelectedModel}' successful", _SelectedModel);
-            }
-            catch (TaskCanceledException)
-            {
-                _Logger.LogInformation("Chat completion for conversation with '{ConversationSelectedModel}' cancelled", _SelectedModel);
-            }
-            catch (Exception e)
-            {
-                _Logger.LogError(e, "Chat completion for conversation with '{ConversationSelectedModel}' failed", _SelectedModel);
-                OnUnhandledException(new(e, false));
-            }
-            finally
-            {
+                await _Conversation.SendChatRequest(_ChatProgress);
+                assistantChatMessage.Timestamp = DateTime.Now;
                 assistantChatMessage.ProgressRingEnabled = false;
-                assistantChatMessage.SetTimestamp(DateTime.Now);
-                OnEndOfResponse(EventArgs.Empty);
-            }
+                OnMessageRecieved(EventArgs.Empty);
+            });
+            
         }
     }
 }

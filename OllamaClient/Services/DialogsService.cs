@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Services
 {
-    internal class DialogsService
+    internal class DialogsService : IDialogsService
     {
         private readonly ILogger _Logger;
         private bool IsDialogOpen { get; set; } = false;
@@ -38,16 +38,10 @@ namespace OllamaClient.Services
 
         public async Task QueueDialog(ContentDialog dialog)
         {
-            if (IsDialogOpen)
-            {
-                dialog.Closed += QueuedDialog_Closed;
-                QueuedDialogs.Add(dialog);
-                _Logger.LogDebug("Queued content dialog {Title}", dialog.Title);
-            }
-            else
-            {
-                await ShowDialog(dialog);
-            }
+            dialog.Closed += QueuedDialog_Closed;
+            QueuedDialogs.Add(dialog);
+            _Logger.LogDebug("Queued content dialog {Title}", dialog.Title);
+            if (!IsDialogOpen) await ShowDialog(dialog);
         }
 
         private async Task ShowDialog(ContentDialog dialog)

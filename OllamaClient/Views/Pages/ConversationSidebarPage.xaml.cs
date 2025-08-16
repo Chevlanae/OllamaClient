@@ -2,6 +2,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Dialogs;
@@ -22,32 +23,17 @@ namespace OllamaClient.Views.Pages
         {
             public Frame ContentFrame { get; set; } = contentFrame;
         }
+
         private Frame? ContentFrame { get; set; }
-        private DialogsService _DialogsService;
+        private IDialogsService _DialogsService;
         private ConversationSidebarViewModel _ConversationsSidebarViewModel { get; set; }
 
         public ConversationSidebarPage()
         {
-            if (App.GetService<DialogsService>() is DialogsService dialogs)
-            {
-                _DialogsService = dialogs;
-            }
-            else throw new ArgumentException(nameof(dialogs));
-
-            if (App.GetService<ConversationSidebarViewModel>() is ConversationSidebarViewModel conversationsSidebar)
-            {
-                _ConversationsSidebarViewModel = conversationsSidebar;
-            }
-            else throw new ArgumentException(nameof(conversationsSidebar));
+            _DialogsService = App.GetRequiredService<IDialogsService>();
+            _ConversationsSidebarViewModel = new();
 
             InitializeComponent();
-
-            ConversationsListView.ItemsSource = _ConversationsSidebarViewModel.ConversationViewModels;
-
-            _ConversationsSidebarViewModel.ConversationViewModels.CollectionChanged += Conversations_CollectionChanged;
-            _ConversationsSidebarViewModel.ConversationsLoaded += Conversations_ConversationsLoaded;
-            _ConversationsSidebarViewModel.ModelsLoaded += Conversations_ModelsLoaded;
-            _ConversationsSidebarViewModel.UnhandledException += Conversations_UnhandledException;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -56,13 +42,17 @@ namespace OllamaClient.Views.Pages
             {
                 ContentFrame = args.ContentFrame;
 
-                if (_ConversationsSidebarViewModel.ConversationViewModels.Count == 0)
+                _ConversationsSidebarViewModel.ConversationViewModelCollection.CollectionChanged += Conversations_CollectionChanged;
+                _ConversationsSidebarViewModel.ConversationCollection.ConversationsLoaded += Conversations_ConversationsLoaded;
+                _ConversationsSidebarViewModel.ConversationCollection.ModelsLoaded += Conversations_ModelsLoaded;
+                _ConversationsSidebarViewModel.ConversationCollection.UnhandledException += Conversations_UnhandledException;
+
+                if (_ConversationsSidebarViewModel.ConversationViewModelCollection.Count == 0)
                 {
-                    DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.LoadConversations(); });
-                    DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.LoadAvailableModels(); });
-                    ContentFrame.Navigate(typeof(BlankPage));
+                    DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.LoadConversations(); });
                 }
 
+                ConversationsListView.ItemsSource = _ConversationsSidebarViewModel.ConversationViewModelCollection;
                 ConversationsListView.SelectedIndex = -1;
             }
 
@@ -71,27 +61,27 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            foreach (ConversationViewModel viewModel in _ConversationsSidebarViewModel.ConversationViewModels)
+            foreach (ConversationViewModel viewModel in _ConversationsSidebarViewModel.ConversationViewModelCollection)
             {
-                viewModel.StartOfRequest -= Conversation_StartOfMessage;
-                viewModel.EndOfResponse -= Conversation_EndOfMessasge;
+                viewModel.MessageRecieved -= Conversation_MessageRecieved;
             }
+
+            _ConversationsSidebarViewModel.ConversationViewModelCollection.CollectionChanged -= Conversations_CollectionChanged;
+            _ConversationsSidebarViewModel.ConversationCollection.ConversationsLoaded -= Conversations_ConversationsLoaded;
+            _ConversationsSidebarViewModel.ConversationCollection.ModelsLoaded -= Conversations_ModelsLoaded;
+            _ConversationsSidebarViewModel.ConversationCollection.UnhandledException -= Conversations_UnhandledException;
+
             base.OnNavigatedFrom(e);
         }
 
-        private void Conversation_StartOfMessage(object? sender, EventArgs e)
+        private void Conversation_MessageRecieved(object? sender, EventArgs e)
         {
-            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.Save(); });
-        }
-
-        private void Conversation_EndOfMessasge(object? sender, EventArgs e)
-        {
-            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.Save(); });
+            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.Save(); });
         }
 
         private void Conversations_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            if (_ConversationsSidebarViewModel.ConversationViewModels.Count == 0)
+            if (_ConversationsSidebarViewModel.ConversationViewModelCollection.Count == 0)
             {
                 ContentFrame?.Navigate(typeof(BlankPage));
             }
@@ -99,13 +89,12 @@ namespace OllamaClient.Views.Pages
 
         private void Conversations_ConversationsLoaded(object? sender, EventArgs e)
         {
-            if (_ConversationsSidebarViewModel.ConversationViewModels.Count == 0) ContentFrame?.Navigate(typeof(BlankPage));
+            if (_ConversationsSidebarViewModel.ConversationViewModelCollection.Count == 0) ContentFrame?.Navigate(typeof(BlankPage));
             else
             {
-                foreach (ConversationViewModel viewModel in _ConversationsSidebarViewModel.ConversationViewModels)
+                foreach (ConversationViewModel viewModel in _ConversationsSidebarViewModel.ConversationViewModelCollection)
                 {
-                    viewModel.StartOfRequest += Conversation_StartOfMessage;
-                    viewModel.EndOfResponse += Conversation_EndOfMessasge;
+                    viewModel.MessageRecieved += Conversation_MessageRecieved;
                 }
             }
         }
@@ -114,7 +103,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
-                ConversationPage.NavArgs args = new(_ConversationsSidebarViewModel.AvailableModels, conversation);
+                ConversationPage.NavArgs args = new(_ConversationsSidebarViewModel.ConversationCollection.AvailableModels, conversation);
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
             }
@@ -129,10 +118,12 @@ namespace OllamaClient.Views.Pages
 
         private void ConversationsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ConversationsListView.SelectedItem is ConversationViewModel conversation)
+            if (_ConversationsSidebarViewModel.AvailableModels.Count == 0)
             {
-                DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.LoadAvailableModels(); });
-
+                DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.LoadAvailableModels(); });
+            }
+            else if (ConversationsListView.SelectedItem is ConversationViewModel conversation)
+            {
                 ConversationPage.NavArgs args = new(_ConversationsSidebarViewModel.AvailableModels, conversation);
 
                 ContentFrame?.Navigate(typeof(ConversationPage), args);
@@ -144,28 +135,25 @@ namespace OllamaClient.Views.Pages
             if (sender is AppBarButton button && button.DataContext is ConversationViewModel c)
             {
                 c.Cancel();
-                c.StartOfRequest -= Conversation_StartOfMessage;
-                c.EndOfResponse -= Conversation_EndOfMessasge;
-                _ConversationsSidebarViewModel.ConversationViewModels.Remove(c);
-                DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.Save(); });
+                c.MessageRecieved -= Conversation_MessageRecieved;
+                _ConversationsSidebarViewModel.ConversationViewModelCollection.Remove(c);
+                DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.Save(); });
             }
         }
 
         private void AddConversationButton_Click(object sender, RoutedEventArgs e)
         {
-            if (App.GetService<ConversationViewModel>() is ConversationViewModel viewModel)
-            {
-                viewModel.StartOfRequest += Conversation_StartOfMessage;
-                viewModel.EndOfResponse += Conversation_EndOfMessasge;
-                _ConversationsSidebarViewModel.ConversationViewModels.Add(viewModel);
-                DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.Save(); });
-            }
+            IConversation conversation = App.GetRequiredService<IConversation>();
+            ConversationViewModel viewModel = new((Conversation)conversation, XamlRoot, DispatcherQueue, _DialogsService);
+            viewModel.MessageRecieved += Conversation_MessageRecieved;
+            _ConversationsSidebarViewModel.ConversationViewModelCollection.Add(viewModel);
+            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.Save(); });
         }
 
         private void RefreshConversationsButton_Click(object sender, RoutedEventArgs e)
         {
-            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.LoadAvailableModels(); });
-            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.LoadConversations(); });
+            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.LoadAvailableModels(); });
+            DispatcherQueue.TryEnqueue(async () => { await _ConversationsSidebarViewModel.ConversationCollection.LoadConversations(); });
         }
     }
 }

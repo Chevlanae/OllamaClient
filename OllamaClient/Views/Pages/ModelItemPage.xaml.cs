@@ -22,17 +22,13 @@ namespace OllamaClient.Views.Pages
             public ModelSidebarViewModel ModelSidebarViewModel { get; set; } = viewModel;
         }
 
-        private DialogsService _DialogsService { get; set; }
+        private IDialogsService _DialogsService { get; set; }
         private ModelViewModel? Item { get; set; }
         private ModelSidebarViewModel? ModelSidebarViewModel { get; set; }
 
         public ModelItemPage()
         {
-            if (App.GetService<DialogsService>() is DialogsService dialogsService)
-            {
-                _DialogsService = dialogsService;
-            }
-            else throw new ArgumentException(nameof(dialogsService));
+            _DialogsService = App.GetRequiredService<IDialogsService>();
 
             InitializeComponent();
         }

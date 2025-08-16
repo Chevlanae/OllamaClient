@@ -23,7 +23,7 @@ namespace OllamaClient
         {
             InitializeComponent();
 
-            ConversationsButton_Click(this, new());
+            ContentFrame.Navigate(typeof(BlankPage));
         }
 
         private void ToggleSidebar()

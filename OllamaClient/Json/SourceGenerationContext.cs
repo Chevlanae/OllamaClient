@@ -1,7 +1,6 @@
-﻿using OllamaClient.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace OllamaClient.Models.Json
+namespace OllamaClient.Json
 {
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
     [JsonSerializable(typeof(ChatRequest))]

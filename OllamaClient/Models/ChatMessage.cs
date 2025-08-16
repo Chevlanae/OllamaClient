@@ -1,17 +1,14 @@
-﻿using OllamaClient.Json;
+﻿using OllamaClient.DataContracts;
+using OllamaClient.Json;
 using System;
 using System.Runtime.Serialization;
 
 namespace OllamaClient.Models
 {
-    [DataContract]
-    public class ChatMessage(Role role, string content, DateTime? timestamp = null)
+    public class ChatMessage(Role role, string content, DateTime? timestamp = null) : IChatMessage
     {
-        [DataMember]
         public Role Role { get; set; } = role;
-        [DataMember]
         public string Content { get; set; } = content;
-        [DataMember]
         public DateTime? Timestamp { get; set; } = timestamp;
 
         public Message ToMessage()
@@ -20,6 +17,23 @@ namespace OllamaClient.Models
             {
                 role = Role.ToString(),
                 content = Content
+            };
+        }
+
+        public void CopyContract(ChatMessageContract contract)
+        {
+            Role = contract.Role;
+            Content = contract.Content;
+            Timestamp = contract.Timestamp;
+        }
+
+        public ChatMessageContract ToSerializable()
+        {
+            return new ()
+            {
+                Role = Role,
+                Content = Content,
+                Timestamp = Timestamp
             };
         }
     }

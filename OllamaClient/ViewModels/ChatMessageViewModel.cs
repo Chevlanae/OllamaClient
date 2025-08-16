@@ -12,9 +12,9 @@ namespace OllamaClient.ViewModels
         private ChatMessage _ChatMessage;
         private bool _ProgressRingEnabled { get; set; }
 
-        public ChatMessageViewModel(Role role, string content, DateTime? timeStamp = null, bool progressRingEnabled = false)
+        public ChatMessageViewModel(ChatMessage chatMessage, bool progressRingEnabled = false)
         {
-            _ChatMessage = new(role, content, timeStamp);
+            _ChatMessage = chatMessage;
             _ProgressRingEnabled = progressRingEnabled;
         }
 
@@ -22,35 +22,23 @@ namespace OllamaClient.ViewModels
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
 
-        public string Role
+        public Role Role
         {
-            get => Enum.GetName(_ChatMessage.Role) ?? "user";
+            get => _ChatMessage.Role;
             set
             {
-                if (Enum.TryParse(value, out Role role))
-                {
-                    _ChatMessage.Role = role;
-                }
-            }
-        }
-
-        public bool ProgressRingEnabled
-        {
-            get => _ProgressRingEnabled;
-            set
-            {
-                _ProgressRingEnabled = value;
+                _ChatMessage.Role = value;
                 OnPropertyChanged();
             }
         }
 
-        public string? Timestamp
+        public DateTime? Timestamp
         {
-            get
+            get => _ChatMessage.Timestamp;
+            set
             {
-                if (_ChatMessage.Timestamp is not null)
-                    return _ChatMessage.Timestamp?.ToLocalTime().ToShortDateString() + " " + _ChatMessage.Timestamp?.ToLocalTime().ToShortTimeString();
-                else return default;
+                _ChatMessage.Timestamp = value;
+                OnPropertyChanged();
             }
         }
 
@@ -64,12 +52,35 @@ namespace OllamaClient.ViewModels
             }
         }
 
-        public string HorizontalAlignment
+        public bool ProgressRingEnabled
         {
-            get => _ChatMessage.Role == Json.Role.assistant ? "Left" : "Right";
+            get => _ProgressRingEnabled;
+            set
+            {
+                _ProgressRingEnabled = value;
+                OnPropertyChanged();
+            }
         }
 
-        public ChatMessage ToChatMessage() => _ChatMessage;
+        public string RoleString
+        {
+            get => Enum.GetName(_ChatMessage.Role) ?? "user";
+        }
+
+        public string? TimestampString
+        {
+            get
+            {
+                if (_ChatMessage.Timestamp is not null)
+                    return _ChatMessage.Timestamp?.ToLocalTime().ToShortDateString() + " " + _ChatMessage.Timestamp?.ToLocalTime().ToShortTimeString();
+                else return default;
+            }
+        }
+
+        public string HorizontalAlignment
+        {
+            get => _ChatMessage.Role == Role.assistant ? "Left" : "Right";
+        }
 
         public Message ToMessage() => _ChatMessage.ToMessage();
 

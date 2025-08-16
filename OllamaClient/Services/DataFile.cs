@@ -1,25 +1,26 @@
-﻿using System;
+﻿using OllamaClient.DataContracts;
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml;
 
-namespace OllamaClient.Models
+namespace OllamaClient.Services
 {
 
     /// <summary>
     /// Generic class for encapsulating a DataContract object to a file. Automatically serializes and deserializes the object to/from XML.
     /// </summary>
     /// <typeparam name="T">Desired type of data file</typeparam>
-    public class DataFile<T>
+    public class DataFile<T> : IDataFile<T> where T : class
     {
         private readonly object _FileLock = new();
         private readonly DataContractSerializer _Serializer = new(typeof(T));
         private readonly Type[] _AllowedTypes =
         {
-            typeof(ChatMessage),
-            typeof(Conversation),
-            typeof(ConversationCollection),
+            typeof(ChatMessageContract),
+            typeof(ConversationContract),
+            typeof(ConversationCollectionContract),
         };
 
         public Uri FileUri { get; set; }
@@ -33,11 +34,7 @@ namespace OllamaClient.Models
         /// <exception cref="ArgumentException"></exception>
         public DataFile(Uri dirUri)
         {
-            if (typeof(T) == null)
-            {
-                throw new ArgumentNullException($"Given type argument '{nameof(T)}' was null", "T");
-            }
-            else if (!Attribute.IsDefined(typeof(T), typeof(DataContractAttribute)))
+            if (!Attribute.IsDefined(typeof(T), typeof(DataContractAttribute)))
             {
                 throw new ArgumentException($"Given type argument '{nameof(T)}' was an invalid type. The constructor only accepts types with a DataContractAttribute", "T");
             }
@@ -64,7 +61,10 @@ namespace OllamaClient.Models
             {
                 using FileStream file = File.OpenRead(FileUri.LocalPath);
                 using XmlReader reader = XmlReader.Create(file);
-                return (T?)_Serializer.ReadObject(reader);
+
+                T? dataFile = (T?)_Serializer.ReadObject(reader);
+
+                return dataFile;
             }
         }
 

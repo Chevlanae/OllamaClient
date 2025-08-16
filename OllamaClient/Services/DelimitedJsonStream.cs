@@ -7,13 +7,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OllamaClient.Models
+namespace OllamaClient.Services
 {
     /// <summary>
     /// A stream reader that reads a stream of JSON objects delimited by a given character
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public partial class DelimitedJsonStream<T> : IDisposable
+    public partial class DelimitedJsonStream<T> : IDisposable where T : notnull
     {
         private StreamReader Reader { get; set; }
         private StringBuilder PartialObject { get; set; }

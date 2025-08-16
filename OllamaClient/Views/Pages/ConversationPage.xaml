@@ -34,8 +34,8 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding HorizontalAlignment}">
-                                    <TextBlock Grid.Row="0" Text="{Binding Role}" Margin="10,0,10,0"  />
-                                    <TextBlock Text="{Binding Timestamp}" />
+                                    <TextBlock Grid.Row="0" Text="{Binding RoleString}" Margin="10,0,10,0"  />
+                                    <TextBlock Text="{Binding TimestampString}" />
                                     <ProgressRing 
                                         Height="10" 
                                         Width="10" 

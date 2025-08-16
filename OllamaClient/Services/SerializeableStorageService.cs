@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OllamaClient.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,37 +10,39 @@ namespace OllamaClient.Services
     /// <summary>
     /// Class for managing a dictionary of DataFile objects, allowing easy access to serialized data files.
     /// </summary>
-    internal class SerializeableStorageService
+    internal class SerializeableStorageService : ISerializeableStorageService
     {
         public class Settings
         {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+
+            public enum DirectoryOption
+            {
+                AppData,
+                WorkingDirectory
+            }
+
             public DirectoryOption Directory { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         }
 
         private readonly ILogger _Logger;
         private readonly string _Directory;
+        private readonly Settings _Settings;
         private Dictionary<Type, object> _Files { get; set; }
 
-        public enum DirectoryOption
-        {
-            AppData,
-            WorkingDirectory
-        }
-
-        public SerializeableStorageService(ILogger<SerializeableStorageService> logger, IOptions<Settings> settings)
+        public SerializeableStorageService(ILogger<SerializeableStorageService> logger, IOptions<Settings> options)
         {
             _Logger = logger;
             _Files = [];
+            _Settings = options.Value;
 
-            _Directory = settings.Value.Directory switch
+            _Directory = _Settings.Directory switch
             {
-                DirectoryOption.AppData => $"{App.LocalAppDataPath}\\Storage",
-                DirectoryOption.WorkingDirectory => $"{Environment.CurrentDirectory}\\Storage",
-                _ => throw new ArgumentException($"Could not parse option {nameof(settings.Value.Directory)}")
+                Settings.DirectoryOption.AppData => $"{App.LocalAppDataPath}\\Storage",
+                Settings.DirectoryOption.WorkingDirectory => $"{Environment.CurrentDirectory}\\Storage",
+                _ => throw new ArgumentException($"Could not parse option {nameof(_Settings.Directory)}")
             };
 
+            // Ensure directory exists
             if (!Directory.Exists(_Directory)) Directory.CreateDirectory(_Directory);
 
             // Get the current assembly. Usually OllamaClient (I hope), pls don't reference my library. It's private! >:( 
@@ -73,7 +74,7 @@ namespace OllamaClient.Services
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T? Get<T>()
+        public T? Get<T>() where T : class
         {
             // Check if the type exists in the dictionary and if it's value is of type DataFile<T>, then return it. Returns the default value if not.
             if (_Files.ContainsKey(typeof(T)) && _Files[typeof(T)] is DataFile<T> dataFile)
@@ -90,7 +91,7 @@ namespace OllamaClient.Services
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="obj"></param>
-        public void Set<T>(T obj)
+        public void Set<T>(T obj) where T : class
         {
             // If the type exists in the dictionary and if it's value is of type DataFile<T>, then call DataFile<T>.Set on the value.
             // If not, create a new DataFile<T> instance and add it to the dictionary.

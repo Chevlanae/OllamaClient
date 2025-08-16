@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OllamaClient.Json;
-using OllamaClient.Models;
-using OllamaClient.Models.Json;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -12,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Services
 {
-    internal class OllamaApiService
+    internal class OllamaApiService : IOllamaApiService
     {
         public class Settings
         {
@@ -245,7 +243,7 @@ namespace OllamaClient.Services
             }
         }
 
-        private async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo)
+        private async Task<DelimitedJsonStream<T>> GetJsonStream<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo) where T : notnull
         {
             HttpResponseMessage httpResp = await _HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 

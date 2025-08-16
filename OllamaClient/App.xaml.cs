@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using Serilog;
@@ -52,16 +53,18 @@ namespace OllamaClient
                 //Settings
                 services.Configure<OllamaApiService.Settings>(context.Configuration.GetSection("OllamaApiService.Settings"));
                 services.Configure<SerializeableStorageService.Settings>(context.Configuration.GetSection("SerializableStorageService.Settings"));
-                services.Configure<ConversationViewModel.Settings>(context.Configuration.GetSection("ConversationViewModel.Settings"));
+                services.Configure<Conversation.Settings>(context.Configuration.GetSection("Conversation.Settings"));
 
                 //Services
-                services.AddSingleton<DialogsService>();
-                services.AddSingleton<OllamaApiService>();
-                services.AddSingleton<SerializeableStorageService>();
+                services.AddSingleton<IDialogsService, DialogsService>();
+                services.AddSingleton<IOllamaApiService, OllamaApiService>();
+                services.AddSingleton<ISerializeableStorageService, SerializeableStorageService>();
+
+                //Models
+                services.AddTransient<IConversation, Conversation>();
+                services.AddSingleton<IConversationCollection, ConversationCollection>();
 
                 //Viewmodels
-                services.AddTransient<ConversationViewModel>();
-                services.AddSingleton<ConversationSidebarViewModel>();
                 services.AddTransient<ModelViewModel>();
                 services.AddSingleton<ModelSidebarViewModel>();
             })
@@ -78,9 +81,9 @@ namespace OllamaClient
             InitializeComponent();
         }
 
-        public static T? GetService<T>() where T : class
+        public static T GetRequiredService<T>() where T : class
         {
-            return _Host.Services.GetService(typeof(T)) as T;
+            return _Host.Services.GetRequiredService<T>();
         }
 
         /// <summary>

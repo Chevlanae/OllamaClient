@@ -14,20 +14,16 @@ namespace OllamaClient.ViewModels
     public class ModelSidebarViewModel
     {
         private readonly ILogger _Logger;
-        private readonly OllamaApiService _Api;
+        private readonly IOllamaApiService _Api;
         private CancellationTokenSource _CancellationTokenSource { get; set; } = new();
 
         public ObservableCollection<ModelViewModel> Items { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
-        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger)
+        public ModelSidebarViewModel(ILogger<ModelSidebarViewModel> logger, IOllamaApiService api)
         {
             _Logger = logger;
-            if (App.GetService<OllamaApiService>() is OllamaApiService api)
-            {
-                _Api = api;
-            }
-            else throw new ArgumentNullException(nameof(api));
+            _Api = api;
         }
 
         public event EventHandler? ModelsLoaded;
@@ -70,11 +66,9 @@ namespace OllamaClient.ViewModels
 
                 foreach (ModelInfo obj in response.models)
                 {
-                    if (App.GetService<ModelViewModel>() is ModelViewModel model)
-                    {
-                        model.Source = new(obj);
-                        Items.Add(model);
-                    }
+                    ModelViewModel model = App.GetRequiredService<ModelViewModel>();
+                    model.Source = new(obj);
+                    Items.Add(model);
                 }
 
                 LastUpdated = DateTime.Now;
