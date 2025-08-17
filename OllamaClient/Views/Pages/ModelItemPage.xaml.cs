@@ -19,17 +19,12 @@ namespace OllamaClient.Views.Pages
         public class NavArgs(ModelViewModel modelItem, ModelSidebarViewModel viewModel)
         {
             public ModelViewModel SelectedItem { get; set; } = modelItem;
-            public ModelSidebarViewModel ModelSidebarViewModel { get; set; } = viewModel;
         }
 
-        private IDialogsService _DialogsService { get; set; }
         private ModelViewModel? ModelViewModel { get; set; }
-        private ModelSidebarViewModel? ModelSidebarViewModel { get; set; }
 
         public ModelItemPage()
         {
-            _DialogsService = App.GetRequiredService<IDialogsService>();
-
             InitializeComponent();
         }
 
@@ -38,7 +33,6 @@ namespace OllamaClient.Views.Pages
             if (e.Parameter is NavArgs args)
             {
                 ModelViewModel = args.SelectedItem;
-                ModelSidebarViewModel = args.ModelSidebarViewModel;
 
                 ItemGrid.DataContext = ModelViewModel;
 

@@ -7,12 +7,13 @@ using OllamaClient.Views.Dialogs;
 using OllamaClient.Views.Pages;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace OllamaClient.ViewModels
 {
     public class ModelSidebarViewModel
     {
-        private ModelCollection _ModelCollection { get; set; }
+        private IModelCollection _ModelCollection { get; set; }
         private ListView _ModelsListView { get; set; }
         private Frame _ContentFrame { get; set; }
         private XamlRoot _XamlRoot { get; set; }
@@ -21,9 +22,9 @@ namespace OllamaClient.ViewModels
 
         public ObservableCollection<ModelViewModel> ModelViewModelCollection { get; set; } = [];
 
-        public ModelSidebarViewModel(ModelCollection modelCollection, ListView modelsListView, Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
+        public ModelSidebarViewModel(ListView modelsListView, Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
         {
-            _ModelCollection = modelCollection;
+            _ModelCollection = App.GetRequiredService<IModelCollection>();
             _ModelsListView = modelsListView;
             _ContentFrame = contentFrame;
             _XamlRoot = xamlRoot;
@@ -50,15 +51,25 @@ namespace OllamaClient.ViewModels
         {
             ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);
 
-            _DispatcherQueue.TryEnqueue(async () =>
-            {
-                await _DialogsService.QueueDialog(dialog);
-            });
+            _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
         }
 
         private void ModelCollection_ModelDeleted(object? sender, EventArgs e)
         {
             _ContentFrame.Navigate(typeof(BlankPage));
+        }
+
+        private void CreateModelDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs e)
+        {
+            if(sender is CreateModelContentDialog dialog)
+            {
+                if (e.Result == ContentDialogResult.Primary && dialog.Content is CreateModelDialog content)
+                {
+                    
+                }
+
+                dialog.Closed -= CreateModelDialog_Closed;
+            }
         }
 
         private void PullModelDialog_Closed(object sender, ContentDialogClosedEventArgs e)
@@ -82,10 +93,22 @@ namespace OllamaClient.ViewModels
 
         public void Refresh()
         {
-            _DispatcherQueue?.TryEnqueue(async () => 
+            _DispatcherQueue?.TryEnqueue(async () =>
             {
                 await _ModelCollection.LoadModels();
             });
+        }
+
+        public void ShowCreateModelDialog()
+        {
+            CreateModelContentDialog dialog = new(_XamlRoot, new CreateModelContentDialog.DialogArgs
+            {
+                AvailableModels = _ModelCollection.Items.Select(i => i.Source?.Name ?? "").ToArray()
+            });
+
+            dialog.Closed += CreateModelDialog_Closed;
+
+            _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
         }
 
         public void ShowPullModelDialog()
@@ -94,7 +117,7 @@ namespace OllamaClient.ViewModels
 
             dialog.Closed += PullModelDialog_Closed;
 
-            _DialogsService.QueueDialog(dialog);
+            _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
         }
     }
 }

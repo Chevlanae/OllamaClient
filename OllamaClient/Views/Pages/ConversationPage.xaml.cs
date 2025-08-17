@@ -26,15 +26,12 @@ namespace OllamaClient.Views.Pages
             public ConversationViewModel ConversationViewModel { get; set; } = conversation;
         }
 
-        private IDialogsService _DialogsService;
         private ConversationViewModel? _ConversationViewModel { get; set; }
         private List<string>? _AvailableModels { get; set; }
         private bool _EnableAutoScroll { get; set; }
 
         public ConversationPage()
         {
-            _DialogsService = App.GetRequiredService<IDialogsService>();
-
             InitializeComponent();
 
             _EnableAutoScroll = false;

@@ -12,17 +12,6 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Views\Pages\CreateModelPage.xaml" />
-    <None Remove="Views\Pages\ErrorPopupContentDialog.xaml" />
-    <None Remove="Views\Pages\ModelItemPage.xaml" />
-    <None Remove="Views\Pages\TextBoxDialog.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Remove="Themes\Generic.xaml" />
-    <Page Remove="Views\Pages\CreateModelPage.xaml" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="appsettings*.json">
@@ -31,7 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Views\Pages\CreateModelPage.xaml.cs" />
+    <None Remove="Views\Dialogs\CreateModelDialog.xaml" />
+    <None Remove="Views\Dialogs\FromContentPage.xaml" />
+    <None Remove="Views\Dialogs\ParametersContentPage.xaml" />
+    <None Remove="Views\Dialogs\SystemContentPage.xaml" />
+    <None Remove="Views\Dialogs\TemplateContentPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,6 +64,21 @@
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Dialogs\SystemContentPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Dialogs\ParametersContentPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Dialogs\TemplateContentPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Dialogs\FromContentPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Dialogs\CreateModelDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Pages\ErrorPopupContentDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -89,6 +97,10 @@
     <Page Update="Views\Pages\ConversationSidebarPage.xaml">
       <SubType>Designer</SubType>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Dialogs\NewFolder1\" />
+    <Folder Include="Views\Dialogs\NewFolder\" />
   </ItemGroup>
 
 

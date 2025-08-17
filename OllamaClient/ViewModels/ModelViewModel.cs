@@ -15,8 +15,8 @@ namespace OllamaClient.ViewModels
 {
     public class ModelViewModel
     {
-        private Model _Model { get; set; }
-        private ModelCollection _ModelCollection { get; set; }
+        private IModel _Model { get; set; }
+        private IModelCollection _ModelCollection { get; set; }
         private XamlRoot _XamlRoot { get; set; }
         private DispatcherQueue _DispatcherQueue { get; set; }
         private IDialogsService _DialogsService { get; set; }
@@ -26,7 +26,7 @@ namespace OllamaClient.ViewModels
         public Paragraph LicenseParagraph { get; set; } = new();
         public Paragraph ModelFileParagraph { get; set; } = new();
 
-        public ModelViewModel(Model model, ModelCollection modelCollection, XamlRoot root, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
+        public ModelViewModel(IModel model, IModelCollection modelCollection, XamlRoot root, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
         {
             _Model = model;
             _ModelCollection = modelCollection;
@@ -62,7 +62,7 @@ namespace OllamaClient.ViewModels
             _DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
         }
 
-        private string GenerateSumaryString()
+        private string GenerateSummaryString()
         {
             StringBuilder sb = new();
 
@@ -83,7 +83,7 @@ namespace OllamaClient.ViewModels
         public void GenerateParagraphText()
         {
             DetailsParagraph.Inlines.Clear();
-            DetailsParagraph.Inlines.Add(new Run() { Text = GenerateSumaryString() });
+            DetailsParagraph.Inlines.Add(new Run() { Text = GenerateSummaryString() });
 
             if (_Model.ModelInfo is not null)
             {

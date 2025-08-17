@@ -63,10 +63,10 @@ namespace OllamaClient
                 //Models
                 services.AddTransient<IConversation, Conversation>();
                 services.AddSingleton<IConversationCollection, ConversationCollection>();
+                services.AddTransient<IModel, Model>();
+                services.AddSingleton<IModelCollection, ModelCollection>();
 
                 //Viewmodels
-                services.AddTransient<Model>();
-                services.AddSingleton<ModelCollection>();
             })
             .Build();
 

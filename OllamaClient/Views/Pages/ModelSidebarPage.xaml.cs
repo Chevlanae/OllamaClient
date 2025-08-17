@@ -25,12 +25,10 @@ namespace OllamaClient.Views.Pages
         private Frame? _ContentFrame { get; set; }
         private ModelSidebarViewModel? _SidebarViewModel { get; set; }
         private IDialogsService _DialogsService { get; set; }
-        private ModelCollection _ModelCollection { get; set; }
 
         public ModelSidebarPage()
         {
             _DialogsService = App.GetRequiredService<IDialogsService>();
-            _ModelCollection = App.GetRequiredService<ModelCollection>();
 
             InitializeComponent();
 
@@ -72,7 +70,7 @@ namespace OllamaClient.Views.Pages
 
         private void CreateModelButton_Click(object sender, RoutedEventArgs e)
         {
-            
+            _SidebarViewModel?.ShowCreateModelDialog();
         }
 
         private void PullModelButton_Click(object sender, RoutedEventArgs e)
@@ -89,7 +87,7 @@ namespace OllamaClient.Views.Pages
         {
             if (_SidebarViewModel is null && _ContentFrame is not null && XamlRoot is not null)
             {
-                _SidebarViewModel = new(_ModelCollection, ModelsListView, _ContentFrame, XamlRoot, DispatcherQueue, _DialogsService);
+                _SidebarViewModel = new(ModelsListView, _ContentFrame, XamlRoot, DispatcherQueue, _DialogsService);
                 ModelsListView.ItemsSource = _SidebarViewModel.ModelViewModelCollection;
 
                 _SidebarViewModel.Refresh();

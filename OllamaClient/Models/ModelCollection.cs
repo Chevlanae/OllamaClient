@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace OllamaClient.Models
 {
-    public class ModelCollection
+    public class ModelCollection : IModelCollection
     {
         private readonly ILogger _Logger;
         private readonly IOllamaApiService _Api;
@@ -66,7 +66,7 @@ namespace OllamaClient.Models
 
                 foreach (ModelInfo obj in response.models)
                 {
-                    Model model = App.GetRequiredService<Model>();
+                    IModel model = App.GetRequiredService<IModel>();
                     model.Source = new(obj);
                     Items.Add(model);
                 }
