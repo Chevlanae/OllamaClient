@@ -87,8 +87,13 @@
                                     </TextBlock>
                                 </RelativePanel>
                                 <ScrollViewer x:Name="LogsScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto">
-                                    <TextBlock x:Name="LogsTextBlock" SizeChanged="LogsTextBlock_SizeChanged" />
+                                    <ItemsView x:Name="LogsItemsView" SizeChanged="LogsItemsView_SizeChanged" SelectionMode="Extended">
+                                        <ItemsView.KeyboardAccelerators>
+                                            <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="CopyKeyboardAccelerator_Invoked" />
+                                        </ItemsView.KeyboardAccelerators>
+                                    </ItemsView>
                                 </ScrollViewer>
+                                
                             </Grid>
                         </Border>
                     </Popup>

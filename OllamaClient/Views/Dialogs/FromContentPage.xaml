@@ -12,12 +12,17 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        
-        <RelativePanel Grid.Column="1" HorizontalAlignment="Center">
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <TextBlock VerticalAlignment="Center" Margin="10,0,10,0">New name:</TextBlock>
+            <TextBox x:Name="ModelNameTextBox" TextChanged="ModelNameTextBox_TextChanged" MaxWidth="160" MaxHeight="20" Template="{StaticResource DefaultInputTextBoxControlTemplate}"  />
+        </StackPanel>
+        <RelativePanel Grid.Column="2" HorizontalAlignment="Center">
             <TextBlock x:Name="LabelTextBox" RelativePanel.AlignLeftWithPanel="True" Margin="10,15,0,0" >
-                Select a base model
+                Base model
             </TextBlock>
             <ComboBox x:Name="SelectedModelComboBox" RelativePanel.RightOf="LabelTextBox" Margin="10" SelectionChanged="SelectedModelComboBox_SelectionChanged">
                 <ComboBox.ItemTemplate>

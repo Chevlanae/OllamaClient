@@ -53,5 +53,10 @@ namespace OllamaClient.Views.Dialogs
 
             base.OnNavigatedTo(e);
         }
+
+        private void ClearParametersButton_Click(object sender, RoutedEventArgs e)
+        {
+            Results.Parameters?.Clear();
+        }
     }
 }

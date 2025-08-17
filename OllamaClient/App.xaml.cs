@@ -7,7 +7,6 @@ using OllamaClient.Services;
 using Serilog;
 using Serilog.Events;
 using System;
-using System.IO;
 using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -24,8 +23,8 @@ namespace OllamaClient
         public static string MsixLocalAppDataPath = $"{ApplicationData.Current.LocalCacheFolder.Path}\\Local\\OllamaClient";
         public static string LogsDirectoryPath = $"{LocalAppDataPath}\\Logs";
         public static string LogsDirectoryMsixPath = $"{MsixLocalAppDataPath}\\Logs";
-        public static StringWriter LoggedText = new StringWriter();
         public static string? EnvironmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        public static IObservable<LogEvent>? LogEvents { get; set; }
 
         private static readonly IHost _Host = Host.CreateDefaultBuilder()
             .UseEnvironment(EnvironmentName ?? "Production")
@@ -42,11 +41,8 @@ namespace OllamaClient
                 {
                     config.MinimumLevel.Debug();
                     config.WriteTo.Debug(restrictedToMinimumLevel: LogEventLevel.Debug);
-                    config.WriteTo.TextWriter(
-                        LoggedText,
-                        restrictedToMinimumLevel: LogEventLevel.Information,
-                        outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}");
                     config.WriteTo.File($"{LocalAppDataPath}\\Logs\\log.txt", rollingInterval: RollingInterval.Day);
+                    config.WriteTo.Observers(events => LogEvents = events, restrictedToMinimumLevel: LogEventLevel.Information);
                 });
 
                 //Settings

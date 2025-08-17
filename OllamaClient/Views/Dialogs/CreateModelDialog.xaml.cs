@@ -74,13 +74,5 @@ namespace OllamaClient.Views.Dialogs
                     break;
             }
         }
-
-        private void ModelNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (sender is TextBox modelNameTextBox)
-            {
-                Results.Name = modelNameTextBox.Text;
-            }
-        }
     }
 }

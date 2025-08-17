@@ -45,5 +45,15 @@ namespace OllamaClient.Views.Dialogs
                 Results.From = viewModel;
             }
         }
+
+
+
+        private void ModelNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox modelNameTextBox && Results is not null)
+            {
+                Results.Name = modelNameTextBox.Text;
+            }
+        }
     }
 }

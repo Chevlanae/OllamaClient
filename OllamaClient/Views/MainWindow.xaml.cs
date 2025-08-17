@@ -1,9 +1,13 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
+using OllamaClient.ViewModels;
 using OllamaClient.Views.Pages;
 using System;
+using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.System;
 
@@ -19,11 +23,19 @@ namespace OllamaClient
 
     public sealed partial class MainWindow : Window
     {
+        private SerilogObserverViewModel SerilogObserver;
+
         public MainWindow()
         {
             InitializeComponent();
 
             ContentFrame.Navigate(typeof(BlankPage));
+
+            SerilogObserver = new(DispatcherQueue);
+
+            App.LogEvents?.Subscribe(SerilogObserver);
+
+            LogsItemsView.ItemsSource = SerilogObserver.Logs;
         }
 
         private void ToggleSidebar()
@@ -62,29 +74,7 @@ namespace OllamaClient
 
         private void LogsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (LogsPopup.IsOpen) LogsPopup.IsOpen = false;
-            else
-            {
-                LogsPopup.IsOpen = true;
-
-                DispatcherQueue.TryEnqueue(async () =>
-                {
-                    while (LogsPopup.IsOpen)
-                    {
-                        LogsTextBlock.Text = App.LoggedText.ToString();
-
-                        await Task.Delay(10);
-                    }
-                });
-            }
-        }
-
-        private void LogsTextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (LogsScrollViewer.VerticalOffset > LogsScrollViewer.ScrollableHeight - 100)
-            {
-                LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
-            }
+            LogsPopup.IsOpen = !LogsPopup.IsOpen;
         }
 
         private async void LogsFolderHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
@@ -97,6 +87,38 @@ namespace OllamaClient
         private void LogsPopup_Opened(object sender, object e)
         {
             LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
+        }
+
+        private void LogsItemsView_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (LogsScrollViewer.VerticalOffset > LogsScrollViewer.ScrollableHeight - 150)
+            {
+                LogsScrollViewer.ScrollToVerticalOffset(LogsScrollViewer.ScrollableHeight);
+            }
+        }
+
+        private void CopyKeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            StringBuilder builder = new();
+            foreach(char item in LogsItemsView.SelectedItems)
+            {
+                if(item == '\u00A0')
+                {
+                    builder.Append("\n");
+                }
+                else
+                {
+                    builder.Append(item);
+                }
+            }
+            DataPackage package = new()
+            {
+                RequestedOperation = DataPackageOperation.Copy
+            };
+
+            package.SetText(builder.ToString());
+
+            Clipboard.SetContent(package);
         }
     }
 }

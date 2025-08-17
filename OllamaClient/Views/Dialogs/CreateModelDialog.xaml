@@ -13,18 +13,13 @@
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition />
-            <RowDefinition />
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <TextBlock VerticalAlignment="Center" Margin="10,0,10,0">New model name:</TextBlock>
-            <TextBox x:Name="ModelNameTextBox" TextChanged="ModelNameTextBox_TextChanged" Template="{StaticResource DefaultInputTextBoxControlTemplate}"  />
-        </StackPanel>
-        <SelectorBar Grid.Row="1" x:Name="NavigationSelectorBar" SelectionChanged="NavigationSelectorBar_SelectionChanged">
+        <SelectorBar Grid.Row="0" x:Name="NavigationSelectorBar" SelectionChanged="NavigationSelectorBar_SelectionChanged">
             <SelectorBarItem x:Name="FromSelectorBarItem" Text="From" />
             <SelectorBarItem x:Name="TemplateSelectorBarItem" Text="Template" />
             <SelectorBarItem x:Name="ParametersSelectorBarItem" Text="Parameters" />
             <SelectorBarItem x:Name="SystemSelectorBarItem" Text="System" />
         </SelectorBar>
-        <Frame Grid.Row="2" x:Name="ContentFrame" IsNavigationStackEnabled="False" />
+        <Frame Grid.Row="1" x:Name="ContentFrame" IsNavigationStackEnabled="False" />
     </Grid>
 </Page>

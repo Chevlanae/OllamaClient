@@ -40,7 +40,7 @@
                     <MenuFlyout x:Name="AddButtonMenuFlyout" Placement="Bottom" />
                 </DropDownButton.Flyout>
             </DropDownButton>
-            <Button ToolTipService.ToolTip="Clear parameters">
+            <Button x:Name="ClearParametersButton" ToolTipService.ToolTip="Clear parameters" Click="ClearParametersButton_Click">
                 <FontIcon Glyph="&#xE894;" />
             </Button>
         </StackPanel>
