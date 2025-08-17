@@ -24,13 +24,10 @@ namespace OllamaClient.Views.Pages
             public Frame ContentFrame { get; set; } = contentFrame;
         }
 
-        private IDialogsService _DialogsService;
         private ConversationSidebarViewModel? _ConversationsSidebarViewModel { get; set; }
 
         public ConversationSidebarPage()
         {
-            _DialogsService = App.GetRequiredService<IDialogsService>();
-
             InitializeComponent();
         }
 
@@ -40,7 +37,7 @@ namespace OllamaClient.Views.Pages
             {
                 if(_ConversationsSidebarViewModel is null)
                 {
-                    _ConversationsSidebarViewModel = new(args.ContentFrame, XamlRoot, DispatcherQueue, _DialogsService, ConversationsListView);
+                    _ConversationsSidebarViewModel = new(args.ContentFrame, XamlRoot, DispatcherQueue, ConversationsListView);
                 }
                 ConversationsListView.ItemsSource = _ConversationsSidebarViewModel.ConversationViewModelCollection;
                 ConversationsListView.SelectedIndex = -1;

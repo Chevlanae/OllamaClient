@@ -1,18 +1,8 @@
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using OllamaClient.Json;
+using OllamaClient.ViewModels;
+using System.Collections.ObjectModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -24,19 +14,39 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class CreateModelDialog : Page
     {
+        public class DialogArgs
+        {
+            public ModelSidebarViewModel ViewModel { get; set; }
+            public InputResults Results { get; set; }
+        }
 
-        public string? SelectedModel { get; set; }
+        public class InputResults
+        {
+            public string? Name { get; set; }
+            public ModelViewModel? From { get; set; }
+            public string? Template { get; set; }
+            public ObservableCollection<ModelParameterViewModel>? Parameters { get; set; }
+            public string? System { get; set; }
+        }
 
+        public InputResults Results { get; set; } = new();
+
+        private DialogArgs Arguments { get; set; }
         private int _PreviousSelectedIndex { get; set; } = 0;
-        private ComboBox AvailableModelsComboBox { get; set; }
 
-        public CreateModelDialog(CreateModelContentDialog.DialogArgs args)
+        public CreateModelDialog(ModelSidebarViewModel viewModel)
         {
             InitializeComponent();
 
-            AvailableModelsComboBox = new();
-            AvailableModelsComboBox.ItemsSource = args.AvailableModels;
+            Arguments = new()
+            {
+                ViewModel = viewModel,
+                Results = Results
+            };
+
+            NavigationSelectorBar.SelectedItem = NavigationSelectorBar.Items[0];
         }
+
 
         private void NavigationSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
         {
@@ -49,20 +59,28 @@ namespace OllamaClient.Views.Dialogs
             switch (currentSelectedIndex)
             {
                 case 0:
-                    ContentFrame.Navigate(typeof(FromContentPage), AvailableModelsComboBox, transitionInfo);
+                    ContentFrame.Navigate(typeof(FromContentPage), Arguments, transitionInfo);
                     break;
                 case 1:
-                    ContentFrame.Navigate(typeof(TemplateContentPage), transitionInfo);
+                    ContentFrame.Navigate(typeof(TemplateContentPage), Arguments, transitionInfo);
                     break;
                 case 2:
-                    ContentFrame.Navigate(typeof(ParametersContentPage), transitionInfo);
+                    ContentFrame.Navigate(typeof(ParametersContentPage), Arguments, transitionInfo);
                     break;
                 case 3:
-                    ContentFrame.Navigate(typeof(SystemContentPage), transitionInfo);
+                    ContentFrame.Navigate(typeof(SystemContentPage), Arguments, transitionInfo);
                     break;
                 default:
-                    ContentFrame.Navigate(typeof(FromContentPage), AvailableModelsComboBox, transitionInfo);
+                    ContentFrame.Navigate(typeof(FromContentPage), Arguments, transitionInfo);
                     break;
+            }
+        }
+
+        private void ModelNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if(sender is TextBox modelNameTextBox)
+            {
+                Results.Name = modelNameTextBox.Text;
             }
         }
     }

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,9 +24,31 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class TemplateContentPage : Page
     {
+        private CreateModelDialog.InputResults Results { get; set; }
+
         public TemplateContentPage()
         {
             InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            if(e.Parameter is CreateModelDialog.DialogArgs args)
+            {
+                Results = args.Results;
+
+                InputTextBox.Text = Results.From?.Template;
+            }
+
+            base.OnNavigatedTo(e);
+        }
+
+        private void InputTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if(sender is TextBox inputTextBox)
+            {
+                Results.Template = inputTextBox.Text;
+            }
         }
     }
 }

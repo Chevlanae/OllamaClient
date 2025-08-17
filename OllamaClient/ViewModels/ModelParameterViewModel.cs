@@ -5,16 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace OllamaClient.ViewModels
 {
-    public class ModelParameterViewModel : IModelParameter, INotifyPropertyChanged
+    public class ModelParameterViewModel(ModelParameterKey key, string value) : IModelParameter, INotifyPropertyChanged
     {
-        private ModelParameterKey _Key { get; set; }
-        private string _Value { get; set; } = "";
+        private ModelParameterKey _Key { get; set; } = key;
+        private string _Value { get; set; } = value;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new(propertyName));
-
-        public ModelParameterKey[] KeyOptions => Enum.GetValues<ModelParameterKey>();
 
         public ModelParameterKey Key
         {

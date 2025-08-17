@@ -30,12 +30,12 @@ namespace OllamaClient.ViewModels
         public List<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
-        public ConversationSidebarViewModel(Frame contentFrame,XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, IDialogsService dialogsService, ListView conversationsListView)
+        public ConversationSidebarViewModel(Frame contentFrame,XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, ListView conversationsListView)
         {
             _ContentFrame = contentFrame;
             _XamlRoot = xamlRoot;
             _DispatcherQueue = dispatcherQueue;
-            _DialogsService = dialogsService;
+            _DialogsService = App.GetRequiredService<IDialogsService>();
             _ConversationsListView = conversationsListView;
 
             _ConversationCollection = (ConversationCollection)App.GetRequiredService<IConversationCollection>();
@@ -56,7 +56,7 @@ namespace OllamaClient.ViewModels
             ConversationViewModelCollection.Clear();
             foreach (Conversation conversation in _ConversationCollection.Items)
             {
-                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue, _DialogsService);
+                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue);
                 viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
                 ConversationViewModelCollection.Add(viewModel);
             }
@@ -121,7 +121,7 @@ namespace OllamaClient.ViewModels
         public void NewConversation()
         {
             IConversation conversation = App.GetRequiredService<IConversation>();
-            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue, _DialogsService);
+            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue);
             viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
             _ConversationCollection.Items.Add(conversation);
             ConversationViewModelCollection.Add(viewModel);

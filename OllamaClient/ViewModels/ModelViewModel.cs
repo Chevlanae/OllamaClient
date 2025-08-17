@@ -55,6 +55,11 @@ namespace OllamaClient.ViewModels
             get => _Model.Source?.Name;
         }
 
+        public string? Template
+        {
+            get => _Model.ModelFile?.Template;
+        }
+
         private void Model_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
         {
             ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);

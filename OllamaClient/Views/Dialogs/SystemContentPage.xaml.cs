@@ -23,9 +23,31 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class SystemContentPage : Page
     {
+        private CreateModelDialog.InputResults Results { get; set; }
+
         public SystemContentPage()
         {
             InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            if (e.Parameter is CreateModelDialog.DialogArgs args)
+            {
+                Results = args.Results;
+
+                InputTextBox.Text = Results.System;
+            }
+
+            base.OnNavigatedTo(e);
+        }
+
+        private void InputTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox inputTextBox)
+            {
+                Results.System = inputTextBox.Text;
+            }
         }
     }
 }

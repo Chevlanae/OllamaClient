@@ -39,15 +39,15 @@ namespace OllamaClient.ViewModels
 
         public SymbolIcon SendChatButtonIcon { get; set; } = new(Symbol.Send);
 
-        public ConversationViewModel(Conversation conversation, XamlRoot root, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
+        public ConversationViewModel(Conversation conversation, XamlRoot root, DispatcherQueue dispatcherQueue)
         {
             _Conversation = conversation;
             _XamlRoot = root;
             _DispatcherQueue = dispatcherQueue;
-            _DialogsService = dialogsService;
+            _DialogsService = App.GetRequiredService<IDialogsService>();
 
 
-            foreach(ChatMessage chatMessage in conversation.ChatMessageCollection)
+            foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
             {
                 _ChatMessageViewModelCollection.Add(new(chatMessage));
             }

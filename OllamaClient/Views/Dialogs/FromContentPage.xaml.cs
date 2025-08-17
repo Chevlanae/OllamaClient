@@ -5,8 +5,10 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -23,11 +25,38 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class FromContentPage : Page
     {
-        private 
+        private ModelSidebarViewModel SidebarViewModel { get; set; }
+        private CreateModelDialog.InputResults? Results { get; set; }
 
-        public FromContentPage(ComboBox availableModelsComboBox)
+        public FromContentPage()
         {
             InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            if(e.Parameter is CreateModelDialog.DialogArgs args)
+            {
+                SidebarViewModel = args.ViewModel;
+                Results = args.Results;
+
+                SelectedModelComboBox.ItemsSource = SidebarViewModel.ModelViewModelCollection;
+                SelectedModelComboBox.SelectedIndex = 1;
+            }
+
+            base.OnNavigatedTo(e);
+        }
+
+        private void SelectedModelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if  (
+                sender is ComboBox selectedItemComboBox && 
+                selectedItemComboBox.SelectedItem is ModelViewModel viewModel && 
+                Results is not null
+                )
+            {
+                Results.From = viewModel;
+            }
         }
     }
 }

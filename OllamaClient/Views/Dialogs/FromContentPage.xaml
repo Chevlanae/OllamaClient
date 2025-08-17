@@ -9,11 +9,23 @@
     mc:Ignorable="d">
 
     <Grid>
-        <RelativePanel HorizontalAlignment="Center">
-            <TextBlock x:Name="LabelTextBox" Margin="10,15,0,0" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        
+        <RelativePanel Grid.Column="1" HorizontalAlignment="Center">
+            <TextBlock x:Name="LabelTextBox" RelativePanel.AlignLeftWithPanel="True" Margin="10,15,0,0" >
                 Select a base model
             </TextBlock>
-            <ComboBox x:Name="SelectedModelComboBox" RelativePanel.RightOf="LabelTextBox" Margin="10" />
+            <ComboBox x:Name="SelectedModelComboBox" RelativePanel.RightOf="LabelTextBox" Margin="10" SelectionChanged="SelectedModelComboBox_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
         </RelativePanel>
     </Grid>
 </Page>

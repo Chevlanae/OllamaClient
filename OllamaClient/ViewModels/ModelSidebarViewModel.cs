@@ -14,22 +14,20 @@ namespace OllamaClient.ViewModels
     public class ModelSidebarViewModel
     {
         private IModelCollection _ModelCollection { get; set; }
+        private IDialogsService _DialogsService { get; set; }
         private ListView _ModelsListView { get; set; }
-        private Frame _ContentFrame { get; set; }
         private XamlRoot _XamlRoot { get; set; }
         private DispatcherQueue _DispatcherQueue { get; set; }
-        private IDialogsService _DialogsService { get; set; }
 
         public ObservableCollection<ModelViewModel> ModelViewModelCollection { get; set; } = [];
 
-        public ModelSidebarViewModel(ListView modelsListView, Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, IDialogsService dialogsService)
+        public ModelSidebarViewModel(ListView modelsListView, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue)
         {
             _ModelCollection = App.GetRequiredService<IModelCollection>();
+            _DialogsService = App.GetRequiredService<IDialogsService>();
             _ModelsListView = modelsListView;
-            _ContentFrame = contentFrame;
             _XamlRoot = xamlRoot;
             _DispatcherQueue = dispatcherQueue;
-            _DialogsService = dialogsService;
 
             _ModelCollection.UnhandledException += ModelCollection_UnhandledException;
             _ModelCollection.ModelDeleted += ModelCollection_ModelDeleted;
@@ -56,7 +54,7 @@ namespace OllamaClient.ViewModels
 
         private void ModelCollection_ModelDeleted(object? sender, EventArgs e)
         {
-            _ContentFrame.Navigate(typeof(BlankPage));
+            _ModelsListView.SelectedIndex = 1;
         }
 
         private void CreateModelDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs e)
@@ -65,6 +63,14 @@ namespace OllamaClient.ViewModels
             {
                 if (e.Result == ContentDialogResult.Primary && dialog.Content is CreateModelDialog content)
                 {
+                    if (content.Results.Name is not null && content.Results.From is not null)
+                    {
+                        _DispatcherQueue.TryEnqueue(async () =>
+                        {
+                            await _ModelCollection.CreateModel(content.Results.Name, content.Results.From.Name, content.Results.System, content.Results.Template, parameters: content.Results.Parameters);
+
+                        });
+                    }
                     
                 }
 
@@ -101,10 +107,7 @@ namespace OllamaClient.ViewModels
 
         public void ShowCreateModelDialog()
         {
-            CreateModelContentDialog dialog = new(_XamlRoot, new CreateModelContentDialog.DialogArgs
-            {
-                AvailableModels = _ModelCollection.Items.Select(i => i.Source?.Name ?? "").ToArray()
-            });
+            CreateModelContentDialog dialog = new(_XamlRoot, this);
 
             dialog.Closed += CreateModelDialog_Closed;
 

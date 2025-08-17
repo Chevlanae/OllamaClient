@@ -20,6 +20,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Dialogs\NewFolder1\**" />
+    <Compile Remove="Views\Dialogs\NewFolder\**" />
+    <Content Remove="Views\Dialogs\NewFolder1\**" />
+    <Content Remove="Views\Dialogs\NewFolder\**" />
+    <EmbeddedResource Remove="Views\Dialogs\NewFolder1\**" />
+    <EmbeddedResource Remove="Views\Dialogs\NewFolder\**" />
+    <None Remove="Views\Dialogs\NewFolder1\**" />
+    <None Remove="Views\Dialogs\NewFolder\**" />
+    <Page Remove="Views\Dialogs\NewFolder1\**" />
+    <Page Remove="Views\Dialogs\NewFolder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Views\Dialogs\CreateModelDialog.xaml" />
     <None Remove="Views\Dialogs\FromContentPage.xaml" />
     <None Remove="Views\Dialogs\ParametersContentPage.xaml" />
@@ -98,10 +111,6 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Views\Dialogs\NewFolder1\" />
-    <Folder Include="Views\Dialogs\NewFolder\" />
-  </ItemGroup>
 
 
   <!--
@@ -142,4 +151,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DebugType>portable</DebugType>
   </PropertyGroup>
+  <ItemGroup>
+    <PRIResource Remove="Views\Dialogs\NewFolder1\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Remove="Views\Dialogs\NewFolder\**" />
+  </ItemGroup>
 </Project>

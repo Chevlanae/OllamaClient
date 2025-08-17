@@ -24,12 +24,9 @@ namespace OllamaClient.Views.Pages
 
         private Frame? _ContentFrame { get; set; }
         private ModelSidebarViewModel? _SidebarViewModel { get; set; }
-        private IDialogsService _DialogsService { get; set; }
 
         public ModelSidebarPage()
         {
-            _DialogsService = App.GetRequiredService<IDialogsService>();
-
             InitializeComponent();
 
             Loaded += ModelSidebarPage_Loaded;
@@ -85,9 +82,9 @@ namespace OllamaClient.Views.Pages
 
         private void SetViewModel()
         {
-            if (_SidebarViewModel is null && _ContentFrame is not null && XamlRoot is not null)
+            if (_SidebarViewModel is null && XamlRoot is not null)
             {
-                _SidebarViewModel = new(ModelsListView, _ContentFrame, XamlRoot, DispatcherQueue, _DialogsService);
+                _SidebarViewModel = new(ModelsListView, XamlRoot, DispatcherQueue);
                 ModelsListView.ItemsSource = _SidebarViewModel.ModelViewModelCollection;
 
                 _SidebarViewModel.Refresh();
