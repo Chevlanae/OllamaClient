@@ -1,7 +1,6 @@
 ﻿using OllamaClient.DataContracts;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace OllamaClient.Models
 {

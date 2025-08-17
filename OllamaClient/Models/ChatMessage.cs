@@ -1,7 +1,6 @@
 ﻿using OllamaClient.DataContracts;
 using OllamaClient.Json;
 using System;
-using System.Runtime.Serialization;
 
 namespace OllamaClient.Models
 {
@@ -29,7 +28,7 @@ namespace OllamaClient.Models
 
         public ChatMessageContract ToSerializable()
         {
-            return new ()
+            return new()
             {
                 Role = Role,
                 Content = Content,

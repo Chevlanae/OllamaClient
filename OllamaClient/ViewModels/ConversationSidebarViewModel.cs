@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.UI.Dispatching;
+﻿using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using OllamaClient.Json;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
@@ -10,10 +8,6 @@ using OllamaClient.Views.Pages;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
 {
@@ -30,7 +24,7 @@ namespace OllamaClient.ViewModels
         public List<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
-        public ConversationSidebarViewModel(Frame contentFrame,XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, ListView conversationsListView)
+        public ConversationSidebarViewModel(Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, ListView conversationsListView)
         {
             _ContentFrame = contentFrame;
             _XamlRoot = xamlRoot;

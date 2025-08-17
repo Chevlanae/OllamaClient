@@ -2,13 +2,10 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Json;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
 using System;
-using System.ComponentModel;
 using System.Text;
 
 namespace OllamaClient.ViewModels
@@ -118,7 +115,7 @@ namespace OllamaClient.ViewModels
 
             dialog.Closed += (s, args) =>
             {
-                if (args.Result == ContentDialogResult.Primary &&  _Model?.Source is not null)
+                if (args.Result == ContentDialogResult.Primary && _Model?.Source is not null)
                 {
                     _DispatcherQueue.TryEnqueue(async () => { await _ModelCollection.DeleteModel(_Model.Source.Model); });
                 }

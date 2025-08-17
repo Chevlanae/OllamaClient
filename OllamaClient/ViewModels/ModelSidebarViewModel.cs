@@ -4,10 +4,8 @@ using Microsoft.UI.Xaml.Controls;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
-using OllamaClient.Views.Pages;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace OllamaClient.ViewModels
 {
@@ -30,10 +28,7 @@ namespace OllamaClient.ViewModels
             _DispatcherQueue = dispatcherQueue;
 
             _ModelCollection.UnhandledException += ModelCollection_UnhandledException;
-            _ModelCollection.ModelDeleted += ModelCollection_ModelDeleted;
             _ModelCollection.ModelsLoaded += ModelCollection_ModelsLoaded;
-
-            _ModelsListView.SelectedIndex = -1;
         }
 
         private void ModelCollection_ModelsLoaded(object? sender, EventArgs e)
@@ -52,14 +47,9 @@ namespace OllamaClient.ViewModels
             _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
         }
 
-        private void ModelCollection_ModelDeleted(object? sender, EventArgs e)
-        {
-            _ModelsListView.SelectedIndex = 1;
-        }
-
         private void CreateModelDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs e)
         {
-            if(sender is CreateModelContentDialog dialog)
+            if (sender is CreateModelContentDialog dialog)
             {
                 if (e.Result == ContentDialogResult.Primary && dialog.Content is CreateModelDialog content)
                 {
@@ -71,7 +61,7 @@ namespace OllamaClient.ViewModels
 
                         });
                     }
-                    
+
                 }
 
                 dialog.Closed -= CreateModelDialog_Closed;

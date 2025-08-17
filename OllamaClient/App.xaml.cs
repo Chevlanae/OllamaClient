@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using OllamaClient.Models;
 using OllamaClient.Services;
-using OllamaClient.ViewModels;
 using Serilog;
 using Serilog.Events;
 using System;

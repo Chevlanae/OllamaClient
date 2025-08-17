@@ -1,15 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using OllamaClient.DataContracts;
 using OllamaClient.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using OllamaClient.DataContracts;
 
 namespace OllamaClient.Models
 {

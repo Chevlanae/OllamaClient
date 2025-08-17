@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.UI.Dispatching;
+﻿using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using OllamaClient.Json;
@@ -8,13 +6,9 @@ using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OllamaClient.ViewModels
@@ -158,7 +152,7 @@ namespace OllamaClient.ViewModels
             {
                 await _Conversation.GenerateSubject(prompt, _SubjectProgress);
             });
-            
+
         }
 
         public void SendUserChatMessage(string prompt)

@@ -3,15 +3,11 @@ using Microsoft.Extensions.Options;
 using OllamaClient.DataContracts;
 using OllamaClient.Json;
 using OllamaClient.Services;
-using OllamaClient.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.JavaScript;
-using System.Runtime.Serialization;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,8 +36,8 @@ namespace OllamaClient.Models
                 public ChatRequest Request { get; set; }
             }
 
-            public class EndOfChatRequest : System.EventArgs 
-            { 
+            public class EndOfChatRequest : System.EventArgs
+            {
             }
         }
 
@@ -89,7 +85,7 @@ namespace OllamaClient.Models
 
         public ConversationContract ToSerializable()
         {
-            return new ()
+            return new()
             {
                 ChatMessageCollection = ChatMessageCollection.Select(c => c.ToSerializable()).ToList(),
                 Subject = Subject,

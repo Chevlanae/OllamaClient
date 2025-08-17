@@ -1,11 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Models;
-using OllamaClient.Services;
 using OllamaClient.ViewModels;
-using OllamaClient.Views.Dialogs;
-using System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -34,12 +30,12 @@ namespace OllamaClient.Views.Pages
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if(e.Parameter is NavArgs args)
+            if (e.Parameter is NavArgs args)
             {
                 _ContentFrame = args.ContentFrame;
             }
 
-            if(_SidebarViewModel is null)
+            if (_SidebarViewModel is null)
             {
                 SetViewModel();
             }

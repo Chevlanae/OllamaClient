@@ -23,7 +23,7 @@
                             <ColumnDefinition Width="100" />
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Key}" HorizontalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{Binding Key}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <TextBox Grid.Column="1" 
                                  x:Name="ParameterInputTextBox" 
                                  Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 

@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
-using OllamaClient.Json;
 using OllamaClient.ViewModels;
 using System.Collections.ObjectModel;
 
@@ -78,7 +77,7 @@ namespace OllamaClient.Views.Dialogs
 
         private void ModelNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if(sender is TextBox modelNameTextBox)
+            if (sender is TextBox modelNameTextBox)
             {
                 Results.Name = modelNameTextBox.Text;
             }
