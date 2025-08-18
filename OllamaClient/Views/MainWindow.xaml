@@ -35,16 +35,52 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <RelativePanel Grid.Column="0" Background="{ThemeResource SolidBackgroundFillColorBaseAlt}">
-                    <Button x:Name="ToggleSidebarButton" RelativePanel.AlignTopWithPanel="True" Style="{StaticResource NavBarButtonStyle}" Click="ToggleSidebarButton_Click">
+                    <Button 
+                        x:Name="ToggleSidebarButton" 
+                        RelativePanel.AlignTopWithPanel="True" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="ToggleSidebarButton_Click"
+                        ToolTipService.ToolTip="Minimize/Maximize Sidebar">
                         <FontIcon Glyph="&#xE700;" />
                     </Button>
-                    <Button x:Name="ConversationsButton" RelativePanel.Below="ToggleSidebarButton" Style="{StaticResource NavBarButtonStyle}" Click="ConversationsButton_Click">
+                    <Button 
+                        x:Name="ConversationsButton" 
+                        RelativePanel.Below="ToggleSidebarButton" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="ConversationsButton_Click"
+                        ToolTipService.ToolTip="Conversations">
                         <FontIcon Glyph="&#xE8F2;" />
                     </Button>
-                    <Button x:Name="ModelsButton" RelativePanel.Below="ConversationsButton" Style="{StaticResource NavBarButtonStyle}" Click="ModelsButton_Click">
+                    <Button 
+                        x:Name="ModelsButton" 
+                        RelativePanel.Below="ConversationsButton" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="ModelsButton_Click"
+                        ToolTipService.ToolTip="Models">
                         <FontIcon Glyph="&#xE8F1;" />
                     </Button>
-                    <Button x:Name="LogsButton" RelativePanel.AlignBottomWithPanel="True" Style="{StaticResource NavBarButtonStyle}" Click="LogsButton_Click">
+                    <Button 
+                        x:Name="ToolsButton" 
+                        RelativePanel.Below="ModelsButton" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="ToolsButton_Click"
+                        ToolTipService.ToolTip="Tools">
+                        <FontIcon Glyph="&#xEC7A;" />
+                    </Button>
+                    <Button 
+                        x:Name="SettingsButton" 
+                        RelativePanel.Below="ToolsButton" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="ToolsButton_Click"
+                        ToolTipService.ToolTip="Settings">
+                        <FontIcon Glyph="&#xE713;" />
+                    </Button>
+                    <Button 
+                        x:Name="LogsButton" 
+                        RelativePanel.AlignBottomWithPanel="True" 
+                        Style="{StaticResource NavBarButtonStyle}" 
+                        Click="LogsButton_Click"
+                        ToolTipService.ToolTip="Logs">
                         <FontIcon Glyph="&#xEA37;" />
                     </Button>
                     <Popup 

@@ -80,12 +80,12 @@ namespace OllamaClient.Models
                 Capabilities = response.capabilities;
                 Tensors = response.tensors;
                 LastUpdated = DateTime.Now;
-                _Logger.LogInformation("Loaded model info for '{SourceModel}'", Source?.Model);
+                _Logger.LogInformation("Loaded model info for {SourceModel}", Source?.Model);
                 OnDetailsLoaded(EventArgs.Empty);
             }
             catch (Exception e)
             {
-                _Logger.LogError(e, "Failed to load model info for '{SourceModel}'", Source?.Model);
+                _Logger.LogError(e, "Failed to load model info for {SourceModel}", Source?.Model);
                 OnUnhandledException(new(e, false));
                 OnDetailsFailed(EventArgs.Empty);
             }

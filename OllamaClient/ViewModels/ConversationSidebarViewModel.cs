@@ -45,6 +45,11 @@ namespace OllamaClient.ViewModels
 
         }
 
+        public event EventHandler? ConversationsLoaded;
+        public event EventHandler? ModelsLoaded;
+        protected void OnConversationsLoaded(EventArgs e) => ConversationsLoaded?.Invoke(this, e);
+        protected void OnModelsLoaded(EventArgs e) => ModelsLoaded?.Invoke(this, e);
+
         private void ConversationCollection_ConversationsLoaded(object? sender, EventArgs e)
         {
             ConversationViewModelCollection.Clear();
@@ -56,6 +61,7 @@ namespace OllamaClient.ViewModels
             }
 
             if (ConversationViewModelCollection.Count == 0) _ContentFrame.Navigate(typeof(BlankPage));
+            OnConversationsLoaded(EventArgs.Empty);
         }
 
         private void ConversationViewModel_MessageRecieved(object? sender, EventArgs e)
@@ -79,6 +85,7 @@ namespace OllamaClient.ViewModels
 
                 _ContentFrame.Navigate(typeof(ConversationPage), args);
             }
+            OnModelsLoaded(EventArgs.Empty);
         }
 
         private void ConversationCollection_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)

@@ -11,17 +11,22 @@ namespace OllamaClient.ViewModels
     public class SerilogObserverViewModel : IObserver<LogEvent>
     {
         private DispatcherQueue _DispatcherQueue { get; set; }
+        private MemoryStream _TextStream { get; set; }
+        private TextWriter _TextWriter { get; set; }
 
         public ObservableCollection<string> Logs { get; set; } = [];
 
         public SerilogObserverViewModel(DispatcherQueue dispatcherQueue)
         {
             _DispatcherQueue = dispatcherQueue;
+            _TextStream = new();
+            _TextWriter = new StreamWriter(_TextStream);
         }
 
         public void OnCompleted()
         {
-
+            _TextStream.Dispose();
+            _TextWriter.Dispose();
         }
 
         public void OnError(Exception e)
@@ -36,14 +41,14 @@ namespace OllamaClient.ViewModels
 
         private string RenderMessage(LogEvent logEvent)
         {
-            using MemoryStream stream = new();
-            using TextWriter writer = new StreamWriter(stream);
+            _TextStream.Position = 0;
+            _TextStream.SetLength(0);
 
-            logEvent.RenderMessage(writer);
+            logEvent.RenderMessage(_TextWriter);
 
-            writer.Flush();
+            _TextWriter.Flush();
 
-            string render = Encoding.UTF8.GetString(stream.ToArray());
+            string render = Encoding.UTF8.GetString(_TextStream.ToArray());
 
             return $"{logEvent.Timestamp.ToLocalTime().ToString("HH:mm:ss")} [{logEvent.Level}] {render}\u00A0";
         }

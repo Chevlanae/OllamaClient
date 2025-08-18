@@ -31,6 +31,9 @@ namespace OllamaClient.ViewModels
             _ModelCollection.ModelsLoaded += ModelCollection_ModelsLoaded;
         }
 
+        public event EventHandler? ModelsLoaded;
+        protected void OnModelsLoaded(EventArgs e) => ModelsLoaded?.Invoke(this, e);
+
         private void ModelCollection_ModelsLoaded(object? sender, EventArgs e)
         {
             ModelViewModelCollection.Clear();
@@ -38,6 +41,7 @@ namespace OllamaClient.ViewModels
             {
                 ModelViewModelCollection.Add(new(item, _ModelCollection, _XamlRoot, _DispatcherQueue, _DialogsService));
             }
+            OnModelsLoaded(EventArgs.Empty);
         }
 
         private void ModelCollection_UnhandledException(object? sender, System.UnhandledExceptionEventArgs e)

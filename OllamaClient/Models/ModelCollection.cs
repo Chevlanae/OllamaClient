@@ -125,7 +125,7 @@ namespace OllamaClient.Models
 
             IProgress<StatusResponse> progress = new Progress<StatusResponse>((s) =>
             {
-                _Logger.LogInformation("Creating '{Name}' - {Status}", name, s.status);
+                _Logger.LogInformation("Creating {Name} - {Status}", name, s.status);
             });
 
             try
@@ -141,7 +141,7 @@ namespace OllamaClient.Models
             }
             catch (Exception e)
             {
-                _Logger.LogError(e, "Failed to create model '{Name}'", name);
+                _Logger.LogError(e, "Failed to create model {Name}", name);
                 OnUnhandledException(new(e, false));
                 OnModelCreateFailed(EventArgs.Empty);
             }
@@ -157,18 +157,18 @@ namespace OllamaClient.Models
             {
                 if (await Task.Run(async () => { return await _Api.DeleteModel(new() { model = modelName }); }))
                 {
-                    _Logger.LogInformation("Model '{ModelName}' deleted successfully", modelName);
+                    _Logger.LogInformation("Model {ModelName} deleted successfully", modelName);
                     OnModelDeleted(EventArgs.Empty);
                 }
                 else
                 {
-                    _Logger.LogInformation("Failed to delete model '{ModelName}'", modelName);
+                    _Logger.LogInformation("Failed to delete model {ModelName}", modelName);
                     OnModelDeleteFailed(EventArgs.Empty);
                 }
             }
             catch (Exception e)
             {
-                _Logger.LogError(e, "Failed to delete model '{ModelName}'", modelName);
+                _Logger.LogError(e, "Failed to delete model {ModelName}", modelName);
                 OnUnhandledException(new(e, false));
                 OnModelDeleteFailed(EventArgs.Empty);
             }
@@ -184,18 +184,18 @@ namespace OllamaClient.Models
             {
                 if (await Task.Run(async () => { return await _Api.CopyModel(new() { source = modelName, destination = newModelName }); }))
                 {
-                    _Logger.LogInformation("Model '{ModelName}' copied to '{NewModelName}' successfully", modelName, newModelName);
+                    _Logger.LogInformation("Model '{ModelName}' copied to {NewModelName} successfully", modelName, newModelName);
                     OnModelCopied(EventArgs.Empty);
                 }
                 else
                 {
-                    _Logger.LogInformation("Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
+                    _Logger.LogInformation("Failed to copy model {ModelName} to {NewModelName}", modelName, newModelName);
                     OnModelCopyFailed(EventArgs.Empty);
                 }
             }
             catch (Exception e)
             {
-                _Logger.LogError(e, "Failed to copy model '{ModelName}' to '{NewModelName}'", modelName, newModelName);
+                _Logger.LogError(e, "Failed to copy model {ModelName} to {NewModelName}", modelName, newModelName);
                 OnUnhandledException(new(e, false));
                 OnModelCopyFailed(EventArgs.Empty);
             }
@@ -213,11 +213,11 @@ namespace OllamaClient.Models
                 {
                     if (s.total is null)
                     {
-                        _Logger.LogInformation("Pulling '{ModelName}' - {Status}", modelName, s.status);
+                        _Logger.LogInformation("Pulling {ModelName} - {Status}", modelName, s.status);
                     }
                     else
                     {
-                        _Logger.LogInformation("Pulling '{ModelName}' - {Status} - {Completed}/{Total} bytes downloaded ", modelName, s.status, s.completed ?? 0, s.total);
+                        _Logger.LogInformation("Pulling {ModelName} - {Status} - {Completed}/{Total} bytes downloaded ", modelName, s.status, s.completed ?? 0, s.total);
                     }
                 });
 
@@ -232,7 +232,7 @@ namespace OllamaClient.Models
             }
             catch (Exception e)
             {
-                _Logger.LogError(e, "Failed to pull model '{ModelName}'", modelName);
+                _Logger.LogError(e, "Failed to pull model {ModelName}", modelName);
                 OnUnhandledException(new(e, false));
                 OnModelPullFailed(EventArgs.Empty);
             }

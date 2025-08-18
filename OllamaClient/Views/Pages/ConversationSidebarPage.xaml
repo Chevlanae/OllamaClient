@@ -11,43 +11,52 @@
     NavigationCacheMode="Required">
 
     <Grid>
-        <ListView x:Name="ConversationsListView" SelectionChanged="ConversationsListView_SelectionChanged" SelectionMode="Single">
-            <ListView.Header>
-                <Grid Height="50">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="80" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="30,0,0,0" FontSize="20">
-                        <Bold>
-                            <Underline>
-                                Conversations
-                            </Underline>
-                        </Bold>
-                    </TextBlock>
-                    <Button Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Background="Transparent" BorderBrush="Transparent">
-                        <Button.Flyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Text="New" Click="AddConversationButton_Click" />
-                                <MenuFlyoutItem Text="Refresh" Click="RefreshConversationsButton_Click" />
-                            </MenuFlyout>
-                        </Button.Flyout>
-                        <FontIcon Glyph="&#xE712;" />
-                    </Button>
-                </Grid>
-            </ListView.Header>
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
+        <RelativePanel>
+            <ListView x:Name="ConversationsListView" SelectionChanged="ConversationsListView_SelectionChanged" SelectionMode="Single">
+                <ListView.Header>
+                    <Grid Height="50">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding Subject}" Grid.Column="0" VerticalAlignment="Center"/>
-                        <AppBarButton Icon="Delete" Grid.Column="1" Height="50" Width="50" Click="DeleteConversationButton_Click" />
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="30,0,0,0" FontSize="20">
+                            <Bold>
+                                <Underline>
+                                    Conversations
+                                </Underline>
+                            </Bold>
+                        </TextBlock>
+                        <Button Grid.Column="1" Margin="10,5,0,0" Height="50" Width="50" Background="Transparent" BorderBrush="Transparent">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="New" Click="AddConversationButton_Click" />
+                                    <MenuFlyoutItem Text="Refresh" Click="RefreshConversationsButton_Click" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <FontIcon Glyph="&#xE712;" />
+                        </Button>
                     </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                </ListView.Header>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <TextBlock Text="{Binding Subject}" VerticalAlignment="Center">
+                                <TextBlock.ContextFlyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem Text="Delete" Click="DeleteConversationButton_Click" />
+                                    </MenuFlyout>
+                                </TextBlock.ContextFlyout>
+                            </TextBlock>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <ProgressRing 
+                x:Name="SidebarProgressRing" 
+                IsActive="False"
+                RelativePanel.AlignHorizontalCenterWithPanel="True" 
+                RelativePanel.AlignVerticalCenterWithPanel="True"
+                Visibility="Collapsed"/>
+        </RelativePanel>
     </Grid>
 </Page>

@@ -40,8 +40,6 @@ namespace OllamaClient.Views.Pages
                 SetViewModel();
             }
 
-            _SidebarViewModel?.Refresh();
-
             ModelsListView.SelectedIndex = -1;
 
             base.OnNavigatedTo(e);
@@ -82,9 +80,20 @@ namespace OllamaClient.Views.Pages
             {
                 _SidebarViewModel = new(ModelsListView, XamlRoot, DispatcherQueue);
                 ModelsListView.ItemsSource = _SidebarViewModel.ModelViewModelCollection;
+                _SidebarViewModel.ModelsLoaded += _SidebarViewModel_ModelsLoaded;
+                SidebarProgressRing.Visibility = Visibility.Visible;
+                SidebarProgressRing.IsActive = true;
+                ModelsListView.Visibility = Visibility.Collapsed;
 
                 _SidebarViewModel.Refresh();
             }
+        }
+
+        private void _SidebarViewModel_ModelsLoaded(object? sender, System.EventArgs e)
+        {
+            SidebarProgressRing.Visibility = Visibility.Collapsed;
+            SidebarProgressRing.IsActive = false;
+            ModelsListView.Visibility = Visibility.Visible;
         }
     }
 }

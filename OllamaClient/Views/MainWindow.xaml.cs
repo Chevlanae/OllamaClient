@@ -100,15 +100,23 @@ namespace OllamaClient
         private void CopyKeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
         {
             StringBuilder builder = new();
-            foreach(char item in LogsItemsView.SelectedItems)
+            foreach(var item in LogsItemsView.SelectedItems)
             {
-                if(item == '\u00A0')
+                switch (item)
                 {
-                    builder.Append("\n");
-                }
-                else
-                {
-                    builder.Append(item);
+                    case char character:
+                        if (character == '\u00A0')
+                        {
+                            builder.Append("\n");
+                        }
+                        else
+                        {
+                            builder.Append(character);
+                        }
+                        break;
+                    case string stringObj:
+                        builder.Append(stringObj);
+                        break;
                 }
             }
             DataPackage package = new()
@@ -119,6 +127,11 @@ namespace OllamaClient
             package.SetText(builder.ToString());
 
             Clipboard.SetContent(package);
+        }
+
+        private void ToolsButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
