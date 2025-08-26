@@ -11,7 +11,7 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class SystemContentPage : Page
     {
-        private CreateModelDialog.InputResults Results { get; set; }
+        private CreateModelDialog.InputResults? Results { get; set; }
 
         public SystemContentPage()
         {
@@ -24,7 +24,7 @@ namespace OllamaClient.Views.Dialogs
             {
                 Results = args.Results;
 
-                InputTextBox.Text = Results.System;
+                InputTextBox.Text = Results?.System;
             }
 
             base.OnNavigatedTo(e);
@@ -32,7 +32,7 @@ namespace OllamaClient.Views.Dialogs
 
         private void InputTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (sender is TextBox inputTextBox)
+            if (sender is TextBox inputTextBox && Results is not null)
             {
                 Results.System = inputTextBox.Text;
             }

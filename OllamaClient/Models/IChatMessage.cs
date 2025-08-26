@@ -1,5 +1,5 @@
-﻿using OllamaClient.DataContracts;
-using OllamaClient.Json;
+﻿using OllamaClient.Services.DataContracts;
+using OllamaClient.Services.Json;
 using System;
 
 namespace OllamaClient.Models

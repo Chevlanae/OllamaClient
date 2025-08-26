@@ -1,7 +1,7 @@
 ﻿using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using OllamaClient.Json;
+using OllamaClient.Services.Json;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
@@ -148,10 +148,7 @@ namespace OllamaClient.ViewModels
         {
             Subject = "";
 
-            _DispatcherQueue.TryEnqueue(async () =>
-            {
-                await _Conversation.GenerateSubject(prompt, _SubjectProgress);
-            });
+            _DispatcherQueue.TryEnqueue(async () => await _Conversation.GenerateSubject(prompt, _SubjectProgress));
 
         }
 
@@ -164,18 +161,15 @@ namespace OllamaClient.ViewModels
             ChatMessageViewModel assistantChatMessage = new(messages.Item2, true);
             _ChatMessageViewModelCollection.Add(assistantChatMessage);
 
-            _DispatcherQueue.TryEnqueue(async () =>
-            {
-                await RecieveChatMessage(assistantChatMessage);
-            });
+            _DispatcherQueue.TryEnqueue(async () => await SendChatMessage(assistantChatMessage));
         }
 
-        public async Task RecieveChatMessage(ChatMessageViewModel assistantChatMessage)
+        public async Task SendChatMessage(ChatMessageViewModel chatMessage)
         {
-            _ChatProgress = new Progress<ChatResponse>(r => assistantChatMessage.Content += r.message?.content ?? "");
+            _ChatProgress = new Progress<ChatResponse>(r => chatMessage.Content += r.message?.content ?? "");
             await _Conversation.SendChatRequest(_ChatProgress);
-            assistantChatMessage.Timestamp = DateTime.Now;
-            assistantChatMessage.ProgressRingEnabled = false;
+            chatMessage.Timestamp = DateTime.Now;
+            chatMessage.ProgressRingEnabled = false;
             OnMessageRecieved(EventArgs.Empty);
         }
     }

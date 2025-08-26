@@ -12,7 +12,7 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class FromContentPage : Page
     {
-        private ModelSidebarViewModel SidebarViewModel { get; set; }
+        private ModelSidebarViewModel? SidebarViewModel { get; set; }
         private CreateModelDialog.InputResults? Results { get; set; }
 
         public FromContentPage()
@@ -27,7 +27,7 @@ namespace OllamaClient.Views.Dialogs
                 SidebarViewModel = args.ViewModel;
                 Results = args.Results;
 
-                SelectedModelComboBox.ItemsSource = SidebarViewModel.ModelViewModelCollection;
+                SelectedModelComboBox.ItemsSource = SidebarViewModel?.ModelViewModelCollection;
                 SelectedModelComboBox.SelectedIndex = 1;
             }
 

@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using OllamaClient.Json;
+using OllamaClient.Services.Json;
 using System;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -14,7 +14,7 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class ParametersContentPage : Page
     {
-        private CreateModelDialog.InputResults Results { get; set; }
+        private CreateModelDialog.InputResults? Results { get; set; }
 
         public ParametersContentPage()
         {
@@ -33,7 +33,7 @@ namespace OllamaClient.Views.Dialogs
         {
             if (sender is MenuFlyoutItem item && Enum.TryParse(item.Text, out ModelParameterKey key))
             {
-                Results.Parameters?.Add(new(key, ""));
+                Results?.Parameters?.Add(new(key, ""));
             }
         }
 
@@ -43,12 +43,12 @@ namespace OllamaClient.Views.Dialogs
             {
                 Results = args.Results;
 
-                if (Results.Parameters is null)
+                if (Results is not null && Results.Parameters is null)
                 {
                     Results.Parameters = new();
                 }
 
-                ParametersListView.ItemsSource = Results.Parameters;
+                ParametersListView.ItemsSource = Results?.Parameters;
             }
 
             base.OnNavigatedTo(e);
@@ -56,7 +56,7 @@ namespace OllamaClient.Views.Dialogs
 
         private void ClearParametersButton_Click(object sender, RoutedEventArgs e)
         {
-            Results.Parameters?.Clear();
+            Results?.Parameters?.Clear();
         }
     }
 }

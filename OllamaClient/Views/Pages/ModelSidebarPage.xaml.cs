@@ -55,7 +55,7 @@ namespace OllamaClient.Views.Pages
         {
             if (ModelsListView.SelectedItem is ModelViewModel item && _SidebarViewModel is not null)
             {
-                _ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(item, _SidebarViewModel));
+                _ContentFrame?.Navigate(typeof(ModelItemPage), new ModelItemPage.NavArgs(item));
             }
         }
 
@@ -78,7 +78,7 @@ namespace OllamaClient.Views.Pages
         {
             if (_SidebarViewModel is null && XamlRoot is not null)
             {
-                _SidebarViewModel = new(ModelsListView, XamlRoot, DispatcherQueue);
+                _SidebarViewModel = new(XamlRoot, DispatcherQueue);
                 ModelsListView.ItemsSource = _SidebarViewModel.ModelViewModelCollection;
                 _SidebarViewModel.ModelsLoaded += _SidebarViewModel_ModelsLoaded;
                 SidebarProgressRing.Visibility = Visibility.Visible;

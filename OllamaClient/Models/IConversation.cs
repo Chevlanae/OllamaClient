@@ -1,4 +1,4 @@
-﻿using OllamaClient.DataContracts;
+﻿using OllamaClient.Services.DataContracts;
 using System.Collections.Generic;
 
 namespace OllamaClient.Models

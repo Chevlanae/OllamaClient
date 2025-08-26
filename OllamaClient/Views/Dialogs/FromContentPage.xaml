@@ -15,7 +15,6 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-
         <StackPanel Grid.Column="1" Orientation="Horizontal">
             <TextBlock VerticalAlignment="Center" Margin="10,0,10,0">New name:</TextBlock>
             <TextBox x:Name="ModelNameTextBox" TextChanged="ModelNameTextBox_TextChanged" MaxWidth="160" MaxHeight="20" Template="{StaticResource DefaultInputTextBoxControlTemplate}"  />

@@ -40,7 +40,13 @@ namespace OllamaClient.ViewModels
 
             if (ConversationViewModelCollection.Count == 0)
             {
-                _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadConversations(); });
+                _DispatcherQueue.TryEnqueue(async () => 
+                {
+                    if(!await _ConversationCollection.LoadConversations())
+                    {
+                        OnConversationsLoaded(EventArgs.Empty);
+                    }
+                });
             }
 
         }

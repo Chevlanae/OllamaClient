@@ -1,12 +1,9 @@
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Pages;
 using System;
 using System.Text;
-using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.System;
@@ -67,6 +64,18 @@ namespace OllamaClient
             if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
         }
 
+        private void ToolsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SidebarFrame.CurrentSourcePageType != typeof(ToolsSidebarPage))
+            {
+                ToolsSidebarPage.NavArgs args = new(ContentFrame);
+
+                SidebarFrame.Navigate(typeof(ToolsSidebarPage), args);
+            }
+
+            if (!TopLevelSplitView.IsPaneOpen) ToggleSidebar();
+        }
+
         private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
         {
             ToggleSidebar();
@@ -100,7 +109,7 @@ namespace OllamaClient
         private void CopyKeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
         {
             StringBuilder builder = new();
-            foreach(var item in LogsItemsView.SelectedItems)
+            foreach (var item in LogsItemsView.SelectedItems)
             {
                 switch (item)
                 {
@@ -127,11 +136,6 @@ namespace OllamaClient
             package.SetText(builder.ToString());
 
             Clipboard.SetContent(package);
-        }
-
-        private void ToolsButton_Click(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }

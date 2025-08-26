@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OllamaClient.DataContracts;
-using OllamaClient.Json;
+using OllamaClient.Services.DataContracts;
+using OllamaClient.Services.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.Generic;
@@ -57,7 +57,6 @@ namespace OllamaClient.Models
             _Api = api;
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<EventArgs.StartOfCompletionRequest>? StartOfCompletionRequest;
         public event EventHandler<EventArgs.EndOfCompletionRequest>? EndOfCompletionRequest;
         public event EventHandler<EventArgs.StartOfChatRequest>? StartOfChatRequest;
@@ -69,7 +68,6 @@ namespace OllamaClient.Models
         protected void OnStartOfChatRequest(EventArgs.StartOfChatRequest e) => StartOfChatRequest?.Invoke(this, e);
         protected void OnEndOfChatRequest(EventArgs.EndOfChatRequest e) => EndOfChatRequest?.Invoke(this, e);
         protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
-        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
 
         public void CopyContract(ConversationContract contract)
         {

@@ -34,10 +34,13 @@
 
   <ItemGroup>
     <None Remove="Views\Dialogs\CreateModelDialog.xaml" />
+    <None Remove="Views\Dialogs\CreateNewToolDialog.xaml" />
     <None Remove="Views\Dialogs\FromContentPage.xaml" />
     <None Remove="Views\Dialogs\ParametersContentPage.xaml" />
     <None Remove="Views\Dialogs\SystemContentPage.xaml" />
     <None Remove="Views\Dialogs\TemplateContentPage.xaml" />
+    <None Remove="Views\Pages\ToolItemPage.xaml" />
+    <None Remove="Views\Pages\ToolsSidebarPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -72,11 +75,21 @@
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.Observable" Version="3.0.0" />
+    <PackageReference Include="WinUIEdit" Version="0.0.4-prerelease" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Dialogs\CreateNewToolDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Pages\ToolItemPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Pages\ToolsSidebarPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Dialogs\SystemContentPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -158,6 +171,7 @@
     <PRIResource Remove="Views\Dialogs\NewFolder\**" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Utils\" />
+    <ProjectReference Include="..\OllamaClient.JsEngine\OllamaClient.JsEngine.csproj" />
+    <ProjectReference Include="..\OllamaClient.Services\OllamaClient.Services.csproj" />
   </ItemGroup>
 </Project>

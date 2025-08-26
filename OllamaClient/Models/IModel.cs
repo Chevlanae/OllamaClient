@@ -1,4 +1,4 @@
-﻿using OllamaClient.Json;
+﻿using OllamaClient.Services.Json;
 using System;
 using System.Threading.Tasks;
 

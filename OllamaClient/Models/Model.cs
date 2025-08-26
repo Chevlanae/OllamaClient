@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OllamaClient.Json;
+using OllamaClient.Services.Json;
 using OllamaClient.Services;
 using OllamaClient.ViewModels;
 using System;

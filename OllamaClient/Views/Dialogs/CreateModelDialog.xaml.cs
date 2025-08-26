@@ -15,8 +15,8 @@ namespace OllamaClient.Views.Dialogs
     {
         public class DialogArgs
         {
-            public ModelSidebarViewModel ViewModel { get; set; }
-            public InputResults Results { get; set; }
+            public ModelSidebarViewModel? ViewModel { get; set; }
+            public InputResults? Results { get; set; }
         }
 
         public class InputResults

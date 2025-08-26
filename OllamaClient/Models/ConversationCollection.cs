@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using OllamaClient.DataContracts;
-using OllamaClient.Json;
+using OllamaClient.Services.DataContracts;
+using OllamaClient.Services.Json;
 using OllamaClient.Services;
 using System;
 using System.Collections.Generic;

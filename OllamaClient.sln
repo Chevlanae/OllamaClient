@@ -10,7 +10,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.Test", "OllamaClient.Test\OllamaClient.Test.csproj", "{A363684C-D048-4D4F-9135-FB0E7E39A463}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.JsEngine", "OllamaClient.JsEngine\OllamaClient.JsEngine.csproj", "{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.Services", "OllamaClient.Services\OllamaClient.Services.csproj", "{1058B081-C5D5-4329-89C0-139CE491E5AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,18 +42,30 @@ Global
 		{3DF95ACF-B45C-4F51-A7E9-89909306EC24}.Release|x86.ActiveCfg = Release|x86
 		{3DF95ACF-B45C-4F51-A7E9-89909306EC24}.Release|x86.Build.0 = Release|x86
 		{3DF95ACF-B45C-4F51-A7E9-89909306EC24}.Release|x86.Deploy.0 = Release|x86
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|x64.Build.0 = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Debug|x86.Build.0 = Debug|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|ARM64.Build.0 = Release|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|x64.ActiveCfg = Release|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|x64.Build.0 = Release|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|x86.ActiveCfg = Release|Any CPU
-		{A363684C-D048-4D4F-9135-FB0E7E39A463}.Release|x86.Build.0 = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|x64.Build.0 = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Debug|x86.Build.0 = Debug|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|ARM64.Build.0 = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|x64.ActiveCfg = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|x64.Build.0 = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|x86.ActiveCfg = Release|Any CPU
+		{C7FC9CB1-D845-4362-84D5-4BCC0E5C1367}.Release|x86.Build.0 = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|x64.Build.0 = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Debug|x86.Build.0 = Debug|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|ARM64.Build.0 = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x64.ActiveCfg = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x64.Build.0 = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x86.ActiveCfg = Release|Any CPU
+		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

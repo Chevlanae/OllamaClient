@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "OllamaClient.Test (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "OllamaClient.Test (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

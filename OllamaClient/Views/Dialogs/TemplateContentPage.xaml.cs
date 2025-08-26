@@ -11,7 +11,7 @@ namespace OllamaClient.Views.Dialogs
     /// </summary>
     public sealed partial class TemplateContentPage : Page
     {
-        private CreateModelDialog.InputResults Results { get; set; }
+        private CreateModelDialog.InputResults? Results { get; set; }
 
         public TemplateContentPage()
         {
@@ -24,7 +24,7 @@ namespace OllamaClient.Views.Dialogs
             {
                 Results = args.Results;
 
-                InputTextBox.Text = Results.From?.Template;
+                InputTextBox.Text = Results?.From?.Template;
             }
 
             base.OnNavigatedTo(e);
@@ -32,7 +32,7 @@ namespace OllamaClient.Views.Dialogs
 
         private void InputTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (sender is TextBox inputTextBox)
+            if (sender is TextBox inputTextBox && Results is not null)
             {
                 Results.Template = inputTextBox.Text;
             }

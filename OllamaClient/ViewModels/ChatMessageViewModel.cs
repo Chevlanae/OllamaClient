@@ -1,5 +1,5 @@
 ﻿
-using OllamaClient.Json;
+using OllamaClient.Services.Json;
 using OllamaClient.Models;
 using System;
 using System.ComponentModel;

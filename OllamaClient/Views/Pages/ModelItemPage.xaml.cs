@@ -12,7 +12,7 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public sealed partial class ModelItemPage : Page
     {
-        public class NavArgs(ModelViewModel modelItem, ModelSidebarViewModel viewModel)
+        public class NavArgs(ModelViewModel modelItem)
         {
             public ModelViewModel SelectedItem { get; set; } = modelItem;
         }

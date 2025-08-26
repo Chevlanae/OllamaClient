@@ -1,4 +1,4 @@
-﻿using OllamaClient.Json;
+﻿using OllamaClient.Services.Json;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -10,7 +10,6 @@ namespace OllamaClient.ViewModels
         private string _Value { get; set; } = value;
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new(propertyName));
 
         public ModelParameterKey Key

@@ -13,17 +13,15 @@ namespace OllamaClient.ViewModels
     {
         private IModelCollection _ModelCollection { get; set; }
         private IDialogsService _DialogsService { get; set; }
-        private ListView _ModelsListView { get; set; }
         private XamlRoot _XamlRoot { get; set; }
         private DispatcherQueue _DispatcherQueue { get; set; }
 
         public ObservableCollection<ModelViewModel> ModelViewModelCollection { get; set; } = [];
 
-        public ModelSidebarViewModel(ListView modelsListView, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue)
+        public ModelSidebarViewModel(XamlRoot xamlRoot, DispatcherQueue dispatcherQueue)
         {
             _ModelCollection = App.GetRequiredService<IModelCollection>();
             _DialogsService = App.GetRequiredService<IDialogsService>();
-            _ModelsListView = modelsListView;
             _XamlRoot = xamlRoot;
             _DispatcherQueue = dispatcherQueue;
 
