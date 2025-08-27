@@ -4,8 +4,8 @@ A client to interact with Ollama's LLMs through the local api. Requires Ollama t
 
 # Usage
 
-This app is still in it's development stage and requires Visual Studio to run. You can install it here: https://visualstudio.microsoft.com/
-You will also need to install .NET 9 and the Windows App SDK. A guide on how to do that here: https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
+This app is still in it's development stage and requires Visual Studio to run. You can install it here: https://visualstudio.microsoft.com/.
+You will also need to install .NET 9 and the Windows App SDK. A guide on how to do that here: https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/.
 
 When you've downloaded all of the pre-requisites, you can download the project using git:
 `git clone https://github.com/Chevlanae/OllamaClient.git`
