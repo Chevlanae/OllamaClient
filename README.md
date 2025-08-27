@@ -1,4 +1,4 @@
-#Ollama Client
+# Ollama Client
 
 A client to interact with Ollama's LLMs through the local api. Requires Ollama to be installed. Built using WinUI3.
 
