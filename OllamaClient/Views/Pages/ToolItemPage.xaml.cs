@@ -1,6 +1,10 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.ViewModels;
+using System;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,32 +34,38 @@ public sealed partial class ToolItemPage : Page
         {
             _ToolViewModel = args.ViewModel;
 
+            ParametersListView.ItemsSource = _ToolViewModel.Parameters.Properties;
             CenterInnerGrid.DataContext = _ToolViewModel;
         }
 
-
         base.OnNavigatedTo(e);
-
-
     }
 
-    private void SubmitFunctionButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void AddNewPropertyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         if (_ToolViewModel is not null)
         {
-            string text = JSCodeEditorControl.Editor.GetText(long.MaxValue);
+            _ToolViewModel.Parameters.Properties.Add(new("test", new(Models.Function.PropertyType.Object, "test")));
         }
     }
 
-    private void AddNewParameterButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void PickAFileButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (_ToolViewModel is not null && _ToolViewModel.FunctionParametersViewModel is not null)
+        if(sender is Button btn && App.Window is not null)
         {
-            _ToolViewModel.FunctionParametersViewModel.AddProperty("test", new()
-            {
-                Type = "string",
-                Description = "test"
-            });
+            btn.IsEnabled = false;
+
+            FileOpenPicker? picker = new();
+            picker.ViewMode = PickerViewMode.List;
+            picker.FileTypeFilter.Add(".js");
+
+            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(picker, windowHandle);
+            StorageFile? file = await picker.PickSingleFileAsync();
+
+
+
+            btn.IsEnabled = true;
         }
     }
 }

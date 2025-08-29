@@ -1,6 +1,4 @@
-﻿using OllamaClient.Services.Json;
-
-namespace OllamaClient.Models
+﻿namespace OllamaClient.Models
 {
     public class Tool
     {
@@ -9,32 +7,22 @@ namespace OllamaClient.Models
             Function
         }
 
-        public enum ParameterType
+        public ToolType Type { get; set; }
+        public Function Function { get; set; }
+
+        public Tool(string name, string description)
         {
-            Object
+            Type = ToolType.Function;
+            Function = new(name, description);
         }
 
-        public enum PropertyType
+        public Services.Json.Tool ToJson()
         {
-            Object,
-            String,
-            Integer,
-            Boolean
-        }
-
-        public string Name { get; set; }
-        public string Type { get; set; }
-        public Function? Function { get; set; }
-
-        public Tool(string name, string type)
-        {
-            Name = name;
-            Type = type;
-
-            if(Type == "Function")
+            return new()
             {
-                Function = new();
-            }
+                type = Type.ToString().ToLower(),
+                function = Function.ToJson()
+            };
         }
     }
 }

@@ -67,6 +67,8 @@ namespace OllamaClient
 
         private Window? MainWindow;
 
+        public static Window? Window = null;
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -89,6 +91,7 @@ namespace OllamaClient
         {
             _Host.Start();
             MainWindow = new MainWindow();
+            Window = MainWindow;
             MainWindow.Activate();
         }
     }

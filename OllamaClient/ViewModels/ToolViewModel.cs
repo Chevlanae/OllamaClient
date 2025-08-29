@@ -1,34 +1,40 @@
 ﻿using OllamaClient.Models;
-using System.Collections.ObjectModel;
+using System;
 
 namespace OllamaClient.ViewModels
 {
-    public class ToolViewModel
+    public partial class ToolViewModel
     {
+
         private Tool _Tool { get; set; }
+
+        public string? Type
+        {
+            get => Enum.GetName(_Tool.Type);
+        }
 
         public string Name
         {
-            get => _Tool.Name;
-            set => _Tool.Name = value;
+            get => _Tool.Function.Name;
         }
 
-        public string Type
+        public string Description
         {
-            get => _Tool.Type;
-            set => _Tool.Type = value;
+            get => _Tool.Function.Description;
         }
 
-        public ToolFunctionParametersViewModel? FunctionParametersViewModel { get; set; }
+        public ParametersViewModel Parameters { get; set; }
 
         public ToolViewModel(Tool tool)
         {
             _Tool = tool;
+            Parameters = new(_Tool.Function.Parameters);
+        }
 
-            if (_Tool.Function.HasValue)
-            {
-                FunctionParametersViewModel = new(_Tool.Function.Value.parameters);
-            }
+        public ToolViewModel(string name, string description)
+        {
+            _Tool = new(name, description);
+            Parameters = new(_Tool.Function.Parameters);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace OllamaClient.Services.Json
     {
         public string type { get; set; }
         public Dictionary<string, FunctionParameterProperty> properties { get; set; }
-        public string[] required { get; set; }
+        public string[]? required { get; set; }
 
         public FunctionParameters()
         {
