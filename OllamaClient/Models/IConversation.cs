@@ -21,7 +21,7 @@ namespace OllamaClient.Models
         IEnumerable<ChatMessage> BuildUserChatMessageAndResponse(string prompt);
         void Cancel();
         void CopyContract(ConversationContract contract);
-        Task<bool> GenerateSubject(string prompt, IProgress<CompletionResponse> progress);
+        Task<bool> GenerateSubject(string prompt, List<string> models, IProgress<CompletionResponse> progress);
         Task<bool> SendChatRequest(IProgress<ChatResponse> progress);
         void SetSystemMessage(string systemMessage);
         ConversationContract ToSerializable();

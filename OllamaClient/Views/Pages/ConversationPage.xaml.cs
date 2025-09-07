@@ -37,18 +37,17 @@ namespace OllamaClient.Views.Pages
         {
             if (e.Parameter is NavArgs args)
             {
-                _AvailableModels = args.AvailableModels;
                 _ConversationViewModel = args.ConversationViewModel;
 
                 ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
-                ModelsComboBox.ItemsSource = _AvailableModels;
+                ModelsComboBox.ItemsSource = _ConversationViewModel.AvailableModels;
 
                 SubjectTextBlock.DataContext = _ConversationViewModel;
 
                 ScrollLockButton.IsChecked = true;
                 _EnableAutoScroll = true;
 
-                int index = _AvailableModels.IndexOf(_ConversationViewModel.SelectedModel ?? "");
+                int index = _ConversationViewModel.AvailableModels.IndexOf(_ConversationViewModel.SelectedModel ?? "");
                 if (index == -1)
                 {
                     ModelsComboBox.SelectedIndex = 0;

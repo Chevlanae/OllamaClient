@@ -31,10 +31,11 @@ namespace OllamaClient.ViewModels
         private IDialogsService _DialogsService;
         private IProgress<CompletionResponse> _SubjectProgress { get; set; }
         private IProgress<ChatResponse>? _ChatProgress { get; set; }
-        private List<string> _AvailableModels { get; set; }
 
         private bool _IsSendingMessage { get; set; } = false;
         private bool _IsInputEnabled { get; set; } = true;
+
+        public List<string> AvailableModels { get; set; }
 
         public SymbolIcon SendChatButtonIcon { get; set; } = new(Symbol.Send);
 
@@ -44,7 +45,7 @@ namespace OllamaClient.ViewModels
             _XamlRoot = root;
             _DispatcherQueue = dispatcherQueue;
             _DialogsService = App.GetRequiredService<IDialogsService>();
-            _AvailableModels = availableModels;
+            AvailableModels = availableModels;
 
 
             foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
@@ -151,10 +152,10 @@ namespace OllamaClient.ViewModels
             IsSendingMessage = false;
         }
 
-        public void GenerateSubject(string prompt, List<string> models)
+        public void GenerateSubject(string prompt)
         {
             Subject = "";
-            _DispatcherQueue.TryEnqueue(async () => await _Conversation.GenerateSubject(prompt, _AvailableModels, _SubjectProgress));
+            _DispatcherQueue.TryEnqueue(async () => await _Conversation.GenerateSubject(prompt, AvailableModels, _SubjectProgress));
         }
 
         public void SetSystemMessage(string prompt) => _Conversation.SetSystemMessage(prompt);

@@ -34,7 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Views\Dialogs\CreateModelDialog.xaml" />
     <None Remove="Views\Dialogs\CreateNewToolDialog.xaml" />
     <None Remove="Views\Dialogs\FromContentPage.xaml" />
     <None Remove="Views\Dialogs\ParametersContentPage.xaml" />
@@ -108,9 +107,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Views\Dialogs\FromContentPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Update="Views\Dialogs\CreateModelDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Views\Pages\ErrorPopupContentDialog.xaml">
