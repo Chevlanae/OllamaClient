@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.ViewModels;
+using OllamaClient.Views.Windows;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,7 +18,6 @@ namespace OllamaClient.Views.Pages
         {
             public Frame ContentFrame { get; set; } = contentFrame;
         }
-
         private Frame? _ContentFrame { get; set; }
         private ModelSidebarViewModel? _SidebarViewModel { get; set; }
 
@@ -61,7 +61,7 @@ namespace OllamaClient.Views.Pages
 
         private void CreateModelButton_Click(object sender, RoutedEventArgs e)
         {
-            _SidebarViewModel?.ShowCreateModelDialog();
+            _SidebarViewModel?.ShowCreateModelWindow();
         }
 
         private void PullModelButton_Click(object sender, RoutedEventArgs e)
@@ -72,6 +72,13 @@ namespace OllamaClient.Views.Pages
         private void RefreshModelsButton_Click(object sender, RoutedEventArgs e)
         {
             _SidebarViewModel?.Refresh();
+        }
+
+        private void _SidebarViewModel_ModelsLoaded(object? sender, System.EventArgs e)
+        {
+            SidebarProgressRing.Visibility = Visibility.Collapsed;
+            SidebarProgressRing.IsActive = false;
+            ModelsListView.Visibility = Visibility.Visible;
         }
 
         private void SetViewModel()
@@ -87,13 +94,6 @@ namespace OllamaClient.Views.Pages
 
                 _SidebarViewModel.Refresh();
             }
-        }
-
-        private void _SidebarViewModel_ModelsLoaded(object? sender, System.EventArgs e)
-        {
-            SidebarProgressRing.Visibility = Visibility.Collapsed;
-            SidebarProgressRing.IsActive = false;
-            ModelsListView.Visibility = Visibility.Visible;
         }
     }
 }

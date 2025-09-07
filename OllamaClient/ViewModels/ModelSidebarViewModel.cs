@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
+using OllamaClient.Views.Windows;
 using System;
 using System.Collections.ObjectModel;
 
@@ -15,6 +16,7 @@ namespace OllamaClient.ViewModels
         private IDialogsService _DialogsService { get; set; }
         private XamlRoot _XamlRoot { get; set; }
         private DispatcherQueue _DispatcherQueue { get; set; }
+        private CreateModelWindow? _CreateModelWindow { get; set; }
 
         public ObservableCollection<ModelViewModel> ModelViewModelCollection { get; set; } = [];
 
@@ -49,27 +51,6 @@ namespace OllamaClient.ViewModels
             _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
         }
 
-        private void CreateModelDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs e)
-        {
-            if (sender is CreateModelContentDialog dialog)
-            {
-                if (e.Result == ContentDialogResult.Primary && dialog.Content is CreateModelDialog content)
-                {
-                    if (content.Results.Name is not null && content.Results.From is not null)
-                    {
-                        _DispatcherQueue.TryEnqueue(async () =>
-                        {
-                            await _ModelCollection.CreateModel(content.Results.Name, content.Results.From.Name, content.Results.System, content.Results.Template, parameters: content.Results.Parameters);
-
-                        });
-                    }
-
-                }
-
-                dialog.Closed -= CreateModelDialog_Closed;
-            }
-        }
-
         private void PullModelDialog_Closed(object sender, ContentDialogClosedEventArgs e)
         {
             if (sender is PullModelContentDialog dialog)
@@ -97,13 +78,35 @@ namespace OllamaClient.ViewModels
             });
         }
 
-        public void ShowCreateModelDialog()
+        public void ShowCreateModelWindow()
         {
-            CreateModelContentDialog dialog = new(_XamlRoot, this);
+            if(_CreateModelWindow is null)
+            {
+                _CreateModelWindow = new(this);
+                _CreateModelWindow.Closed += _CreateModelWindow_Closed;
+                _CreateModelWindow.Activate();
+            }
+        }
 
-            dialog.Closed += CreateModelDialog_Closed;
+        private void _CreateModelWindow_Closed(object sender, WindowEventArgs e)
+        {
+            if (sender is CreateModelWindow window)
+            {
+                if(window.Reason == CreateModelWindow.ClosedReason.Created)
+                {
+                    if (window.Results.Name is not null && window.Results.From is not null)
+                    {
+                        _DispatcherQueue.TryEnqueue(async () =>
+                        {
+                            await _ModelCollection.CreateModel(window.Results.Name, window.Results.From.Name, window.Results.System, window.Results.Template, parameters: window.Results.Parameters);
 
-            _DispatcherQueue.TryEnqueue(async () => await _DialogsService.QueueDialog(dialog));
+                        });
+                    }
+                }
+
+                window.Closed -= _CreateModelWindow_Closed;
+                _CreateModelWindow = null;
+            }
         }
 
         public void ShowPullModelDialog()

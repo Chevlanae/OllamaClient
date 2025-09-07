@@ -2,8 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using OllamaClient.JsEngine;
 using OllamaClient.Models;
 using OllamaClient.Services;
+using OllamaClient.Views.Windows;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -54,12 +56,14 @@ namespace OllamaClient
                 services.AddSingleton<IDialogsService, DialogsService>();
                 services.AddSingleton<IOllamaApiService, OllamaApiService>();
                 services.AddSingleton<ISerializeableStorageService, SerializeableStorageService>();
+                services.AddSingleton<INodeJs, NodeJs>();
 
                 //Models
                 services.AddTransient<IConversation, Conversation>();
                 services.AddSingleton<IConversationCollection, ConversationCollection>();
                 services.AddTransient<IModel, Model>();
                 services.AddSingleton<IModelCollection, ModelCollection>();
+                services.AddSingleton<IToolCollection, ToolCollection>();
 
                 //Viewmodels
             })

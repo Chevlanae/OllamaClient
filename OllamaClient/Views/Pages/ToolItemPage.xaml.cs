@@ -16,12 +16,14 @@ namespace OllamaClient.Views.Pages;
 /// </summary>
 public sealed partial class ToolItemPage : Page
 {
-    public class NavArgs(ToolViewModel viewModel)
+    public class NavArgs(ToolViewModel viewModel, ToolSidebarViewModel sidebarViewModel)
     {
         public ToolViewModel ViewModel { get; set; } = viewModel;
+        public ToolSidebarViewModel SidebarViewModel { get; set; } = sidebarViewModel;
     }
 
     private ToolViewModel? _ToolViewModel { get; set; }
+    private ToolSidebarViewModel? _ToolSidebarViewModel { get; set; }
 
     public ToolItemPage()
     {
@@ -33,25 +35,17 @@ public sealed partial class ToolItemPage : Page
         if (e.Parameter is NavArgs args)
         {
             _ToolViewModel = args.ViewModel;
+            _ToolSidebarViewModel = args.SidebarViewModel;
 
-            ParametersListView.ItemsSource = _ToolViewModel.Parameters.Properties;
             CenterInnerGrid.DataContext = _ToolViewModel;
         }
 
         base.OnNavigatedTo(e);
     }
 
-    private void AddNewPropertyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
-    {
-        if (_ToolViewModel is not null)
-        {
-            _ToolViewModel.Parameters.Properties.Add(new("test", new(Models.Function.PropertyType.Object, "test")));
-        }
-    }
-
     private async void PickAFileButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if(sender is Button btn && App.Window is not null)
+        if(sender is Button btn && App.Window is not null && _ToolViewModel is not null && _ToolSidebarViewModel is not null)
         {
             btn.IsEnabled = false;
 
@@ -63,7 +57,7 @@ public sealed partial class ToolItemPage : Page
             InitializeWithWindow.Initialize(picker, windowHandle);
             StorageFile? file = await picker.PickSingleFileAsync();
 
-
+            _ToolSidebarViewModel.ProcessJsFile(file);
 
             btn.IsEnabled = true;
         }

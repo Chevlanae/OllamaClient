@@ -1,11 +1,12 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.ViewModels;
+using OllamaClient.Views.Windows;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace OllamaClient.Views.Dialogs
+namespace OllamaClient.Views.Pages
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -13,7 +14,7 @@ namespace OllamaClient.Views.Dialogs
     public sealed partial class FromContentPage : Page
     {
         private ModelSidebarViewModel? SidebarViewModel { get; set; }
-        private CreateModelDialog.InputResults? Results { get; set; }
+        private CreateModelWindow.InputResults? Results { get; set; }
 
         public FromContentPage()
         {
@@ -22,7 +23,7 @@ namespace OllamaClient.Views.Dialogs
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is CreateModelDialog.DialogArgs args)
+            if (e.Parameter is CreateModelWindow.PageArgs args)
             {
                 SidebarViewModel = args.ViewModel;
                 Results = args.Results;

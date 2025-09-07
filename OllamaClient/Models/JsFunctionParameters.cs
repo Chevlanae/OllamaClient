@@ -1,22 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static OllamaClient.Models.Function;
 
 namespace OllamaClient.Models
 {
-    public class Parameters
+    public class JsFunctionParameters
     {
         public class Property
         {
             public PropertyType Type { get; set; }
             public string Description { get; set; }
-            public Property(PropertyType type, string description)
+            public object Value { get; set; }
+
+            public Property(PropertyType type, string description, object value)
             {
                 Type = type;
                 Description = description;
+                Value = value;
             }
 
             public Services.Json.FunctionParameterProperty ToJson()
@@ -33,7 +32,7 @@ namespace OllamaClient.Models
         public Dictionary<string, Property> Properties { get; set; }
         public string[]? Required { get; set; }
 
-        public Parameters(ParameterType type)
+        public JsFunctionParameters(ParameterType type)
         {
             Type = type;
             Properties = new Dictionary<string, Property>();

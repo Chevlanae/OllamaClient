@@ -12,7 +12,7 @@ namespace OllamaClient.Views.Dialogs
             DefaultButton = ContentDialogButton.Primary;
             PrimaryButtonText = "Create";
             CloseButtonText = "Cancel";
-            Content = new CreateModelDialog(viewModel);
+            Content = new CreateModelDialog(viewModel, this);
             XamlRoot = xamlRoot;
         }
     }

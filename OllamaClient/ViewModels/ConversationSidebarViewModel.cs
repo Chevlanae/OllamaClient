@@ -18,7 +18,7 @@ namespace OllamaClient.ViewModels
         private DispatcherQueue _DispatcherQueue { get; set; }
         private IDialogsService _DialogsService { get; set; }
         private ListView _ConversationsListView { get; set; }
-        private ConversationCollection _ConversationCollection { get; set; }
+        private IConversationCollection _ConversationCollection { get; set; }
 
         public ObservableCollection<ConversationViewModel> ConversationViewModelCollection { get; set; } = [];
         public List<string> AvailableModels { get; set; } = [];
@@ -32,7 +32,7 @@ namespace OllamaClient.ViewModels
             _DialogsService = App.GetRequiredService<IDialogsService>();
             _ConversationsListView = conversationsListView;
 
-            _ConversationCollection = (ConversationCollection)App.GetRequiredService<IConversationCollection>();
+            _ConversationCollection = App.GetRequiredService<IConversationCollection>();
             _ConversationCollection.ConversationsLoaded += ConversationCollection_ConversationsLoaded;
             ConversationViewModelCollection.CollectionChanged += ConversationViewModelCollection_CollectionChanged;
             _ConversationCollection.ModelsLoaded += ConversationCollection_ModelsLoaded;
@@ -61,7 +61,7 @@ namespace OllamaClient.ViewModels
             ConversationViewModelCollection.Clear();
             foreach (Conversation conversation in _ConversationCollection.Items)
             {
-                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue);
+                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue, AvailableModels);
                 viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
                 ConversationViewModelCollection.Add(viewModel);
             }
@@ -85,6 +85,8 @@ namespace OllamaClient.ViewModels
 
         private void ConversationCollection_ModelsLoaded(object? sender, EventArgs e)
         {
+            AvailableModels = _ConversationCollection.AvailableModels;
+
             if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
                 ConversationPage.NavArgs args = new(_ConversationCollection.AvailableModels, conversation);
@@ -99,6 +101,11 @@ namespace OllamaClient.ViewModels
             ErrorPopupContentDialog dialog = new(_XamlRoot, (Exception)e.ExceptionObject);
 
             _DispatcherQueue.TryEnqueue(async () => { await _DialogsService.QueueDialog(dialog); });
+           
+            if(_ContentFrame.Content is LoadingPage)
+            {
+                _ContentFrame.Navigate(typeof(BlankPage));
+            }
         }
 
         public void ConversationsListView_SelectionChanged()
@@ -106,6 +113,7 @@ namespace OllamaClient.ViewModels
             if (AvailableModels.Count == 0)
             {
                 _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadAvailableModels(); });
+                _ContentFrame.Navigate(typeof(LoadingPage));
             }
             else if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
@@ -128,7 +136,7 @@ namespace OllamaClient.ViewModels
         public void NewConversation()
         {
             IConversation conversation = App.GetRequiredService<IConversation>();
-            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue);
+            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue, AvailableModels);
             viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
             _ConversationCollection.Items.Add(conversation);
             ConversationViewModelCollection.Add(viewModel);

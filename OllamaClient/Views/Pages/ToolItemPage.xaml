@@ -6,7 +6,6 @@
     xmlns:local="using:OllamaClient.Views.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:editor="using:WinUIEditor"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorTertiary}">
 
@@ -30,50 +29,30 @@
                     </Grid.RowDefinitions>
                     <TextBlock FontSize="24" TextDecorations="Underline" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20" Text="{Binding Name}" />
                     <StackPanel Grid.Row="1" HorizontalAlignment="Center">
-                        <TextBlock VerticalAlignment="Center" Margin="10,10,10,10">Description:</TextBlock>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,10,10,10">Description:</TextBlock>
                         <TextBox HorizontalAlignment="Stretch" MaxWidth="200" TextWrapping="Wrap" Template="{StaticResource DefaultInputTextBoxControlTemplate}" />
-                    </StackPanel>
-                    <StackPanel HorizontalAlignment="Center" Margin="10" Grid.Row="2">
-                        <TextBlock>Parameters:</TextBlock>
-                        <ListView x:Name="ParametersListView" Margin="0,30,0,30" >
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition />
-                                            <ColumnDefinition />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Key}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Value.Type}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <Button x:Name="AddNewPropertyButton" HorizontalAlignment="Right" Click="AddNewPropertyButton_Click">
-                            <FontIcon Glyph="&#xE710;" />
-                        </Button>
+                        <Grid Grid.Row="1" Margin="10" >
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock 
+                                Grid.Row="0" 
+                                Margin="10"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" 
+                                Text="Select a javascript file that contains the function(s) you want the model to use" />
+                             <Button 
+                                x:Name="PickAFileButton" 
+                                Grid.Row="1" 
+                                HorizontalAlignment="Center"
+                                Click="PickAFileButton_Click">
+                                <TextBlock>Select File</TextBlock>
+                            </Button>
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
-            <Grid Grid.Row="1" >
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <TextBlock 
-                    Grid.Row="0" 
-                    Margin="10"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center" 
-                    Text="Select a javascript file with your desired function" />
-                <Button 
-                    x:Name="PickAFileButton" 
-                    Grid.Row="1" 
-                    HorizontalAlignment="Center"
-                    Click="PickAFileButton_Click">
-                    <TextBlock>Select File</TextBlock>
-                </Button>
-            </Grid>
         </Grid>
     </Grid>
 </Page>

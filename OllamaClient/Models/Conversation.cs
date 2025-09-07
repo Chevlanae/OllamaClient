@@ -100,9 +100,15 @@ namespace OllamaClient.Models
             _CancellationTokenSource = new();
         }
 
-        public async Task<bool> GenerateSubject(string prompt, IProgress<CompletionResponse> progress)
+        public async Task<bool> GenerateSubject(string prompt, List<string> models, IProgress<CompletionResponse> progress)
         {
             CompletionRequest request = _Settings.SubjectRequest;
+
+            if(request.model == "$Random" || !models.Contains(request.model))
+            {
+                Random rand = new();
+                request.model = models[rand.Next(models.Count)];
+            }
 
             if (request.prompt.Contains("$Prompt"))
             {
@@ -140,21 +146,37 @@ namespace OllamaClient.Models
             }
         }
 
+        public void SetSystemMessage(string systemMessage)
+        {
+            IChatMessage? existingSystemMessage = ChatMessageCollection.FirstOrDefault(m => m.Role == Role.system);
+            if (existingSystemMessage is not null)
+            {
+                existingSystemMessage.Content = systemMessage;
+            }
+            else
+            {
+                ChatMessage systemChatMessage = new(Role.system, systemMessage);
+                ChatMessageCollection.Insert(0, systemChatMessage);
+            }
+        }
+
         /// <summary>
         /// Build user chat message by initializing a user message, and then the assistant response message.
-        /// Returns the user chat message in a tuple with with assistant chat message.
-        /// The tuple is ordered &ltUserChatMessage, AssistantChatMessage&gt.
+        /// Returns both messages as an enumerable.
+        /// The enumerable is ordered &ltUserChatMessage, AssistantChatMessage&gt.
         /// Call the 'SendChatRequest' method to send the built messages.
         /// </summary>
         /// <param name="prompt">The prompt for the user chat messsage</param>
-        /// <returns>A tuple with the user chat message, and the empty assistant response message</returns>
-        public Tuple<ChatMessage, ChatMessage> BuildUserChatMessage(string prompt)
+        /// <returns>An enumerable with the user chat message, and the empty assistant response message</returns>
+        public IEnumerable<ChatMessage> BuildUserChatMessageAndResponse(string prompt)
         {
             ChatMessage userChatMessage = new(Role.user, prompt);
             ChatMessageCollection.Add(userChatMessage);
             ChatMessage assistantChatMessage = new(Role.assistant, "");
             ChatMessageCollection.Add(assistantChatMessage);
-            return new(userChatMessage, assistantChatMessage);
+
+            yield return userChatMessage;
+            yield return assistantChatMessage;
         }
 
         public async Task<bool> SendChatRequest(IProgress<ChatResponse> progress)

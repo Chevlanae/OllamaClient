@@ -37,6 +37,7 @@ namespace OllamaClient.Models
         protected void OnConversationsLoaded(EventArgs e) => ConversationsLoaded?.Invoke(this, e);
         protected void OnConversationsLoadFailed(EventArgs e) => ConversationsLoadFailed?.Invoke(this, e);
         protected void OnUnhandledException(UnhandledExceptionEventArgs e) => UnhandledException?.Invoke(this, e);
+
         private async void Conversation_StartOfRequest(object? sender, EventArgs e) => await Save();
         private async void Conversation_EndOfResponse(object? sender, EventArgs e) => await Save();
 

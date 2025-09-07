@@ -35,7 +35,8 @@
                                 Width="50">
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem Text="New" Click="AddNewTool_Click" />
+                                        <MenuFlyoutItem Text="New" />
+                                    <MenuFlyoutItem Text="From TS/JS file..." Click="GetFile_Click" />
                                 </MenuFlyout>
                                 </Button.Flyout>
                                 <FontIcon Glyph="&#xE712;" />

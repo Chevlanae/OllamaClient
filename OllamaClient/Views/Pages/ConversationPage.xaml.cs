@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using OllamaClient.ViewModels;
 using System.Collections.Generic;
@@ -21,7 +22,6 @@ namespace OllamaClient.Views.Pages
         }
 
         private ConversationViewModel? _ConversationViewModel { get; set; }
-        private List<string>? _AvailableModels { get; set; }
         private bool _EnableAutoScroll { get; set; }
 
         public ConversationPage()
@@ -30,6 +30,8 @@ namespace OllamaClient.Views.Pages
 
             _EnableAutoScroll = false;
         }
+
+        public bool IsChatInputTextBoxEnabled => !(_ConversationViewModel?.IsSendingMessage == true);
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -66,23 +68,19 @@ namespace OllamaClient.Views.Pages
 
         private void SendChatButton_Click(object? sender, RoutedEventArgs e)
         {
+            SendUserChatMessage();
+        }
+
+        private void SendChatKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+            SendUserChatMessage();
+        }
+
+        private void CancelKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
             if (_ConversationViewModel?.IsSendingMessage == true)
-            {
                 _ConversationViewModel?.Cancel();
-            }
-            else if (_ConversationViewModel is not null)
-            {
-                string text = ChatInputTextBox.Text;
-
-                if (_ConversationViewModel.Subject == "New Conversation")
-                {
-                    _ConversationViewModel.GenerateSubject(text);
-                }
-
-                _ConversationViewModel.SendUserChatMessage(text);
-
-                ChatInputTextBox.Text = "";
-            }
         }
 
         private void ChatMessagesControl_AutoScrollToBottom(object? sender, RoutedEventArgs e)
@@ -106,7 +104,7 @@ namespace OllamaClient.Views.Pages
             ChatMessagesControl_AutoScrollToBottom(sender, e);
         }
 
-        private void SendChatButton_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        private void SendChatButton_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             if (_ConversationViewModel?.IsSendingMessage == true)
             {
@@ -116,19 +114,34 @@ namespace OllamaClient.Views.Pages
             }
         }
 
-        private void SendChatButton_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        private void SendChatButton_PointerExited(object sender, PointerRoutedEventArgs e)
         {
-            if (_ConversationViewModel?.IsSendingMessage == true)
-            {
-                SendChatButton.Opacity = 0;
-                SendChatButton.Icon = new SymbolIcon(Symbol.Send);
-                SendChatButton.Opacity = 1;
-            }
+            SendChatButton.Opacity = 0;
+            SendChatButton.Icon = new SymbolIcon(Symbol.Send);
+            SendChatButton.Opacity = 1;
         }
 
         private void ScrollLockButton_Click(object sender, RoutedEventArgs e)
         {
             _EnableAutoScroll = ScrollLockButton.IsChecked == true;
+        }
+
+        private void SendUserChatMessage()
+        {
+            if (_ConversationViewModel?.IsSendingMessage == true) return;
+            else if (_ConversationViewModel is not null)
+            {
+                string text = ChatInputTextBox.Text;
+
+                if (_ConversationViewModel.Subject == "New Conversation")
+                {
+                    _ConversationViewModel.GenerateSubject(text);
+                }
+
+                _ConversationViewModel.SendUserChatMessage(text);
+
+                ChatInputTextBox.Text = "";
+            }
         }
     }
 }

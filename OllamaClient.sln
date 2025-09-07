@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.JsEngine", "Ol
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.Services", "OllamaClient.Services\OllamaClient.Services.csproj", "{1058B081-C5D5-4329-89C0-139CE491E5AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaClient.Tests", "OllamaClient.Tests\OllamaClient.Tests.csproj", "{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -66,6 +68,24 @@ Global
 		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x64.Build.0 = Release|Any CPU
 		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x86.ActiveCfg = Release|Any CPU
 		{1058B081-C5D5-4329-89C0-139CE491E5AB}.Release|x86.Build.0 = Release|Any CPU
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|ARM64.Build.0 = Debug|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x64.ActiveCfg = Debug|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x64.Build.0 = Debug|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x64.Deploy.0 = Debug|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x86.ActiveCfg = Debug|x86
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x86.Build.0 = Debug|x86
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Debug|x86.Deploy.0 = Debug|x86
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|ARM64.ActiveCfg = Release|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|ARM64.Build.0 = Release|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|ARM64.Deploy.0 = Release|ARM64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x64.ActiveCfg = Release|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x64.Build.0 = Release|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x64.Deploy.0 = Release|x64
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x86.ActiveCfg = Release|x86
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x86.Build.0 = Release|x86
+		{D9984DC8-7078-42BF-825E-C87ABF4D3EA0}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

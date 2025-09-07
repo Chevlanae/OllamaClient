@@ -1,20 +1,28 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using OllamaClient.ViewModels;
 using OllamaClient.Views.Pages;
 using System.Collections.ObjectModel;
+using Windows.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace OllamaClient.Views.Dialogs
+namespace OllamaClient.Views.Windows
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class CreateModelDialog : Page
+    public sealed partial class CreateModelWindow : Window
     {
-        public class DialogArgs
+        public enum ClosedReason
+        {
+            Created,
+            Canceled
+        }
+
+        public class PageArgs
         {
             public ModelSidebarViewModel? ViewModel { get; set; }
             public InputResults? Results { get; set; }
@@ -29,12 +37,13 @@ namespace OllamaClient.Views.Dialogs
             public string? System { get; set; }
         }
 
+        public ClosedReason Reason { get; set; } = ClosedReason.Canceled;
         public InputResults Results { get; set; } = new();
 
-        private DialogArgs Arguments { get; set; }
+        private PageArgs Arguments { get; set; }
         private int _PreviousSelectedIndex { get; set; } = 0;
 
-        public CreateModelDialog(ModelSidebarViewModel viewModel, CreateModelContentDialog dialog)
+        public CreateModelWindow(ModelSidebarViewModel viewModel)
         {
             InitializeComponent();
 
@@ -45,6 +54,8 @@ namespace OllamaClient.Views.Dialogs
             };
 
             NavigationSelectorBar.SelectedItem = NavigationSelectorBar.Items[0];
+
+            AppWindow.Resize(new SizeInt32(700, 600));
         }
 
 
@@ -74,6 +85,18 @@ namespace OllamaClient.Views.Dialogs
                     ContentFrame.Navigate(typeof(FromContentPage), Arguments, transitionInfo);
                     break;
             }
+        }
+
+        private void CreateButton_Click(object sender, RoutedEventArgs e)
+        {
+            Reason = ClosedReason.Created;
+            this.Close();
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            Reason = ClosedReason.Canceled;
+            this.Close();
         }
     }
 }

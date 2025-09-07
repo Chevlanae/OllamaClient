@@ -81,12 +81,20 @@
                          BorderBrush="Transparent"
                          FocusVisualPrimaryBrush="Transparent"
                          FocusVisualSecondaryBrush="Transparent"
+                         IsEnabled="{Binding IsChatInputTextBoxEnabled}"
                          Template="{StaticResource ChatInputTextBoxControlTemplate}"
                          VerticalAlignment="Stretch" 
                          HorizontalAlignment="Stretch" 
                          ScrollViewer.VerticalScrollMode="Enabled"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
-                         ScrollViewer.IsVerticalRailEnabled="True" />
+                         ScrollViewer.IsVerticalRailEnabled="True"
+                         ToolTipService.ToolTip="Enter a message">
+
+                    <TextBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Enter" Invoked="SendChatKeyboardAccelerator_Invoked" />
+                        <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="CancelKeyboardAccelerator_Invoked" />
+                    </TextBox.KeyboardAccelerators>
+                </TextBox>
                 <StackPanel Grid.Row="1" Margin="0,0,10,0" Orientation="Horizontal" HorizontalAlignment="Right">
                     <AppBarToggleButton 
                         x:Name="ScrollLockButton" 
@@ -113,15 +121,12 @@
                         Width="50" 
                         Height="50" 
                         Foreground="{ThemeResource AccentFillColorDefaultBrush}" 
-                        Click="SendChatButton_Click"  
+                        Click="SendChatButton_Click"
                         PointerEntered="SendChatButton_PointerEntered"
                         PointerExited="SendChatButton_PointerExited">
                         <AppBarButton.OpacityTransition>
                             <ScalarTransition Duration="0:0:4" />
                         </AppBarButton.OpacityTransition>
-                        <AppBarButton.KeyboardAccelerators>
-                            <KeyboardAccelerator Key="Enter" />
-                        </AppBarButton.KeyboardAccelerators>
                     </AppBarButton>
                 </StackPanel>
             </Grid>

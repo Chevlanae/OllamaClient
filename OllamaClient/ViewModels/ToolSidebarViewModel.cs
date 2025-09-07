@@ -1,10 +1,12 @@
 ﻿using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using OllamaClient.Models;
 using OllamaClient.Services;
 using OllamaClient.Views.Dialogs;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Windows.Storage;
 
 namespace OllamaClient.ViewModels
 {
@@ -12,42 +14,30 @@ namespace OllamaClient.ViewModels
     {
         private XamlRoot _XamlRoot { get; set; }
         private DispatcherQueue _DispatcherQueue { get; set; }
+        private Frame _ContentFrame { get; set; }
         private IDialogsService _DialogsService { get; set; }
+        private IToolCollection _Tools { get; set; }
 
-        public List<Models.Tool> Tools { get; set; } = new();
         public ObservableCollection<ToolViewModel> ToolViewModelCollection { get; set; } = new();
 
-        public ToolSidebarViewModel(XamlRoot xamlRoot, DispatcherQueue dispatcherQueue)
+        public ToolSidebarViewModel(XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, Frame contentFrame)
         {
             _XamlRoot = xamlRoot;
             _DispatcherQueue = dispatcherQueue;
+            _ContentFrame = contentFrame;
             _DialogsService = App.GetRequiredService<IDialogsService>();
+            _Tools = App.GetRequiredService<IToolCollection>();
         }
 
-        public void ShowCreateNewToolDialog()
+        public void ProcessJsFile(StorageFile file)
         {
-            ContentDialog dialog = new CreateNewToolContentDialog(_XamlRoot);
-
-            dialog.Closed += CreateNewToolContentDialog_Closed;
-
-            _DispatcherQueue.TryEnqueue(() => _DialogsService.QueueDialog(dialog));
-        }
-
-        private void CreateNewToolContentDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
-        {
-            if (sender.Content is CreateNewToolDialog dialog && dialog.ToolType is string type)
-            {
-                Models.Tool tool = new(dialog.ToolName, type);
-
-                Tools.Add(tool);
-                Refresh();
-            }
+            _Tools.ProcessJavascriptFile(file.Path);
         }
 
         public void Refresh()
         {
             ToolViewModelCollection.Clear();
-            foreach (Models.Tool tool in Tools)
+            foreach (Tool tool in _Tools.Items)
             {
                 ToolViewModelCollection.Add(new(tool));
             }

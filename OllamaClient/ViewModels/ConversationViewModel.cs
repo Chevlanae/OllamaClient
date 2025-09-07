@@ -10,6 +10,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
 
 namespace OllamaClient.ViewModels
 {
@@ -27,18 +31,20 @@ namespace OllamaClient.ViewModels
         private IDialogsService _DialogsService;
         private IProgress<CompletionResponse> _SubjectProgress { get; set; }
         private IProgress<ChatResponse>? _ChatProgress { get; set; }
+        private List<string> _AvailableModels { get; set; }
 
         private bool _IsSendingMessage { get; set; } = false;
         private bool _IsInputEnabled { get; set; } = true;
 
         public SymbolIcon SendChatButtonIcon { get; set; } = new(Symbol.Send);
 
-        public ConversationViewModel(Conversation conversation, XamlRoot root, DispatcherQueue dispatcherQueue)
+        public ConversationViewModel(Conversation conversation, XamlRoot root, DispatcherQueue dispatcherQueue, List<string> availableModels)
         {
             _Conversation = conversation;
             _XamlRoot = root;
             _DispatcherQueue = dispatcherQueue;
             _DialogsService = App.GetRequiredService<IDialogsService>();
+            _AvailableModels = availableModels;
 
 
             foreach (ChatMessage chatMessage in conversation.ChatMessageCollection)
@@ -142,34 +148,43 @@ namespace OllamaClient.ViewModels
         public void Cancel()
         {
             _Conversation.Cancel();
+            IsSendingMessage = false;
         }
 
-        public void GenerateSubject(string prompt)
+        public void GenerateSubject(string prompt, List<string> models)
         {
             Subject = "";
-
-            _DispatcherQueue.TryEnqueue(async () => await _Conversation.GenerateSubject(prompt, _SubjectProgress));
-
+            _DispatcherQueue.TryEnqueue(async () => await _Conversation.GenerateSubject(prompt, _AvailableModels, _SubjectProgress));
         }
+
+        public void SetSystemMessage(string prompt) => _Conversation.SetSystemMessage(prompt);
 
         public void SendUserChatMessage(string prompt)
         {
-            Tuple<ChatMessage, ChatMessage> messages = _Conversation.BuildUserChatMessage(prompt);
+            foreach(ChatMessage message in _Conversation.BuildUserChatMessageAndResponse(prompt))
+            {
+                ChatMessageViewModel viewModel = new(message);
+                _ChatMessageViewModelCollection.Add(viewModel);
+            }
 
-            ChatMessageViewModel userChatMessage = new(messages.Item1);
-            _ChatMessageViewModelCollection.Add(userChatMessage);
-            ChatMessageViewModel assistantChatMessage = new(messages.Item2, true);
-            _ChatMessageViewModelCollection.Add(assistantChatMessage);
-
-            _DispatcherQueue.TryEnqueue(async () => await SendChatMessage(assistantChatMessage));
+            _DispatcherQueue.TryEnqueue(async () => await SendMessages(_ChatMessageViewModelCollection.Last()));
         }
 
-        public async Task SendChatMessage(ChatMessageViewModel chatMessage)
+        private async Task SendMessages(ChatMessageViewModel responseViewModel)
         {
-            _ChatProgress = new Progress<ChatResponse>(r => chatMessage.Content += r.message?.content ?? "");
+            StringBuilder responseContent = new();
+            _ChatProgress = new Progress<ChatResponse>(r => 
+            {
+                responseContent.Append(r.message?.content ?? "");
+                responseViewModel.Content = responseContent.ToString();
+            });
+
+
+            responseViewModel.ProgressRingEnabled = true;
             await _Conversation.SendChatRequest(_ChatProgress);
-            chatMessage.Timestamp = DateTime.Now;
-            chatMessage.ProgressRingEnabled = false;
+            responseContent.Clear();
+            responseViewModel.Timestamp = DateTime.Now;
+            responseViewModel.ProgressRingEnabled = false;
             OnMessageRecieved(EventArgs.Empty);
         }
     }

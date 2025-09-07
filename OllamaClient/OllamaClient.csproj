@@ -11,6 +11,7 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,8 +40,10 @@
     <None Remove="Views\Dialogs\ParametersContentPage.xaml" />
     <None Remove="Views\Dialogs\SystemContentPage.xaml" />
     <None Remove="Views\Dialogs\TemplateContentPage.xaml" />
+    <None Remove="Views\Pages\LoadingPage.xaml" />
     <None Remove="Views\Pages\ToolItemPage.xaml" />
     <None Remove="Views\Pages\ToolsSidebarPage.xaml" />
+    <None Remove="Views\Windows\CreateModelWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -75,12 +78,17 @@
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.Observable" Version="3.0.0" />
-    <PackageReference Include="WinUIEdit" Version="0.0.4-prerelease" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Update="Views\Windows\CreateModelWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\Pages\LoadingPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Dialogs\CreateNewToolDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

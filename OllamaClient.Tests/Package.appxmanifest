@@ -8,14 +8,14 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="77a9a4d6-65d7-47cd-bf00-5eb819de5635"
+    Name="d80ac0d8-d35b-43d7-972f-710cabd1ef80"
     Publisher="CN=leahv"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="77a9a4d6-65d7-47cd-bf00-5eb819de5635" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="d80ac0d8-d35b-43d7-972f-710cabd1ef80" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>OllamaClient.Test</DisplayName>
+    <DisplayName>OllamaClient.Tests</DisplayName>
     <PublisherDisplayName>leahv</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -34,8 +34,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="OllamaClient.Test"
-        Description="OllamaClient.Test"
+        DisplayName="OllamaClient.Tests"
+        Description="OllamaClient.Tests"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

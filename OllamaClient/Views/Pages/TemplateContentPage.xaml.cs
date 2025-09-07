@@ -1,17 +1,18 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using OllamaClient.Views.Windows;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace OllamaClient.Views.Dialogs
+namespace OllamaClient.Views.Pages
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class TemplateContentPage : Page
     {
-        private CreateModelDialog.InputResults? Results { get; set; }
+        private CreateModelWindow.InputResults? Results { get; set; }
 
         public TemplateContentPage()
         {
@@ -20,9 +21,10 @@ namespace OllamaClient.Views.Dialogs
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is CreateModelDialog.DialogArgs args)
+            if (e.Parameter is CreateModelWindow.PageArgs args)
             {
                 Results = args.Results;
+
 
                 InputTextBox.Text = Results?.From?.Template;
             }
