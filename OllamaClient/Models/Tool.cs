@@ -13,21 +13,14 @@ namespace OllamaClient.Models
             Function
         }
 
-        private INodeJs _NodeJS { get; set; }
-
         public ToolType Type { get; set; }
-        public JsFunction? Function { get; set; }
+        public JsFunction Function { get; set; }
         
-        public Tool(string name, string description, INodeJs node, JSReference? reference)
+        public Tool(string name, string description, INodeJs node, JSReference reference, string filename)
         {
-            _NodeJS = node;
-
             Type = ToolType.Function;
-            
-            if(reference is not null)
-            {
-                Function = new(name, description, reference, node);
-            }
+
+            Function = new(name, description, filename, reference, node);
         }
 
         public Services.Json.Tool ToJson()

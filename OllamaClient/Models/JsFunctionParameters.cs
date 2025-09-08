@@ -7,6 +7,14 @@ namespace OllamaClient.Models
     {
         public class Property
         {
+            public enum PropertyType
+            {
+                Object,
+                String,
+                Integer,
+                Boolean
+            }
+
             public PropertyType Type { get; set; }
             public string Description { get; set; }
             public object Value { get; set; }
@@ -32,9 +40,9 @@ namespace OllamaClient.Models
         public Dictionary<string, Property> Properties { get; set; }
         public string[]? Required { get; set; }
 
-        public JsFunctionParameters(ParameterType type)
+        public JsFunctionParameters()
         {
-            Type = type;
+            Type = ParameterType.Object;
             Properties = new Dictionary<string, Property>();
         }
 

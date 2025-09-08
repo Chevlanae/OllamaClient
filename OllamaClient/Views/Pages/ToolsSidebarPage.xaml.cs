@@ -5,6 +5,7 @@ using OllamaClient.ViewModels;
 using System;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Pickers;
 using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -64,17 +65,17 @@ public sealed partial class ToolsSidebarPage : Page
     {
         if(_ToolSidebarViewModel is not null && App.Window is not null)
         {
-            //var handle = WindowNative.GetWindowHandle(App.Window);
+            var handle = WindowNative.GetWindowHandle(App.Window);
 
-            //var picker = new Windows.Storage.Pickers.FileOpenPicker();
-            //picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Downloads;
-            //picker.FileTypeFilter.Add(".js");
+            var picker = new FileOpenPicker();
+            picker.SuggestedStartLocation = PickerLocationId.Downloads;
+            picker.FileTypeFilter.Add(".js");
 
-            //InitializeWithWindow.Initialize(picker, handle);
+            InitializeWithWindow.Initialize(picker, handle);
 
-            //StorageFile file = await picker.PickSingleFileAsync();
+            StorageFile file = await picker.PickSingleFileAsync();
 
-            //if (file is not null) _ToolSidebarViewModel.ProcessJsFile(file);
+            if (file is not null) _ToolSidebarViewModel.ProcessJsFile(file);
         }
     }
 }

@@ -20,11 +20,14 @@ namespace OllamaClient.Tests
                 new NodeJs(new Logger<INodeJs>(factory))
                 );
 
-            string currentDirectory = Directory.GetCurrentDirectory();
-            string mockFilesDir = Path.Combine(currentDirectory, "OllamaClient.Tests\\Mocks\\Typescript");
-            string mockFile = Path.Combine(mockFilesDir, "TestFunctions.ts");
+            string mockFile = Path.Combine("C:\\Users\\leahv\\source\\repos\\Chevlanae\\OllamaClient\\OllamaClient.Tests\\Mocks\\Javascript", "TestFunctions.js");
 
             await collection.ProcessJavascriptFile(mockFile);
+
+            foreach(var item in collection.Items)
+            {
+                item.Function.Invoke(1, 2);
+            }
         }
     }
 }

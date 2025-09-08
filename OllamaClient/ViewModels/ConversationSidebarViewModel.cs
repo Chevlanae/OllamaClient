@@ -21,7 +21,6 @@ namespace OllamaClient.ViewModels
         private IConversationCollection _ConversationCollection { get; set; }
 
         public ObservableCollection<ConversationViewModel> ConversationViewModelCollection { get; set; } = [];
-        public List<string> AvailableModels { get; set; } = [];
         public DateTime? LastUpdated { get; set; }
 
         public ConversationSidebarViewModel(Frame contentFrame, XamlRoot xamlRoot, DispatcherQueue dispatcherQueue, ListView conversationsListView)
@@ -61,7 +60,7 @@ namespace OllamaClient.ViewModels
             ConversationViewModelCollection.Clear();
             foreach (Conversation conversation in _ConversationCollection.Items)
             {
-                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue, AvailableModels);
+                ConversationViewModel viewModel = new(conversation, _XamlRoot, _DispatcherQueue, _ConversationCollection.AvailableModels);
                 viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
                 ConversationViewModelCollection.Add(viewModel);
             }
@@ -85,11 +84,10 @@ namespace OllamaClient.ViewModels
 
         private void ConversationCollection_ModelsLoaded(object? sender, EventArgs e)
         {
-            AvailableModels = _ConversationCollection.AvailableModels;
-
             if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
-                ConversationPage.NavArgs args = new(_ConversationCollection.AvailableModels, conversation);
+                conversation.AvailableModels = _ConversationCollection.AvailableModels;
+                ConversationPage.NavArgs args = new(conversation);
 
                 _ContentFrame.Navigate(typeof(ConversationPage), args);
             }
@@ -110,14 +108,15 @@ namespace OllamaClient.ViewModels
 
         public void ConversationsListView_SelectionChanged()
         {
-            if (AvailableModels.Count == 0)
+            if (_ConversationCollection.AvailableModels.Count == 0)
             {
                 _DispatcherQueue.TryEnqueue(async () => { await _ConversationCollection.LoadAvailableModels(); });
                 _ContentFrame.Navigate(typeof(LoadingPage));
             }
             else if (_ConversationsListView.SelectedItem is ConversationViewModel conversation)
             {
-                ConversationPage.NavArgs args = new(AvailableModels, conversation);
+                conversation.AvailableModels = _ConversationCollection.AvailableModels;
+                ConversationPage.NavArgs args = new(conversation);
 
                 _ContentFrame.Navigate(typeof(ConversationPage), args);
             }
@@ -136,7 +135,7 @@ namespace OllamaClient.ViewModels
         public void NewConversation()
         {
             IConversation conversation = App.GetRequiredService<IConversation>();
-            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue, AvailableModels);
+            ConversationViewModel viewModel = new((Conversation)conversation, _XamlRoot, _DispatcherQueue, _ConversationCollection.AvailableModels);
             viewModel.MessageRecieved += ConversationViewModel_MessageRecieved;
             _ConversationCollection.Items.Add(conversation);
             ConversationViewModelCollection.Add(viewModel);

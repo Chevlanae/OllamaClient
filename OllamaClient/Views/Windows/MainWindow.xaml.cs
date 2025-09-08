@@ -114,10 +114,8 @@ namespace OllamaClient.Views.Windows
                     case "Models":
                         ModelsButton.Background = navActivation.Models ? new SolidColorBrush((Color)Application.Current.Resources["SolidBackgroundFillColorBase"]) : null;
                         break;
-                    case "Tools":
-                        ToolsButton.Background = navActivation.Tools ? new SolidColorBrush((Color)Application.Current.Resources["SolidBackgroundFillColorBase"]) : null;
-                        break;
                     case "Settings":
+                        SettingsButton.Background = navActivation.Tools ? new SolidColorBrush((Color)Application.Current.Resources["SolidBackgroundFillColorBase"]) : null;
                         break;
 
                 }
@@ -234,6 +232,11 @@ namespace OllamaClient.Views.Windows
             package.SetText(builder.ToString());
 
             Clipboard.SetContent(package);
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

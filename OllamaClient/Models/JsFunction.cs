@@ -1,7 +1,9 @@
 ﻿using Microsoft.JavaScript.NodeApi;
 using OllamaClient.JsEngine;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OllamaClient.Models
 {
@@ -10,7 +12,7 @@ namespace OllamaClient.Models
         Object
     }
 
-    public enum PropertyType
+    public enum ReturnType
     {
         Object,
         String,
@@ -21,66 +23,24 @@ namespace OllamaClient.Models
     public class JsFunction
     {
         private INodeJs _NodeJS;
+        private string? _Filename { get; set; }
 
         public JSReference Reference { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public JsFunctionParameters Parameters { get; set; }
 
-        public JsFunction(string name, string description, JSReference reference, INodeJs nodejs, ParameterType? parameterType = null)
+        public JsFunction(string name, string description, string filename, JSReference reference, INodeJs nodejs)
         {
             _NodeJS = nodejs;
+            _Filename = filename;
 
             Name = name;
             Description = description;
             Reference = reference;
-            Parameters = new JsFunctionParameters(parameterType ?? ParameterType.Object);
+            Parameters = new JsFunctionParameters();
 
-            ProcessReference();
-        }
 
-        private void ProcessReference()
-        {
-            _NodeJS.Runtime.Run(() =>
-            {
-                if (Reference.GetValue() is JSValue value)
-                {
-                    JSFunction fn = (JSFunction)value;
-
-                    Name = fn.Name;
-                }
-            });
-        }
-
-        public T? CallFunction<T>() where T : struct, IJSValue<T>
-        {
-            return _NodeJS.Runtime.Run(() =>
-            {
-                if (Reference.GetValue() is JSValue value)
-                {
-                    JSFunction fn = (JSFunction)value;
-
-                    JSValue[] jsArgs = new JSValue[Parameters.Properties.Count];
-                    int i = 0;
-
-                    foreach (var arg in Parameters.Properties)
-                    {
-                        jsArgs[i] = arg.Value.Type switch
-                        {
-                            PropertyType.String => JSValue.CreateStringUtf8(Encoding.UTF8.GetBytes((string)arg.Value.Value)),
-                            PropertyType.Integer => JSValue.CreateBigInt((long)arg.Value.Value),
-                            PropertyType.Boolean => JSValue.GetBoolean((bool)arg.Value.Value),
-                            PropertyType.Object => JSValue.CreateObject().Wrap(arg.Value.Value),
-                            _ => JSValue.Null
-                        };
-                        i++;
-                    }
-
-                    var result = fn.CallAsStatic();
-                    return result.As<T>();
-                }
-                return default(T);
-            });
         }
 
         public Services.Json.Function ToJson()
@@ -91,6 +51,42 @@ namespace OllamaClient.Models
                 description = Description,
                 parameters = Parameters.ToJson()
             };
+        }
+
+        public object Invoke(params object[]argsNet)
+        {
+            return _NodeJS.Runtime.Run(() =>
+            {
+                try
+                {
+                    JSValue[] argsJs = new JSValue[argsNet.Length];
+
+                    for (int i = 0; i < argsNet.Length; i++)
+                    {
+                        switch (argsNet[i])
+                        {
+                            case string s:
+                                argsJs[i] = JSValue.CreateStringUtf8(Encoding.UTF8.GetBytes(s));
+                                break;
+                            case int n:
+                                argsJs[i] = JSValue.CreateNumber(n);
+                                break;
+                        }
+                    }
+
+                    JSFunction fn = (JSFunction)Reference.GetValue();
+
+                    JSValue result = fn.Call(fn, argsJs);
+
+                    object res = result.Unwrap("int");
+
+                    return res;
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Error invoking function {Name} from file {_Filename}", ex);
+                }
+            });
         }
     }
 }

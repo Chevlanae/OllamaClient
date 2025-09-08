@@ -60,18 +60,10 @@
                         <FontIcon Glyph="&#xE8F1;" />
                     </Button>
                     <Button 
-                        x:Name="ToolsButton" 
+                        x:Name="SettingsButton" 
                         RelativePanel.Below="ModelsButton" 
                         Style="{StaticResource NavBarButtonStyle}" 
-                        Click="ToolsButton_Click"
-                        ToolTipService.ToolTip="Tools">
-                        <FontIcon Glyph="&#xEC7A;" />
-                    </Button>
-                    <Button 
-                        x:Name="SettingsButton" 
-                        RelativePanel.Below="ToolsButton" 
-                        Style="{StaticResource NavBarButtonStyle}" 
-                        Click="ToolsButton_Click"
+                        Click="SettingsButton_Click"
                         ToolTipService.ToolTip="Settings">
                         <FontIcon Glyph="&#xE713;" />
                     </Button>

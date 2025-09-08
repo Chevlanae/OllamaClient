@@ -15,9 +15,8 @@ namespace OllamaClient.Views.Pages
     /// </summary>
     public partial class ConversationPage : Page
     {
-        public class NavArgs(List<string> availableModels, ConversationViewModel conversation)
+        public class NavArgs(ConversationViewModel conversation)
         {
-            public List<string> AvailableModels { get; set; } = availableModels;
             public ConversationViewModel ConversationViewModel { get; set; } = conversation;
         }
 
@@ -39,8 +38,8 @@ namespace OllamaClient.Views.Pages
             {
                 _ConversationViewModel = args.ConversationViewModel;
 
-                ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
                 ModelsComboBox.ItemsSource = _ConversationViewModel.AvailableModels;
+                ChatMessagesControl.ItemsSource = _ConversationViewModel.ChatMessages;
 
                 SubjectTextBlock.DataContext = _ConversationViewModel;
 
