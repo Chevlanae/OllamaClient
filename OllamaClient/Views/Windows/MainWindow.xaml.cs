@@ -97,7 +97,7 @@ namespace OllamaClient.Views.Windows
 
             _NavActivation.PropertyChanged += _NavActivation_PropertyChanged;
 
-            App.LogEvents?.Subscribe(_SerilogObserver);
+            App.LogInformationEvents?.Subscribe(_SerilogObserver);
 
             LogsItemsView.ItemsSource = _SerilogObserver.Logs;
         }

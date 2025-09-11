@@ -26,7 +26,7 @@ namespace OllamaClient
         public static string LogsDirectoryPath = $"{LocalAppDataPath}\\Logs";
         public static string LogsDirectoryMsixPath = $"{MsixLocalAppDataPath}\\Logs";
         public static string? EnvironmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-        public static IObservable<LogEvent>? LogEvents { get; set; }
+        public static IObservable<LogEvent>? LogInformationEvents { get; set; }
 
         private static readonly IHost _Host = Host.CreateDefaultBuilder()
             .UseEnvironment(EnvironmentName ?? "Production")
@@ -44,7 +44,7 @@ namespace OllamaClient
                     config.MinimumLevel.Debug();
                     config.WriteTo.Debug(restrictedToMinimumLevel: LogEventLevel.Debug);
                     config.WriteTo.File($"{LocalAppDataPath}\\Logs\\log.txt", rollingInterval: RollingInterval.Day);
-                    config.WriteTo.Observers(events => LogEvents = events, restrictedToMinimumLevel: LogEventLevel.Information);
+                    config.WriteTo.Observers(events => LogInformationEvents = events, restrictedToMinimumLevel: LogEventLevel.Information);
                 });
 
                 //Settings
